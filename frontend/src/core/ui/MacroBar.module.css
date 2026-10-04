@@ -1,0 +1,50 @@
+.macro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.track {
+  height: var(--space-6);
+  background: var(--color-track);
+  border-radius: var(--radius-bar);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-bar);
+}
+
+.protein {
+  background: var(--color-protein);
+}
+
+.carbs {
+  background: var(--color-carbs);
+}
+
+.fat {
+  background: var(--color-fat);
+}
+
+.fillOver {
+  background: var(--color-over);
+}
+
+.value {
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-medium);
+}
+
+.over {
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-over);
+}

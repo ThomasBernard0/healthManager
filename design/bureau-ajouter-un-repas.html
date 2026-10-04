@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alimentation – Ajouter un repas (bureau)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1E6B47}a:hover{color:#14492F}
+</style>
+</head>
+<body style="background:#E6E8E1">
+<div style="min-height: 1000px; background: #8F948C; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; color: #17201B; padding: 64px 16px; box-sizing: border-box">
+  <div role="dialog" aria-label="Ajouter un repas" style="max-width: 560px; margin: 0 auto; background: #FFFFFF; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 60px rgba(23,32,27,0.25)">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px">Ajouter un repas</div>
+        <a href="bureau-jour.html" aria-label="Fermer" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #17201B; border-radius: 10px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </a>
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; background: #F3F4EF; border-radius: 12px; color: #5B655F">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" placeholder="Chercher dans mes repas (shaker, fajitas…)" aria-label="Rechercher" style="border: none; outline: none; font: inherit; font-size: 14px; flex: 1; background: transparent; color: #17201B">
+        <span style="font-size: 12px; border: 1px solid #C9CEC3; border-radius: 6px; padding: 1px 6px">/</span>
+      </label>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <a href="mobile-3a-nouveau-repas.html" style="min-height: 64px; border-radius: 12px; border: 1px solid #E1E4DC; background: #FFFFFF; text-decoration: none; color: #17201B; display: flex; align-items: center; gap: 10px; padding: 10px 12px; box-sizing: border-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M12 5v14M5 12h14"></path></svg>
+          <span style="display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 600; font-size: 14px">Nouveau repas</span></span>
+        </a>
+        <a href="mobile-3b-saisie-rapide.html" style="min-height: 64px; border-radius: 12px; border: 1px solid #E1E4DC; background: #FFFFFF; text-decoration: none; color: #17201B; display: flex; align-items: center; gap: 10px; padding: 10px 12px; box-sizing: border-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"></path></svg>
+          <span style="display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 600; font-size: 14px">Saisie rapide</span></span>
+        </a>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #E1E4DC; padding-bottom: 8px">
+        <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px">Mes repas <span style="font-family: 'IBM Plex Sans', sans-serif; font-weight: 400; font-size: 13px; color: #5B655F">· 24</span></div>
+        <a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none">Gérer</a>
+      </div>
+      <div style="display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF0EA">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px">Shaker protéiné <svg width="13" height="13" viewBox="0 0 24 24" fill="#C98A1B" aria-label="Favori"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></span><span style="font-size: 12px; color: #5B655F">250 kcal · P 30 · G 22 · L 5 · hier</span></div>
+          <button aria-label="Ajouter Shaker protéiné" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #C9CEC3; background: #FFFFFF; color: #17201B; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF0EA">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px">Fajitas poulet <svg width="13" height="13" viewBox="0 0 24 24" fill="#C98A1B" aria-label="Favori"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></span><span style="font-size: 12px; color: #5B655F">770 kcal · P 45 · G 80 · L 30 · samedi</span></div>
+          <button aria-label="Ajouter Fajitas poulet" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #C9CEC3; background: #FFFFFF; color: #17201B; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF0EA">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px">Saumon &amp; pommes de terre</span><span style="font-size: 12px; color: #5B655F">610 kcal · P 38 · G 52 · L 26 · jeudi</span></div>
+          <button aria-label="Ajouter Saumon et pommes de terre" style="width: 40px; height: 40px; border-radius: 10px; border: none; background: #1E6B47; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF0EA">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px">Pâtes au pesto</span><span style="font-size: 12px; color: #5B655F">720 kcal · P 22 · G 88 · L 30 · lundi</span></div>
+          <button aria-label="Ajouter Pâtes au pesto" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #C9CEC3; background: #FFFFFF; color: #17201B; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF0EA">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px">Bowl poulet riz</span><span style="font-size: 12px; color: #5B655F">640 kcal · P 48 · G 72 · L 16 · aujourd'hui</span></div>
+          <button aria-label="Ajouter Bowl poulet riz" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #C9CEC3; background: #FFFFFF; color: #17201B; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0">
+          <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px">Bol yaourt grec</span><span style="font-size: 12px; color: #5B655F">420 kcal · P 28 · G 45 · L 14 · aujourd'hui</span></div>
+          <button aria-label="Ajouter Bol yaourt grec" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #C9CEC3; background: #FFFFFF; color: #17201B; display: flex; align-items: center; justify-content: center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+/* Transcribed from design/mobile-3b-saisie-rapide.html */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}

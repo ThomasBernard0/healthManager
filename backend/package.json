@@ -22,9 +22,11 @@
     "start:deploy": "prisma migrate deploy && node dist/main",
     "export:openapi": "npm run build && node dist/scripts/export-openapi.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "postinstall": "npm ci --prefix ../shared --no-audit --no-fund && npm run build --prefix ../shared"
   },
   "dependencies": {
+    "@healthmanager/shared": "file:../shared",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.1",
     "@nestjs/core": "^12.0.1",

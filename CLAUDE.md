@@ -8,7 +8,8 @@
 | API docs | `@nestjs/swagger` → OpenAPI at `/api/docs` (JSON: `/api/docs-json`)                   |
 | Frontend | React 19, Vite 8, TypeScript, React Router 7                                          |
 | Client   | Orval (axios-functions) generated from `frontend/openapi.json`                        |
-| Tooling  | npm, oxlint, Vitest (both apps), Prettier (backend)                                   |
+| Shared   | `shared/` (`@healthmanager/shared`): pure domain maths used by both apps              |
+| Tooling  | npm, oxlint, Vitest (all packages), Prettier (backend)                                |
 | Hosting  | Railway project **healthManager**: service `app` + `Postgres`; GitHub Actions CI      |
 
 - Repo: https://github.com/ThomasBernard0/healthManager — `main` is protected (PR + `backend` and `frontend` checks required, admins included).
@@ -18,9 +19,14 @@ Production is **one service**: Nest serves `/api/*` and the built SPA from `fron
 (unknown non-API paths fall back to `index.html`, so deep links work). The frontend calls the API
 on the same origin, so `VITE_API_URL` is empty in production.
 
+Every `/api` route except `/api/health` requires the `X-Access-Key` header (= `ACCESS_KEY`), else 401.
+No login: each device asks for the key once (or opens `/?key=…`) and keeps it in localStorage.
+
 ## Folder structure
 
 ```
+shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals)
+  src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
   prisma/                schema.prisma + migrations/
   prisma7.config.ts      Prisma CLI config (schema path, DATABASE_URL)
@@ -29,6 +35,8 @@ backend/                 NestJS API
     app.setup.ts         shared app config + OpenAPI document builder
     app.module.ts        root module (Config, ServeStatic, Prisma, domain modules)
     prisma/              PrismaModule (global) + PrismaService
+    access/              global AccessGuard (X-Access-Key), @Public() for /api/health
+    common/              NutrientsDto, Decimal helpers, date/time validators
     <domain>/            one module per domain: *.module.ts, *.controller.ts, *.service.ts, dto/
     scripts/             export-openapi.ts
     generated/prisma/    Prisma client (generated, gitignored)
@@ -39,9 +47,11 @@ frontend/                React SPA
   src/
     api/http.ts          axios instance + Orval mutator (base URL = VITE_API_URL)
     api/generated/       Orval output (committed, never edit)
-    theme/               design tokens — single source for colors/spacing/typography
-    pages/               route components
-design/<feature>/        Claude Design handoff bundles (read-only)
+    theme/               design tokens (light + dark) — single source for colors/spacing/typography
+    i18n/fr.ts           every UI string (French only)
+    core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
+    modules/food/        Alimentation module: pages/, components/, routes.ts (Sport/Finances later as modules/<name>)
+design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
 .github/workflows/ci.yml CI (backend + frontend jobs)
@@ -56,7 +66,7 @@ Root:
 | `npm run build`         | `npm ci` both apps, `prisma generate` + `nest build`, `vite build`    |
 | `npm start`             | `prisma migrate deploy` then start Nest (used by Railway)             |
 | `npm run api:sync`      | `export:openapi` (backend) + `generate-client` (frontend)             |
-| `npm run lint` / `test` | lint / unit tests for both apps                                       |
+| `npm run lint` / `test` | lint / unit tests (`shared`, backend, frontend)                       |
 | `npm run dev:backend` / `dev:frontend` | dev servers                                            |
 
 Backend (`cd backend`):
@@ -67,7 +77,7 @@ Backend (`cd backend`):
 | `npm run build`                          | `prisma generate && nest build`                              |
 | `npm run lint` / `npm test` / `npm run test:e2e` | oxlint / Vitest unit / Vitest e2e                   |
 | `npm run export:openapi`                 | build + write `../frontend/openapi.json` (no DB needed)      |
-| `npm run prisma:migrate -- --name <x>`   | create + apply a dev migration (needs a DB)                  |
+| `npx prisma migrate dev --name <x>`     | create + apply a dev migration (needs a DB)                  |
 | `npm run prisma:generate`                | regenerate the Prisma client                                 |
 
 Frontend (`cd frontend`):
@@ -78,6 +88,12 @@ Frontend (`cd frontend`):
 | `npm run build`            | type-check + production build to `dist/`         |
 | `npm run lint` / `npm test`| oxlint / Vitest (jsdom)                          |
 | `npm run generate-client`  | regenerate `src/api/generated` from openapi.json |
+
+Shared (`cd shared`): `npm test` (Vitest), `npm run build` (tsc → `dist/`; also run by each app's `postinstall`).
+After editing `shared/src`, rebuild it so the apps see the change.
+
+> **Windows/PowerShell:** the npm shim drops arguments after `--` (`npm run dev -- --port 5173` runs `vite 5173`).
+> Call the tool directly instead: `npx vite --port 5173`, `npx prisma migrate dev --name <x>`.
 
 ## Conventions
 
@@ -96,13 +112,19 @@ Frontend (`cd frontend`):
   Use CSS variables (`var(--color-primary)`, `var(--space-md)`, …) in CSS modules, or `tokens` in TS.
   New values are added to `src/theme/tokens.ts` first.
 - Schema changes always go through a Prisma migration committed in `backend/prisma/migrations/`.
+- **Domain maths live in `shared/`** (nutrient sums, week = Monday→Monday in Europe/Paris, goal for a date)
+  and are used by both apps — never re-implement them in a component or a service.
+- Dates are Europe/Paris local `YYYY-MM-DD` strings (Postgres `date`), times are `HH:mm`. kcal are integers,
+  macros are grams to 0.1 g (`Decimal`); round only in the UI.
+- **All UI strings live in `frontend/src/i18n/fr.ts`** (French only, no helper/explanatory text);
+  numbers via `core/format.ts` (`Intl.NumberFormat('fr-FR')`).
 
 ## Feature workflow
 
 1. **Design handoff** lands in `design/<feature>/` (Claude Design bundle — read-only).
 2. **Spec**: move/write the spec to `docs/specs/<feature>.md`.
 3. **Branch**: `git switch -c feat/<feature>` from an up-to-date `main`.
-4. **Backend**: Prisma model + migration (`npm run prisma:migrate -- --name <feature>`),
+4. **Backend**: Prisma model + migration (`npx prisma migrate dev --name <feature>`),
    domain module, decorated DTOs, service, controller, unit/e2e tests.
 5. **Sync the contract**: `npm run api:sync` (= `export:openapi` + `generate-client`); commit
    `frontend/openapi.json` and `frontend/src/api/generated/`.
@@ -130,6 +152,8 @@ $env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"
   Never remove `Postgres` or `postgres-volume` (that deletes the database).
 - Commit changes to the file through a PR like any other change, and apply after merging.
 - `source.checkSuites: true` = Railway waits for the GitHub `backend`/`frontend` checks before deploying.
+- Secrets are declared with `preserve()` (kept as set on Railway, never committed). Set them by hand:
+  `& $env:_ variables --set "ACCESS_KEY=<long random>" -s app`.
 
 ## Environment variables
 
@@ -141,6 +165,7 @@ Backend (`backend/.env`, see `backend/.env.example`):
 | `PORT`         | no       | `3001`                  | Railway injects it                                           |
 | `FRONTEND_URL` | no       | `http://localhost:5173` | CORS allowed origin                                          |
 | `NODE_ENV`     | no       | —                       | `production` on Railway                                      |
+| `ACCESS_KEY`   | yes      | —                       | Required `X-Access-Key` value. Unset = every API call is 401 |
 
 Frontend (`frontend/.env`, see `frontend/.env.example`; read at **build** time):
 

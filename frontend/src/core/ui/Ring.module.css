@@ -1,0 +1,45 @@
+.ring {
+  position: relative;
+  width: var(--size-ring);
+  height: var(--size-ring);
+  flex-shrink: 0;
+}
+
+.desktop {
+  width: var(--size-ring-desktop);
+  height: var(--size-ring-desktop);
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.track,
+.progress,
+.over {
+  fill: none;
+}
+
+.track {
+  stroke: var(--color-track);
+}
+
+.progress {
+  stroke: var(--color-accent);
+}
+
+.over {
+  stroke: var(--color-over);
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

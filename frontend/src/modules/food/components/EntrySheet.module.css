@@ -1,0 +1,41 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  background: var(--color-inverse);
+  color: var(--color-on-inverse);
+  border-radius: var(--radius-card);
+  padding: var(--space-16);
+}
+
+.totalKcal {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-26);
+}
+
+.totalMacros {
+  font-size: var(--font-size-13);
+  color: var(--color-on-inverse-muted);
+}
+
+.duplicate {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-8);
+}
+
+.duplicate button {
+  min-height: var(--size-input);
+}
+
+.grow {
+  flex: 1;
+}

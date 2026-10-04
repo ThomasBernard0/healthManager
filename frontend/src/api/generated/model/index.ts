@@ -5,5 +5,23 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './createQuickEntryDto';
+export * from './currentGoalDto';
+export * from './currentGoalDtoGoal';
+export * from './daySummaryDto';
+export * from './daySummaryDtoGoal';
+export * from './daySummaryDtoLeft';
+export * from './duplicateLogEntryDto';
+export * from './goalDto';
 export * from './healthResponseDto';
 export * from './healthResponseDtoStatus';
+export * from './logEntryDto';
+export * from './logKind';
+export * from './nutrientsDeltaDto';
+export * from './nutrientsDto';
+export * from './restoreLogEntryDto';
+export * from './updateGoalDto';
+export * from './updateLogEntryDto';
+export * from './weekProgressDto';
+export * from './weekProgressDtoLeft';
+export * from './weekProgressDtoTarget';

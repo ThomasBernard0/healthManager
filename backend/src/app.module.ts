@@ -4,8 +4,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { API_PREFIX } from './app.setup.js';
+import { AccessModule } from './access/access.module.js';
+import { GoalsModule } from './goals/goals.module.js';
 import { HealthModule } from './health/health.module.js';
+import { LogEntriesModule } from './log-entries/log-entries.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { SummaryModule } from './summary/summary.module.js';
 
 // Built SPA (frontend/dist), served so production is a single service.
 // Unknown non-API paths fall back to index.html for client-side routing.
@@ -23,7 +27,11 @@ const frontendDist = join(import.meta.dirname, '..', '..', 'frontend', 'dist');
         ]
       : []),
     PrismaModule,
+    AccessModule,
     HealthModule,
+    GoalsModule,
+    LogEntriesModule,
+    SummaryModule,
   ],
 })
 export class AppModule {}
