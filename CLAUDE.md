@@ -43,7 +43,7 @@ frontend/                React SPA
     pages/               route components
 design/<feature>/        Claude Design handoff bundles (read-only)
 docs/specs/              feature specs
-railway.json             Railway build/start/healthcheck
+.railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
 .github/workflows/ci.yml CI (backend + frontend jobs)
 ```
 
@@ -112,8 +112,24 @@ Frontend (`cd frontend`):
    OpenAPI spec and generated client are not stale).
 8. **PR to `main`** (`gh pr create`), Conventional Commit title; CI must pass.
 9. **Merge** (squash).
-10. **Railway auto-deploys** `main` (build → `prisma migrate deploy` → start → healthcheck `/api/health`).
+10. **Railway auto-deploys** `main` once CI passes (build → `prisma migrate deploy` → start → healthcheck `/api/health`).
 11. **Check the deploy**: `railway logs --build` / `railway logs` (service `app`) and hit `/api/health`.
+
+## Railway infrastructure (`.railway/railway.ts`)
+
+Railway does **not** read this file during deploys — changes take effect only when applied by hand:
+
+```powershell
+# Windows workaround: the railway/iac SDK re-runs the CLI via $env:_ and can't execute the npm shim
+$env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"
+& $env:_ config plan     # preview — always read it first
+& $env:_ config apply    # only if the plan is what you expect
+```
+
+- The file manages the **whole project**: removing a resource from it deletes that resource on apply.
+  Never remove `Postgres` or `postgres-volume` (that deletes the database).
+- Commit changes to the file through a PR like any other change, and apply after merging.
+- `source.checkSuites: true` = Railway waits for the GitHub `backend`/`frontend` checks before deploying.
 
 ## Environment variables
 

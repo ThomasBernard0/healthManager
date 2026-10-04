@@ -14,5 +14,8 @@
     "api:sync": "npm run export:openapi --prefix backend && npm run generate-client --prefix frontend",
     "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
     "test": "npm test --prefix backend && npm test --prefix frontend"
+  },
+  "devDependencies": {
+    "railway": "^3.12.0"
   }
 }
