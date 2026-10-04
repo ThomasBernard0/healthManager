@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:e2e
+      - name: OpenAPI spec is up to date
+        run: |
+          npm run export:openapi
+          git diff --exit-code -- ../frontend/openapi.json || (echo "::error::frontend/openapi.json is stale — run 'npm run api:sync' and commit" && exit 1)
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Generated client is up to date
+        run: |
+          npm run generate-client
+          git diff --exit-code -- src/api/generated || (echo "::error::src/api/generated is stale — run 'npm run generate-client' and commit" && exit 1)
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test

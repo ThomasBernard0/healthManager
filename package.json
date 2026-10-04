@@ -1,0 +1,18 @@
+{
+  "name": "healthmanager",
+  "private": true,
+  "description": "healthManager — NestJS API + React SPA, deployed as one Railway service",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "install:all": "npm ci --prefix backend --include=dev && npm ci --prefix frontend --include=dev",
+    "build": "npm run install:all && npm run build --prefix backend && npm run build --prefix frontend",
+    "start": "npm run start:deploy --prefix backend",
+    "dev:backend": "npm run start:dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "api:sync": "npm run export:openapi --prefix backend && npm run generate-client --prefix frontend",
+    "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
+    "test": "npm test --prefix backend && npm test --prefix frontend"
+  }
+}

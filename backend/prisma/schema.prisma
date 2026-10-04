@@ -1,0 +1,13 @@
+// Prisma schema — one model per domain entity.
+// Dev migration: `npm run prisma:migrate -- --name <change>`; applied on deploy by `prisma migrate deploy`.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
