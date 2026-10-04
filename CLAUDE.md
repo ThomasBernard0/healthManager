@@ -11,6 +11,9 @@
 | Tooling  | npm, oxlint, Vitest (both apps), Prettier (backend)                                   |
 | Hosting  | Railway project **healthManager**: service `app` + `Postgres`; GitHub Actions CI      |
 
+- Repo: https://github.com/ThomasBernard0/healthManager — `main` is protected (PR + `backend` and `frontend` checks required, admins included).
+- Production: https://app-production-0f43.up.railway.app (Swagger at `/api/docs`).
+
 Production is **one service**: Nest serves `/api/*` and the built SPA from `frontend/dist`
 (unknown non-API paths fall back to `index.html`, so deep links work). The frontend calls the API
 on the same origin, so `VITE_API_URL` is empty in production.
