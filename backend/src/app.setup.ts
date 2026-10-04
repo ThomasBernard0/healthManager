@@ -24,6 +24,8 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('healthManager API')
     .setVersion('1.0')
+    .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Access-Key' }, 'access-key')
+    .addSecurityRequirements('access-key')
     .build();
 
   return SwaggerModule.createDocument(app, config, {

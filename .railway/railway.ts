@@ -1,4 +1,4 @@
-import { defineRailway, github, postgres, project, service, volume } from "railway/iac";
+import { defineRailway, github, postgres, preserve, project, service, volume } from "railway/iac";
 
 // Railway infrastructure for healthManager (project-wide: every resource in the
 // project is declared here, and removing one from this file deletes it on apply).
@@ -28,6 +28,8 @@ export default defineRailway(() => {
       DATABASE_URL: Postgres.env.DATABASE_URL,
       NODE_ENV: "production",
       FRONTEND_URL: "https://app-production-0f43.up.railway.app",
+      // Secret, never committed: set once with `railway variables --set ACCESS_KEY=… -s app`.
+      ACCESS_KEY: preserve(),
     },
   });
 

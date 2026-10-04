@@ -22,11 +22,15 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: backend/package-lock.json
-      - run: npm ci
+          cache-dependency-path: |
+            backend/package-lock.json
+            shared/package-lock.json
+      - run: npm ci # postinstall builds ../shared
       - run: npm run lint
       - run: npm run build
       - run: npm test
+      - name: Shared package (lint + tests)
+        run: npm run lint --prefix ../shared && npm test --prefix ../shared
       - run: npm run test:e2e
       - name: OpenAPI spec is up to date
         run: |
@@ -45,7 +49,9 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            shared/package-lock.json
       - run: npm ci
       - name: Generated client is up to date
         run: |

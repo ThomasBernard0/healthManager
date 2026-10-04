@@ -1,5 +1,8 @@
 // Prisma schema — one model per domain entity.
 // Dev migration: `npm run prisma:migrate -- --name <change>`; applied on deploy by `prisma migrate deploy`.
+//
+// Nutrients are stored as flat columns: kcal as integers, macros (g) as Decimal to 0.1 g.
+// Dates are Europe/Paris local dates (`date`), times are "HH:mm".
 
 generator client {
   provider            = "prisma-client"
@@ -10,4 +13,113 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum FoodSource {
+  custom
+  ciqual
+  off
+}
+
+enum MealMode {
+  ingredients
+  manual
+}
+
+enum LogKind {
+  meal
+  quick
+}
+
+/// One ingredient. Values are per 100 g.
+model Food {
+  id         String     @id @default(uuid())
+  name       String
+  /// Lowercase, accents stripped — for accent/case-insensitive search.
+  searchName String
+  brand      String?
+  source     FoodSource
+  ciqualCode String?    @unique
+  barcode    String?    @unique
+  kcal       Int
+  protein    Decimal    @db.Decimal(7, 1)
+  carbs      Decimal    @db.Decimal(7, 1)
+  fat        Decimal    @db.Decimal(7, 1)
+  /// [{ label, grams }] — e.g. { label: "c. à s.", grams: 10 }
+  units      Json?
+  updatedAt  DateTime   @updatedAt
+  mealItems  MealItem[]
+
+  @@index([searchName])
+}
+
+/// A saved meal ("Mes repas"). timesEaten / lastEatenAt are derived from LogEntry.
+model Meal {
+  id              String     @id @default(uuid())
+  name            String
+  searchName      String
+  mode            MealMode
+  /// Manual-mode totals (all four or none).
+  manualKcal      Int?
+  manualProtein   Decimal?   @db.Decimal(7, 1)
+  manualCarbs     Decimal?   @db.Decimal(7, 1)
+  manualFat       Decimal?   @db.Decimal(7, 1)
+  /// Manual correction of the totals (all four or none).
+  overrideKcal    Int?
+  overrideProtein Decimal?   @db.Decimal(7, 1)
+  overrideCarbs   Decimal?   @db.Decimal(7, 1)
+  overrideFat     Decimal?   @db.Decimal(7, 1)
+  isFavorite      Boolean    @default(false)
+  archived        Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  items           MealItem[]
+  logEntries      LogEntry[]
+}
+
+model MealItem {
+  id        String   @id @default(uuid())
+  mealId    String
+  meal      Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id], onDelete: Restrict)
+  grams     Decimal  @db.Decimal(7, 1)
+  /// Display only: the unit the quantity was entered with (e.g. 1 × "c. à s.").
+  unitLabel String?
+  unitCount Decimal? @db.Decimal(5, 2)
+  position  Int
+
+  @@index([mealId])
+  @@index([foodId])
+}
+
+/// What I ate. Nutrients are a per-portion snapshot frozen at log time.
+model LogEntry {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  time      String   @db.VarChar(5)
+  kind      LogKind
+  mealId    String?
+  meal      Meal?    @relation(fields: [mealId], references: [id], onDelete: SetNull)
+  label     String
+  quantity  Decimal  @db.Decimal(5, 2)
+  kcal      Int
+  protein   Decimal  @db.Decimal(7, 1)
+  carbs     Decimal  @db.Decimal(7, 1)
+  fat       Decimal  @db.Decimal(7, 1)
+  createdAt DateTime @default(now())
+
+  @@index([date])
+  @@index([mealId])
+}
+
+/// Daily goal, versioned by day: applies from validFrom until the next version.
+model Goal {
+  id        String   @id @default(uuid())
+  validFrom DateTime @unique @db.Date
+  dailyKcal Int
+  protein   Decimal  @db.Decimal(6, 1)
+  carbs     Decimal  @db.Decimal(6, 1)
+  fat       Decimal  @db.Decimal(6, 1)
+  createdAt DateTime @default(now())
 }

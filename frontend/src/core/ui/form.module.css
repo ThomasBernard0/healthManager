@@ -1,0 +1,157 @@
+/* Shared form controls (inputs, primary button, links), transcribed from design/. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+  min-width: 0;
+}
+
+.input {
+  height: var(--size-input);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  padding: 0 var(--space-14);
+  font-size: var(--font-size-16);
+  color: var(--color-ink);
+  width: 100%;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+/* Input with a unit suffix ("g", "kcal") inside the same box. */
+.affix {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--size-input);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  padding: 0 var(--space-10);
+  color: var(--color-ink);
+}
+
+.affix:focus-within,
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.affixInput {
+  border: none;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  font-size: var(--font-size-16);
+  color: var(--color-ink);
+  background: transparent;
+}
+
+.affixUnit {
+  color: var(--color-muted);
+}
+
+/* The big kcal input of Saisie rapide. */
+.hero {
+  height: var(--space-64);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--color-accent);
+  padding: 0 var(--space-16);
+  gap: var(--space-8);
+}
+
+.hero .affixInput {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-30);
+}
+
+.hero .affixUnit {
+  font-size: var(--font-size-15);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+/* "Heure ........ 20:30" row */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-height: var(--size-row);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  padding: 0 var(--space-14);
+  font-size: var(--font-size-15);
+  color: var(--color-ink);
+}
+
+.inlineInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-ink);
+  min-height: var(--size-touch);
+  font-size: var(--font-size-15);
+}
+
+.primary {
+  height: var(--size-button);
+  border-radius: var(--radius-xl);
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-15);
+  width: 100%;
+  text-decoration: none;
+}
+
+.primary:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+.primary:disabled {
+  background: var(--color-border-strong);
+}
+
+.secondary {
+  min-height: var(--size-touch);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  color: var(--color-ink);
+  padding: 0 var(--space-16);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+}
+
+.danger {
+  min-height: var(--size-touch);
+  border: none;
+  background: transparent;
+  color: var(--color-over);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+}
+
+.error {
+  color: var(--color-over);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}

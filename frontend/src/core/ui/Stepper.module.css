@@ -1,0 +1,41 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-card);
+}
+
+.button {
+  width: var(--size-input);
+  height: var(--size-input);
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+}
+
+.button:disabled {
+  color: var(--color-border-strong);
+}
+
+.lg .button {
+  width: var(--size-fab);
+  height: var(--size-fab);
+}
+
+.value {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-20);
+}
+
+.lg .value {
+  font-size: var(--font-size-28);
+}

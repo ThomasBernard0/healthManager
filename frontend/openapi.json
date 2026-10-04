@@ -1,6 +1,23 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/access": {
+      "get": {
+        "operationId": "Access_check",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "access"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "Health_check",
@@ -21,6 +38,259 @@
           "health"
         ]
       }
+    },
+    "/api/goals/current": {
+      "get": {
+        "operationId": "Goals_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentGoalDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "goals"
+        ]
+      },
+      "put": {
+        "operationId": "Goals_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/api/log-entries/quick": {
+      "post": {
+        "operationId": "LogEntries_createQuick",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuickEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
+    "/api/log-entries/restore": {
+      "post": {
+        "operationId": "LogEntries_restore",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreLogEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
+    "/api/log-entries/{id}": {
+      "patch": {
+        "operationId": "LogEntries_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      },
+      "delete": {
+        "operationId": "LogEntries_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
+    "/api/log-entries/{id}/duplicate": {
+      "post": {
+        "operationId": "LogEntries_duplicate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateLogEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
+    "/api/summary/days/{date}": {
+      "get": {
+        "operationId": "Summary_day",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "2026-10-04",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DaySummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "summary"
+        ]
+      }
     }
   },
   "info": {
@@ -32,6 +302,13 @@
   "tags": [],
   "servers": [],
   "components": {
+    "securitySchemes": {
+      "access-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Access-Key"
+      }
+    },
     "schemas": {
       "HealthResponseDto": {
         "type": "object",
@@ -47,7 +324,484 @@
         "required": [
           "status"
         ]
+      },
+      "GoalDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validFrom": {
+            "type": "string",
+            "example": "2026-09-30",
+            "description": "First day (YYYY-MM-DD) this goal applies to"
+          },
+          "dailyKcal": {
+            "type": "number",
+            "example": 2200
+          },
+          "protein": {
+            "type": "number",
+            "example": 150,
+            "description": "Daily protein (g)"
+          },
+          "carbs": {
+            "type": "number",
+            "example": 230,
+            "description": "Daily carbs (g)"
+          },
+          "fat": {
+            "type": "number",
+            "example": 70,
+            "description": "Daily fat (g)"
+          }
+        },
+        "required": [
+          "id",
+          "validFrom",
+          "dailyKcal",
+          "protein",
+          "carbs",
+          "fat"
+        ]
+      },
+      "CurrentGoalDto": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "example": "2026-10-04",
+            "description": "Today in Europe/Paris"
+          },
+          "goal": {
+            "nullable": true,
+            "description": "Goal applying today; null before any goal is set",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GoalDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "today",
+          "goal"
+        ]
+      },
+      "UpdateGoalDto": {
+        "type": "object",
+        "properties": {
+          "dailyKcal": {
+            "type": "number",
+            "example": 2400,
+            "minimum": 500,
+            "maximum": 10000
+          },
+          "protein": {
+            "type": "number",
+            "example": 160,
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "carbs": {
+            "type": "number",
+            "example": 250,
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "fat": {
+            "type": "number",
+            "example": 80,
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "dailyKcal",
+          "protein",
+          "carbs",
+          "fat"
+        ]
+      },
+      "CreateQuickEntryDto": {
+        "type": "object",
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "example": 640,
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "protein": {
+            "type": "number",
+            "example": 48,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "carbs": {
+            "type": "number",
+            "example": 72,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "fat": {
+            "type": "number",
+            "example": 16,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "time": {
+            "type": "string",
+            "example": "20:30"
+          },
+          "label": {
+            "type": "string",
+            "example": "Restaurant italien",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "kcal",
+          "protein",
+          "carbs",
+          "fat",
+          "date",
+          "time",
+          "label"
+        ]
+      },
+      "LogKind": {
+        "type": "string",
+        "enum": [
+          "meal",
+          "quick"
+        ]
+      },
+      "NutrientsDto": {
+        "type": "object",
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "example": 640,
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "protein": {
+            "type": "number",
+            "example": 48,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "carbs": {
+            "type": "number",
+            "example": 72,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "fat": {
+            "type": "number",
+            "example": 16,
+            "minimum": 0,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "kcal",
+          "protein",
+          "carbs",
+          "fat"
+        ]
+      },
+      "LogEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "time": {
+            "type": "string",
+            "example": "12:45"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LogKind"
+              }
+            ]
+          },
+          "mealId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Saved meal it was logged from"
+          },
+          "label": {
+            "type": "string",
+            "example": "Bowl poulet riz"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 1,
+            "description": "Portions"
+          },
+          "snapshot": {
+            "description": "Per portion, frozen at log time",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "total": {
+            "description": "snapshot × quantity",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "time",
+          "kind",
+          "mealId",
+          "label",
+          "quantity",
+          "snapshot",
+          "total"
+        ]
+      },
+      "RestoreLogEntryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "time": {
+            "type": "string",
+            "example": "12:45"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LogKind"
+              }
+            ]
+          },
+          "mealId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "example": "Bowl poulet riz",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "quantity": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0.25,
+            "maximum": 20
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/NutrientsDto"
+          }
+        },
+        "required": [
+          "date",
+          "time",
+          "kind",
+          "label",
+          "quantity",
+          "snapshot"
+        ]
+      },
+      "UpdateLogEntryDto": {
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "example": 1.5,
+            "minimum": 0.25,
+            "maximum": 20
+          },
+          "time": {
+            "type": "string",
+            "example": "13:00"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-03"
+          }
+        }
+      },
+      "DuplicateLogEntryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "Day to copy the entry to"
+          },
+          "time": {
+            "type": "string",
+            "example": "12:30",
+            "description": "Defaults to the original time"
+          }
+        },
+        "required": [
+          "date"
+        ]
+      },
+      "NutrientsDeltaDto": {
+        "type": "object",
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "example": 740
+          },
+          "protein": {
+            "type": "number",
+            "example": 62
+          },
+          "carbs": {
+            "type": "number",
+            "example": 50
+          },
+          "fat": {
+            "type": "number",
+            "example": 29
+          }
+        },
+        "required": [
+          "kcal",
+          "protein",
+          "carbs",
+          "fat"
+        ]
+      },
+      "WeekProgressDto": {
+        "type": "object",
+        "properties": {
+          "monday": {
+            "type": "string",
+            "example": "2026-09-28",
+            "description": "Monday starting the week"
+          },
+          "eaten": {
+            "description": "Sum of the week (Monday 00:00 → next Monday 00:00)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "target": {
+            "nullable": true,
+            "description": "Sum of the daily target of each of the 7 days",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "left": {
+            "nullable": true,
+            "description": "target − eaten (negative when over)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDeltaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "monday",
+          "eaten",
+          "target",
+          "left"
+        ]
+      },
+      "DaySummaryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "today": {
+            "type": "string",
+            "example": "2026-10-04",
+            "description": "Today in Europe/Paris"
+          },
+          "goal": {
+            "nullable": true,
+            "description": "Goal applying on that date",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GoalDto"
+              }
+            ]
+          },
+          "eaten": {
+            "$ref": "#/components/schemas/NutrientsDto"
+          },
+          "left": {
+            "nullable": true,
+            "description": "Daily target − eaten (negative when over)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDeltaDto"
+              }
+            ]
+          },
+          "entries": {
+            "description": "Ordered by time",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogEntryDto"
+            }
+          },
+          "week": {
+            "$ref": "#/components/schemas/WeekProgressDto"
+          }
+        },
+        "required": [
+          "date",
+          "today",
+          "goal",
+          "eaten",
+          "left",
+          "entries",
+          "week"
+        ]
       }
     }
-  }
+  },
+  "security": [
+    {
+      "access-key": []
+    }
+  ]
 }
