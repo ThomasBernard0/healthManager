@@ -14,7 +14,7 @@ import { toFoodDto } from '../foods/foods.service.js';
 import type { Food, Meal, MealItem } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MealDto, MealSummaryDto } from './dto/meal.dto.js';
-import { SaveMealDto, UpdateMealFlagsDto } from './dto/save-meal.dto.js';
+import { SaveMealDto, SetFavoriteDto } from './dto/save-meal.dto.js';
 
 type MealWithItems = Meal & { items: (MealItem & { food: Food })[] };
 
@@ -58,7 +58,6 @@ function toSummary(meal: MealWithItems, stats: MealStats): MealSummaryDto {
     name: meal.name,
     mode: meal.mode,
     isFavorite: meal.isFavorite,
-    archived: meal.archived,
     totals,
     totalsSource: source,
     ...stats,
@@ -97,8 +96,8 @@ export class MealsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Mes repas: one list, filtered by name (accent/case-insensitive, anywhere), sorted for quick logging. */
-  async list(query = '', archived = false): Promise<MealSummaryDto[]> {
-    const meals = await this.prisma.meal.findMany({ where: { archived }, include: WITH_ITEMS });
+  async list(query = ''): Promise<MealSummaryDto[]> {
+    const meals = await this.prisma.meal.findMany({ include: WITH_ITEMS });
     const matching = meals.filter((m) => matchesSearch(m.searchName, query));
     const stats = await this.stats(matching.map((m) => m.id));
     return matching.map((m) => toSummary(m, stats.get(m.id) ?? NO_STATS)).sort(compareMeals);
@@ -133,15 +132,24 @@ export class MealsService {
     return this.get(id);
   }
 
-  async setFlags(id: string, dto: UpdateMealFlagsDto): Promise<MealSummaryDto> {
+  async setFavorite(id: string, dto: SetFavoriteDto): Promise<MealSummaryDto> {
     await this.getOrThrow(id);
     const meal = await this.prisma.meal.update({
       where: { id },
-      data: { isFavorite: dto.isFavorite, archived: dto.archived },
+      data: { isFavorite: dto.isFavorite },
       include: WITH_ITEMS,
     });
     const stats = await this.stats([id]);
     return toSummary(meal, stats.get(id) ?? NO_STATS);
+  }
+
+  /**
+   * Deletes a saved meal for good. Days it was logged on keep their entries and totals
+   * (each entry has its own snapshot; the link to the meal is cleared).
+   */
+  async remove(id: string): Promise<void> {
+    await this.getOrThrow(id);
+    await this.prisma.meal.delete({ where: { id } });
   }
 
   /** What logging one portion of this meal records (name + totals at that moment). */

@@ -39,7 +39,6 @@ function meal(id: string, name: string, extra: Partial<Record<string, unknown>> 
     overrideCarbs: null,
     overrideFat: null,
     isFavorite: false,
-    archived: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     items: [],

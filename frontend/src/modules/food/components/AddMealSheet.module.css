@@ -156,21 +156,6 @@
   color: var(--color-on-accent);
 }
 
-.portions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: 0 0 var(--space-12);
-}
-
-.stepper {
-  flex: 1;
-}
-
-.portions button:last-child {
-  min-height: var(--size-input);
-}
-
 .create {
   width: 100%;
   min-height: var(--size-row);

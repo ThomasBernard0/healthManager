@@ -70,7 +70,6 @@ model Meal {
   overrideCarbs   Decimal?   @db.Decimal(7, 1)
   overrideFat     Decimal?   @db.Decimal(7, 1)
   isFavorite      Boolean    @default(false)
-  archived        Boolean    @default(false)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   items           MealItem[]

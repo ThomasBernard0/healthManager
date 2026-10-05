@@ -1,10 +1,5 @@
-import { TIME_PATTERN } from '@healthmanager/shared'
-import { useState, type FormEvent } from 'react'
-import {
-  logEntriesRemove,
-  logEntriesRestore,
-  logEntriesUpdate,
-} from '../../../api/generated/endpoints/log-entries/log-entries'
+import { useState } from 'react'
+import { logEntriesRemove, logEntriesRestore } from '../../../api/generated/endpoints/log-entries/log-entries'
 import type { LogEntryDto } from '../../../api/generated/model'
 import { formatInt, formatMacros } from '../../../core/format'
 import { Sheet } from '../../../core/ui/Sheet'
@@ -20,84 +15,53 @@ interface EntrySheetProps {
   onChanged: () => void
 }
 
-/** Tap on a logged meal: edit its time, delete it (with undo). */
+/** Tap on a logged meal: its totals, and delete it (with undo). Time and portions are set when logging. */
 export function EntrySheet({ entry, onClose, onChanged }: EntrySheetProps) {
   const toast = useToast()
-  const [time, setTime] = useState(entry.time)
   const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
 
-  const changed = time !== entry.time
-
-  async function run(action: () => Promise<void>) {
+  async function remove() {
     setState('busy')
     try {
-      await action()
+      await logEntriesRemove(entry.id)
     } catch {
       setState('error')
+      return
     }
-  }
-
-  const save = (e: FormEvent) => {
-    e.preventDefault()
-    if (!changed || !TIME_PATTERN.test(time)) return
-    void run(async () => {
-      await logEntriesUpdate(entry.id, { time })
-      onClose()
-      onChanged()
-    })
-  }
-
-  const remove = () =>
-    run(async () => {
-      await logEntriesRemove(entry.id)
-      onClose()
-      onChanged()
-      toast({
-        message: fr.entry.deleted,
-        action: {
-          label: fr.entry.undo,
-          onClick: () => {
-            void logEntriesRestore({
-              date: entry.date,
-              time: entry.time,
-              kind: entry.kind,
-              mealId: entry.mealId,
-              label: entry.label,
-              quantity: entry.quantity,
-              snapshot: entry.snapshot,
-            }).then(onChanged)
-          },
+    onClose()
+    onChanged()
+    toast({
+      message: fr.entry.deleted,
+      action: {
+        label: fr.entry.undo,
+        onClick: () => {
+          void logEntriesRestore({
+            date: entry.date,
+            time: entry.time,
+            kind: entry.kind,
+            mealId: entry.mealId,
+            label: entry.label,
+            quantity: entry.quantity,
+            snapshot: entry.snapshot,
+          }).then(onChanged)
         },
-      })
+      },
     })
-
-  const busy = state === 'busy'
+  }
 
   return (
     <Sheet title={entry.label} onClose={onClose}>
-      <form className={styles.form} onSubmit={save}>
-        <div className={styles.total}>
-          <span className={styles.totalKcal}>
-            {formatInt(entry.total.kcal)} {fr.common.kcal}
-          </span>
-          <span className={styles.totalMacros}>{formatMacros(entry.total)}</span>
-        </div>
+      <div className={styles.total}>
+        <span className={styles.totalKcal}>
+          {formatInt(entry.total.kcal)} {fr.common.kcal}
+        </span>
+        <span className={styles.totalMacros}>{formatMacros(entry.total)}</span>
+      </div>
 
-        <label className={form.row}>
-          <span>{fr.entry.time}</span>
-          <input
-            className={form.inlineInput}
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-        </label>
-
-        <button className={form.primary} type="submit" disabled={!changed || busy}>
-          {fr.common.save}
-        </button>
-      </form>
+      <div className={styles.time}>
+        <span>{fr.entry.time}</span>
+        <span className={styles.timeValue}>{entry.time}</span>
+      </div>
 
       {state === 'error' && (
         <div className={form.error} role="alert">
@@ -105,7 +69,7 @@ export function EntrySheet({ entry, onClose, onChanged }: EntrySheetProps) {
         </div>
       )}
 
-      <button type="button" className={form.danger} disabled={busy} onClick={() => void remove()}>
+      <button type="button" className={form.danger} disabled={state === 'busy'} onClick={() => void remove()}>
         {fr.entry.delete}
       </button>
     </Sheet>

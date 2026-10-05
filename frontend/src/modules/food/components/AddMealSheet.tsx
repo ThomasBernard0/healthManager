@@ -4,10 +4,9 @@ import { Link } from 'react-router-dom'
 import { logEntriesLogMeal, logEntriesRemove } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import type { MealSummaryDto } from '../../../api/generated/model'
-import { formatInt, formatLastEaten, formatMacros, formatQuantity } from '../../../core/format'
+import { formatInt, formatLastEaten, formatMacros } from '../../../core/format'
 import { Bolt, Plus, Search, Star } from '../../../core/ui/icons'
 import { Sheet } from '../../../core/ui/Sheet'
-import { Stepper } from '../../../core/ui/Stepper'
 import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
@@ -32,8 +31,6 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
   const toast = useToast()
   const meals = useAsync(() => mealsList(), 'meals')
   const [query, setQuery] = useState('')
-  const [expanded, setExpanded] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
   const [busy, setBusy] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const desktop = useIsDesktop()
@@ -57,11 +54,11 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
   )
   const trimmed = query.trim()
 
-  async function log(meal: MealSummaryDto, portions: number) {
+  async function log(meal: MealSummaryDto) {
     if (busy) return
     setBusy(true)
     try {
-      const entry = await logEntriesLogMeal({ mealId: meal.id, date, time: parisNowTime(), quantity: portions })
+      const entry = await logEntriesLogMeal({ mealId: meal.id, date, time: parisNowTime(), quantity: 1 })
       onLogged()
       onClose()
       toast({
@@ -103,10 +100,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
           placeholder={desktop ? fr.add.searchDesktop : fr.add.search}
           aria-label={fr.add.searchLabel}
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setExpanded(null)
-          }}
+          onChange={(e) => setQuery(e.target.value)}
         />
         <kbd className={styles.key}>{fr.desktop.searchKey}</kbd>
       </label>
@@ -122,15 +116,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
           {visible.map((meal, index) => (
             <li key={meal.id} className={styles.item}>
               <div className={styles.row}>
-                <button
-                  type="button"
-                  className={styles.rowMain}
-                  aria-expanded={expanded === meal.id}
-                  onClick={() => {
-                    setExpanded(expanded === meal.id ? null : meal.id)
-                    setQuantity(1)
-                  }}
-                >
+                <div className={styles.rowMain}>
                   <span className={styles.name}>
                     {meal.name}
                     {meal.isFavorite && <Star className={styles.star} aria-label={fr.add.favorite} />}
@@ -144,42 +130,17 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
                       .filter(Boolean)
                       .join(' · ')}
                   </span>
-                </button>
+                </div>
                 <button
                   type="button"
                   className={index === 0 && !trimmed ? styles.plusPrimary : styles.plus}
                   aria-label={fr.add.addMeal(meal.name)}
                   disabled={busy}
-                  onClick={() => void log(meal, 1)}
+                  onClick={() => void log(meal)}
                 >
                   <Plus />
                 </button>
               </div>
-              {expanded === meal.id && (
-                <div className={styles.portions}>
-                  <div className={styles.stepper}>
-                    <Stepper
-                      value={quantity}
-                      onChange={setQuantity}
-                      step={0.5}
-                      min={0.5}
-                      max={20}
-                      decreaseLabel={fr.entry.decrease}
-                      increaseLabel={fr.entry.increase}
-                    >
-                      {formatQuantity(quantity)}
-                    </Stepper>
-                  </div>
-                  <button
-                    type="button"
-                    className={form.secondary}
-                    disabled={busy}
-                    onClick={() => void log(meal, quantity)}
-                  >
-                    {fr.add.addPortions(formatQuantity(quantity))}
-                  </button>
-                </div>
-              )}
             </li>
           ))}
           {trimmed && visible.length === 0 && (

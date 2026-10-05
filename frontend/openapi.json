@@ -186,47 +186,6 @@
       }
     },
     "/api/log-entries/{id}": {
-      "patch": {
-        "operationId": "LogEntries_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLogEntryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogEntryDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "log-entries"
-        ]
-      },
       "delete": {
         "operationId": "LogEntries_remove",
         "parameters": [
@@ -263,14 +222,6 @@
             "description": "Accent/case-insensitive, matches anywhere in the name",
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "archived",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
             }
           }
         ],
@@ -397,7 +348,7 @@
         ]
       },
       "patch": {
-        "operationId": "Meals_setFlags",
+        "operationId": "Meals_setFavorite",
         "parameters": [
           {
             "name": "id",
@@ -413,7 +364,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateMealFlagsDto"
+                "$ref": "#/components/schemas/SetFavoriteDto"
               }
             }
           }
@@ -428,6 +379,30 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      },
+      "delete": {
+        "operationId": "Meals_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
           },
           "404": {
             "description": ""
@@ -1007,19 +982,6 @@
           "snapshot"
         ]
       },
-      "UpdateLogEntryDto": {
-        "type": "object",
-        "properties": {
-          "time": {
-            "type": "string",
-            "example": "13:00"
-          },
-          "date": {
-            "type": "string",
-            "example": "2026-10-03"
-          }
-        }
-      },
       "MealMode": {
         "type": "string",
         "enum": [
@@ -1057,9 +1019,6 @@
           "isFavorite": {
             "type": "boolean"
           },
-          "archived": {
-            "type": "boolean"
-          },
           "totals": {
             "description": "One portion",
             "allOf": [
@@ -1093,7 +1052,6 @@
           "name",
           "mode",
           "isFavorite",
-          "archived",
           "totals",
           "totalsSource",
           "timesEaten",
@@ -1239,9 +1197,6 @@
           "isFavorite": {
             "type": "boolean"
           },
-          "archived": {
-            "type": "boolean"
-          },
           "totals": {
             "description": "One portion",
             "allOf": [
@@ -1302,7 +1257,6 @@
           "name",
           "mode",
           "isFavorite",
-          "archived",
           "totals",
           "totalsSource",
           "timesEaten",
@@ -1395,16 +1349,16 @@
           "isFavorite"
         ]
       },
-      "UpdateMealFlagsDto": {
+      "SetFavoriteDto": {
         "type": "object",
         "properties": {
           "isFavorite": {
             "type": "boolean"
-          },
-          "archived": {
-            "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "isFavorite"
+        ]
       },
       "BarcodeLookupDto": {
         "type": "object",

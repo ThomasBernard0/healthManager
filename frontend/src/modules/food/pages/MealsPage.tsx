@@ -1,24 +1,26 @@
 import { matchesSearch, parisToday, searchKey } from '@healthmanager/shared'
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { mealsList, mealsSetFlags } from '../../../api/generated/endpoints/meals/meals'
+import { mealsList, mealsRemove, mealsSetFavorite } from '../../../api/generated/endpoints/meals/meals'
 import type { MealSummaryDto } from '../../../api/generated/model'
 import { formatInt, formatLastEaten, formatMacros } from '../../../core/format'
-import { ChevronLeft, Search, Star, StarOutline } from '../../../core/ui/icons'
+import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
+import { ChevronLeft, Search, Star, StarOutline, Trash } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { dayPath, editMealPath } from '../routes'
 import styles from './MealsPage.module.css'
 
-/** Gérer: every saved meal — edit, archive, favourite. */
+/** Gérer: every saved meal — edit, favourite, delete (after confirmation). */
 export default function MealsPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [archived, setArchived] = useState(false)
   const [query, setQuery] = useState('')
-  const meals = useAsync(() => mealsList({ archived }), String(archived))
+  const meals = useAsync(() => mealsList(), 'meals')
   const [favorites, setFavorites] = useState<Record<string, boolean>>({})
+  const [toDelete, setToDelete] = useState<MealSummaryDto | null>(null)
+  const [deleting, setDeleting] = useState<'idle' | 'busy' | 'error'>('idle')
   const today = parisToday()
 
   const visible = useMemo(
@@ -32,10 +34,24 @@ export default function MealsPage() {
     const next = !(favorites[meal.id] ?? meal.isFavorite)
     setFavorites((f) => ({ ...f, [meal.id]: next }))
     try {
-      await mealsSetFlags(meal.id, { isFavorite: next })
+      await mealsSetFavorite(meal.id, { isFavorite: next })
     } catch {
       setFavorites((f) => ({ ...f, [meal.id]: !next }))
     }
+  }
+
+  async function confirmDelete() {
+    if (!toDelete) return
+    setDeleting('busy')
+    try {
+      await mealsRemove(toDelete.id)
+    } catch {
+      setDeleting('error')
+      return
+    }
+    setToDelete(null)
+    setDeleting('idle')
+    meals.reload()
   }
 
   return (
@@ -47,21 +63,6 @@ export default function MealsPage() {
         <h1 className={styles.title}>{fr.add.myMeals}</h1>
         <span className={styles.spacer} />
       </header>
-
-      <div className={styles.segmented} role="radiogroup">
-        {[false, true].map((value) => (
-          <button
-            key={String(value)}
-            type="button"
-            role="radio"
-            aria-checked={archived === value}
-            className={archived === value ? styles.segmentActive : styles.segment}
-            onClick={() => setArchived(value)}
-          >
-            {value ? fr.meal.archived : fr.meal.active}
-          </button>
-        ))}
-      </div>
 
       <label className={styles.search}>
         <Search size={18} />
@@ -107,10 +108,32 @@ export default function MealsPage() {
                       .join(' · ')}
                   </span>
                 </button>
+                <button
+                  type="button"
+                  className={styles.delete}
+                  aria-label={fr.meal.deleteLabel(meal.name)}
+                  onClick={() => {
+                    setDeleting('idle')
+                    setToDelete(meal)
+                  }}
+                >
+                  <Trash />
+                </button>
               </li>
             )
           })}
         </ul>
+      )}
+
+      {toDelete && (
+        <ConfirmSheet
+          title={fr.meal.confirmDelete(toDelete.name)}
+          confirmLabel={fr.meal.delete}
+          busy={deleting === 'busy'}
+          error={deleting === 'error' ? fr.common.saveError : null}
+          onConfirm={() => void confirmDelete()}
+          onCancel={() => setToDelete(null)}
+        />
       )}
     </div>
   )

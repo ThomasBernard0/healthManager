@@ -1,0 +1,22 @@
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+.actions button {
+  min-height: var(--size-button);
+}
+
+.confirm {
+  border: none;
+  border-radius: var(--radius-xl);
+  background: var(--color-over);
+  color: var(--color-on-accent);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-15);
+}
+
+.confirm:disabled {
+  background: var(--color-border-strong);
+}

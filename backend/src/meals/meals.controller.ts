@@ -1,13 +1,27 @@
-import { Body, Controller, Get, Param, ParseBoolPipe, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { MealDto, MealSummaryDto } from './dto/meal.dto.js';
-import { SaveMealDto, UpdateMealFlagsDto } from './dto/save-meal.dto.js';
+import { SaveMealDto, SetFavoriteDto } from './dto/save-meal.dto.js';
 import { MealsService } from './meals.service.js';
 
 @ApiTags('meals')
@@ -18,13 +32,9 @@ export class MealsController {
   /** Mes repas: favourites first, then most eaten, then most recent. */
   @Get()
   @ApiQuery({ name: 'q', required: false, description: 'Accent/case-insensitive, matches anywhere in the name' })
-  @ApiQuery({ name: 'archived', required: false, type: Boolean })
   @ApiOkResponse({ type: [MealSummaryDto] })
-  list(
-    @Query('q') q?: string,
-    @Query('archived', new ParseBoolPipe({ optional: true })) archived?: boolean,
-  ): Promise<MealSummaryDto[]> {
-    return this.meals.list(q ?? '', archived ?? false);
+  list(@Query('q') q?: string): Promise<MealSummaryDto[]> {
+    return this.meals.list(q ?? '');
   }
 
   @Get(':id')
@@ -47,14 +57,23 @@ export class MealsController {
     return this.meals.update(id, dto);
   }
 
-  /** Favourite / archive. */
+  /** Star / unstar. */
   @Patch(':id')
   @ApiOkResponse({ type: MealSummaryDto })
   @ApiNotFoundResponse()
-  setFlags(
+  setFavorite(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateMealFlagsDto,
+    @Body() dto: SetFavoriteDto,
   ): Promise<MealSummaryDto> {
-    return this.meals.setFlags(id, dto);
+    return this.meals.setFavorite(id, dto);
+  }
+
+  /** Hard delete; logged days keep their totals. */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse()
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.meals.remove(id);
   }
 }

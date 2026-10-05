@@ -77,6 +77,13 @@ export const Barcode = (p: IconProps) => (
   </Icon>
 )
 
+/** Delete. */
+export const Trash = (p: IconProps) => (
+  <Icon size={18} {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+  </Icon>
+)
+
 /** Filled star (favourite). */
 export const Star = (p: IconProps) => (
   <Icon size={14} fill="currentColor" stroke="none" {...p}>

@@ -18,12 +18,13 @@ import {
 import {
   mealsCreate,
   mealsGet,
-  mealsSetFlags,
+  mealsRemove,
   mealsUpdate,
 } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto, SaveMealDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { formatDayMonth, formatDecimal, formatInt, formatMacros, parseNumber } from '../../../core/format'
+import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { Barcode, ChevronLeft } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
@@ -121,7 +122,9 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   )
   const [override, setOverride] = useState<NutrientFields | null>(meal?.override ? toFields(meal.override) : null)
   const [saveToMeals, setSaveToMeals] = useState(true)
-  const [favorite, setFavorite] = useState(meal?.isFavorite ?? false)
+  // New meals start as favourites.
+  const [favorite, setFavorite] = useState(meal?.isFavorite ?? true)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [time, setTime] = useState(draft?.time ?? parisNowTime())
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [overlay, setOverlay] = useState<
@@ -198,13 +201,16 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
     }
   }
 
-  async function toggleArchived() {
+  /** Deletes the meal for good; days it was logged on keep their totals. */
+  async function remove() {
     if (!meal) return
     setState('saving')
     try {
-      await mealsSetFlags(meal.id, { archived: !meal.archived })
+      await mealsRemove(meal.id)
+      invalidateData()
       back()
     } catch {
+      setConfirmDelete(false)
       setState('error')
     }
   }
@@ -427,11 +433,20 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
         {submitLabel}
       </button>
       {meal && (
-        <button type="button" className={form.danger} disabled={state === 'saving'} onClick={() => void toggleArchived()}>
-          {meal.archived ? fr.meal.restore : fr.meal.archive}
+        <button type="button" className={form.danger} disabled={state === 'saving'} onClick={() => setConfirmDelete(true)}>
+          {fr.meal.delete}
         </button>
       )}
 
+      {meal && confirmDelete && (
+        <ConfirmSheet
+          title={fr.meal.confirmDelete(meal.name)}
+          confirmLabel={fr.meal.delete}
+          busy={state === 'saving'}
+          onConfirm={() => void remove()}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
       {overlay?.kind === 'pick' && (
         <FoodPickerSheet
           onClose={() => setOverlay(null)}
