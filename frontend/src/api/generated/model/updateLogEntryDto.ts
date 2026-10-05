@@ -6,11 +6,6 @@
  */
 
 export interface UpdateLogEntryDto {
-  /**
-   * @minimum 0.25
-   * @maximum 20
-   */
-  quantity?: number;
   time?: string;
   date?: string;
 }

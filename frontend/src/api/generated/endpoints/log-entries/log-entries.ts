@@ -6,7 +6,6 @@
  */
 import type {
   CreateQuickEntryDto,
-  DuplicateLogEntryDto,
   LogEntryDto,
   LogMealDto,
   RestoreLogEntryDto,
@@ -68,20 +67,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
-  export const logEntriesDuplicate = (
-    id: string,
-    duplicateLogEntryDto: DuplicateLogEntryDto,
- options?: SecondParameter<typeof apiClient<LogEntryDto>>,) => {
-      return apiClient<LogEntryDto>(
-      {url: `/api/log-entries/${id}/duplicate`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: duplicateLogEntryDto
-    },
-      options);
-    }
   export type LogEntriesLogMealResult = NonNullable<Awaited<ReturnType<typeof logEntriesLogMeal>>>
 export type LogEntriesCreateQuickResult = NonNullable<Awaited<ReturnType<typeof logEntriesCreateQuick>>>
 export type LogEntriesRestoreResult = NonNullable<Awaited<ReturnType<typeof logEntriesRestore>>>
 export type LogEntriesUpdateResult = NonNullable<Awaited<ReturnType<typeof logEntriesUpdate>>>
 export type LogEntriesRemoveResult = NonNullable<Awaited<ReturnType<typeof logEntriesRemove>>>
-export type LogEntriesDuplicateResult = NonNullable<Awaited<ReturnType<typeof logEntriesDuplicate>>>

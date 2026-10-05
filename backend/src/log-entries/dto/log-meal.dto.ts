@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsUUID, Max, Min } from 'class-validator';
 import { IsLocalDate, IsLocalTime } from '../../common/validators.js';
-import { MAX_QUANTITY, MIN_QUANTITY } from './update-log-entry.dto.js';
+
+export const MIN_QUANTITY = 0.25;
+export const MAX_QUANTITY = 20;
 
 /** Logs a saved meal: its current totals are frozen into the entry. */
 export class LogMealDto {

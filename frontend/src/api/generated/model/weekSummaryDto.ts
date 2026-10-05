@@ -14,6 +14,8 @@ export interface WeekSummaryDto {
   monday: string;
   /** Today in Europe/Paris */
   today: string;
+  /** Earliest browsable date: first day with data, else today */
+  earliestDate: string;
   /** Monday → Sunday */
   days: WeekDayDto[];
   /** Sum of the 7 days */

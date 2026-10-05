@@ -22,6 +22,9 @@ export class WeekSummaryDto {
   @ApiProperty({ example: '2026-10-04', description: 'Today in Europe/Paris' })
   today: string;
 
+  @ApiProperty({ example: '2026-01-15', description: 'Earliest browsable date: first day with data, else today' })
+  earliestDate: string;
+
   @ApiProperty({ type: [WeekDayDto], description: 'Monday → Sunday' })
   days: WeekDayDto[];
 

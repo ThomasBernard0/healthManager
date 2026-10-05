@@ -49,6 +49,11 @@
   border-radius: var(--radius-sm);
 }
 
+/* Before the first day with data. */
+.column:disabled {
+  cursor: default;
+}
+
 .stack {
   position: relative;
   width: 100%;

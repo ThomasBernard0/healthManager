@@ -14,7 +14,7 @@ import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
 import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
-import { DuplicateLogEntryDto, UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
+import { UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 
 export const entrySnapshot = (entry: LogEntry): Nutrients => toNutrients(entry);
 
@@ -77,26 +77,8 @@ export class LogEntriesService {
     const entry = await this.prisma.logEntry.update({
       where: { id },
       data: {
-        quantity: dto.quantity,
         time: dto.time,
         date: dto.date ? toUtcDate(dto.date) : undefined,
-      },
-    });
-    return toLogEntryDto(entry);
-  }
-
-  /** Copies an entry (same snapshot, quantity and meal) to another day. */
-  async duplicate(id: string, dto: DuplicateLogEntryDto): Promise<LogEntryDto> {
-    const source = await this.getOrThrow(id);
-    const entry = await this.prisma.logEntry.create({
-      data: {
-        date: toUtcDate(dto.date),
-        time: dto.time ?? source.time,
-        kind: source.kind,
-        mealId: source.mealId,
-        label: source.label,
-        quantity: source.quantity,
-        ...entrySnapshot(source),
       },
     });
     return toLogEntryDto(entry);

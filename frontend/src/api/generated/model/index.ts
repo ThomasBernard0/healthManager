@@ -14,7 +14,6 @@ export * from './currentGoalDtoGoal';
 export * from './daySummaryDto';
 export * from './daySummaryDtoGoal';
 export * from './daySummaryDtoLeft';
-export * from './duplicateLogEntryDto';
 export * from './foodDto';
 export * from './foodSource';
 export * from './foodUnitDto';

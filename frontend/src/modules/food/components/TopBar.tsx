@@ -9,6 +9,8 @@ interface TopBarProps {
   previousLabel: string
   nextLabel: string
   onPrevious: () => void
+  /** Already at the first day (or week) with data. */
+  previousDisabled?: boolean
   onNext: () => void
   /** "Aujourd'hui" / "Cette semaine" shortcut */
   currentLabel: string
@@ -24,7 +26,10 @@ export function TopBar(props: TopBarProps) {
       <div className={styles.inner}>
         <div className={styles.title}>{fr.app.title}</div>
         <div className={styles.switcher}>
-          <button type="button" className={styles.arrow} aria-label={props.previousLabel} onClick={props.onPrevious}>
+          <button type="button" className={styles.arrow} aria-label={props.previousLabel}
+            disabled={props.previousDisabled}
+            onClick={props.onPrevious}
+          >
             <ChevronLeft size={18} />
           </button>
           <h1 className={styles.label}>{props.label}</h1>

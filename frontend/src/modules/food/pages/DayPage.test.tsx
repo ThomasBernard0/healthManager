@@ -1,10 +1,11 @@
 import { parisToday } from '@healthmanager/shared'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import {
   logEntriesCreateQuick,
   logEntriesLogMeal,
+  logEntriesUpdate,
 } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
@@ -18,7 +19,6 @@ vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
   logEntriesCreateQuick: vi.fn(),
   logEntriesLogMeal: vi.fn(),
   logEntriesUpdate: vi.fn(),
-  logEntriesDuplicate: vi.fn(),
   logEntriesRemove: vi.fn(),
   logEntriesRestore: vi.fn(),
 }))
@@ -42,6 +42,7 @@ function summary(overrides: Partial<DaySummaryDto> = {}): DaySummaryDto {
   return {
     date: DATE,
     today: DATE,
+    earliestDate: '2026-01-15',
     goal: { id: 'g', validFrom: '2026-01-01', dailyKcal: 2200, protein: 150, carbs: 230, fat: 70 },
     eaten: n(1460, 88, 180, 41),
     left: n(740, 62, 50, 29),
@@ -158,7 +159,8 @@ describe('DayPage', () => {
       expect.objectContaining({ mealId: 'm1', date: DATE, quantity: 1 }),
     )
     expect(await screen.findByText('Shaker protéiné ajouté', {}, { timeout: 3000 })).toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    // Closing the sheet is a navigation (search param removed): it can land just after the toast.
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
   it('searches Mes repas without accents or case, and offers to create a missing meal', async () => {
@@ -199,6 +201,47 @@ describe('DayPage', () => {
     await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
     await user.click(screen.getByRole('button', { name: 'Ajouter ×2' }))
     expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm2', quantity: 2 }))
+  })
+
+  it('edits only the time of a logged meal: no quantity, no duplicate', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(logEntriesUpdate).mockResolvedValue(entry('a', '08:30', 'Bol yaourt grec', 420))
+    const user = userEvent.setup()
+    renderDay()
+    await user.click(await screen.findByRole('button', { name: /Bol yaourt grec/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Bol yaourt grec' })
+    expect(within(dialog).queryByText('Quantité')).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Augmenter la quantité' })).toBeNull()
+    expect(within(dialog).queryByText(/Dupliquer/)).toBeNull()
+
+    const time = dialog.querySelector('input[type="time"]') as HTMLInputElement
+    await user.clear(time)
+    await user.type(time, '08:30')
+    await user.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
+    expect(logEntriesUpdate).toHaveBeenCalledWith('a', { time: '08:30' })
+  })
+
+  it('can’t go back before the first day with data', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary({ earliestDate: DATE }))
+    renderDay()
+    await screen.findByRole('heading', { name: 'Repas du jour' })
+    expect(screen.getByRole('button', { name: 'Jour précédent' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Jour suivant' })).toBeEnabled()
+  })
+
+  it('can go back while after the first day with data', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    renderDay()
+    await screen.findByRole('heading', { name: 'Repas du jour' })
+    expect(screen.getByRole('button', { name: 'Jour précédent' })).toBeEnabled()
+  })
+
+  it('sends an older date to the first day with data', async () => {
+    vi.mocked(summaryDay).mockImplementation(async (date) =>
+      summary({ date, earliestDate: '2026-10-02', today: '2026-10-04' }),
+    )
+    renderDay('/jour/2026-09-01')
+    await waitFor(() => expect(summaryDay).toHaveBeenLastCalledWith('2026-10-02'))
   })
 
   it('opens Mon objectif from the pencil', async () => {
