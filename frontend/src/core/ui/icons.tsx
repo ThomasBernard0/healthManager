@@ -70,6 +70,13 @@ export const Search = (p: IconProps) => (
   </Icon>
 )
 
+/** Barcode in a viewfinder (Scanner). */
+export const Barcode = (p: IconProps) => (
+  <Icon size={18} {...p}>
+    <path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8" />
+  </Icon>
+)
+
 /** Filled star (favourite). */
 export const Star = (p: IconProps) => (
   <Icon size={14} fill="currentColor" stroke="none" {...p}>

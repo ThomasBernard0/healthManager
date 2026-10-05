@@ -168,6 +168,16 @@ export const fr = {
     validate: 'Valider',
     create100: 'Créer',
   },
+  scan: {
+    title: 'Scanner',
+    open: 'Scanner',
+    camera: 'Caméra',
+    cameraUnavailable: 'Caméra indisponible',
+    barcode: 'Code-barres',
+    search: 'Rechercher',
+    invalid: 'Code-barres invalide',
+    error: 'Recherche impossible',
+  },
   quickSave: 'Plutôt l’enregistrer dans Mes repas',
   goal: {
     title: 'Mon objectif',

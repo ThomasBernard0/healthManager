@@ -15,6 +15,8 @@ export interface CreateFoodDto {
   name: string;
   /** @maxLength 80 */
   brand?: string;
+  /** Scanned product missing from Open Food Facts */
+  barcode?: string;
   /** Per 100 g */
   per100g: NutrientsDto;
   units?: FoodUnitDto[];

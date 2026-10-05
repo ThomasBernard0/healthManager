@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { foodsCreate, foodsSearch } from '../../../api/generated/endpoints/foods/foods'
+import { foodsCreate, foodsLookupBarcode, foodsSearch } from '../../../api/generated/endpoints/foods/foods'
 import {
   logEntriesCreateQuick,
   logEntriesLogMeal,
@@ -10,7 +10,11 @@ import { mealsCreate } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto } from '../../../api/generated/model'
 import MealEditorPage from './MealEditorPage'
 
-vi.mock('../../../api/generated/endpoints/foods/foods', () => ({ foodsSearch: vi.fn(), foodsCreate: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/foods/foods', () => ({
+  foodsSearch: vi.fn(),
+  foodsCreate: vi.fn(),
+  foodsLookupBarcode: vi.fn(),
+}))
 vi.mock('../../../api/generated/endpoints/meals/meals', () => ({
   mealsCreate: vi.fn(),
   mealsGet: vi.fn(),
@@ -133,6 +137,66 @@ describe('MealEditorPage (Nouveau repas)', () => {
       units: [],
     })
     expect(await screen.findByRole('dialog', { name: 'Granola maison' })).toBeInTheDocument()
+  })
+
+  describe('Scanner', () => {
+    async function scanTyped(user: ReturnType<typeof userEvent.setup>, code: string) {
+      await user.click(screen.getByRole('button', { name: 'Scanner' }))
+      const dialog = screen.getByRole('dialog', { name: 'Scanner' })
+      await user.type(within(dialog).getByLabelText('Code-barres'), code)
+      await user.click(within(dialog).getByRole('button', { name: 'Rechercher' }))
+    }
+
+    it('adds a scanned product with the grams asked', async () => {
+      const nutella = { ...food('f7', 'Nutella', 539, 6.3, 57.5, 30.9), source: 'off' as const }
+      vi.mocked(foodsLookupBarcode).mockResolvedValue({ food: nutella, suggestedName: null })
+      const user = userEvent.setup()
+      renderEditor()
+      await scanTyped(user, '3017620 422003')
+      expect(foodsLookupBarcode).toHaveBeenCalledWith('3017620422003')
+
+      const dialog = await screen.findByRole('dialog', { name: 'Nutella' })
+      const input = within(dialog).getByLabelText('Quantité de Nutella')
+      await user.clear(input)
+      await user.type(input, '15')
+      await user.click(within(dialog).getByRole('button', { name: 'Valider' }))
+      // 15 g × 539 kcal / 100 g = 81
+      expect(text(document.body)).toContain('81 kcal')
+    })
+
+    it('creates "Mon aliment" with the barcode when the product is unknown', async () => {
+      vi.mocked(foodsLookupBarcode).mockResolvedValue({ food: null, suggestedName: 'Biscuits' })
+      vi.mocked(foodsCreate).mockResolvedValue(food('f8', 'Biscuits', 450, 6, 65, 18))
+      const user = userEvent.setup()
+      renderEditor()
+      await scanTyped(user, '5000112637922')
+
+      const dialog = await screen.findByRole('dialog', { name: 'Mon aliment' })
+      expect(within(dialog).getByLabelText('Nom')).toHaveValue('Biscuits')
+      expect(text(dialog)).toContain('5000112637922')
+      await user.type(within(dialog).getByLabelText('Calories'), '450')
+      await user.type(within(dialog).getByLabelText('Protéines en grammes'), '6')
+      await user.type(within(dialog).getByLabelText('Glucides en grammes'), '65')
+      await user.type(within(dialog).getByLabelText('Lipides en grammes'), '18')
+      await user.click(within(dialog).getByRole('button', { name: 'Créer' }))
+      expect(foodsCreate).toHaveBeenCalledWith({
+        name: 'Biscuits',
+        barcode: '5000112637922',
+        per100g: { kcal: 450, protein: 6, carbs: 65, fat: 18 },
+        units: [],
+      })
+      expect(await screen.findByRole('dialog', { name: 'Biscuits' })).toBeInTheDocument()
+    })
+
+    it('rejects a mistyped barcode without searching, and says when the camera is unavailable', async () => {
+      const user = userEvent.setup()
+      renderEditor()
+      await scanTyped(user, '3017620422004')
+      expect(screen.getByText('Code-barres invalide')).toBeInTheDocument()
+      expect(foodsLookupBarcode).not.toHaveBeenCalled()
+      // jsdom has no camera.
+      expect(await screen.findByText('Caméra indisponible')).toBeInTheDocument()
+    })
   })
 
   it('without "Enregistrer dans mes repas", logs a one-time entry with the totals', async () => {

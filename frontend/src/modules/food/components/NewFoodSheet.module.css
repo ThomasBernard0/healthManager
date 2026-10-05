@@ -11,6 +11,19 @@
   margin-top: var(--space-4);
 }
 
+.barcode {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.barcodeValue {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
 .unitRow {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

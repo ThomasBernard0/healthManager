@@ -24,7 +24,7 @@ import {
 import type { FoodDto, MealDto, SaveMealDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { formatDayMonth, formatDecimal, formatInt, formatMacros, parseNumber } from '../../../core/format'
-import { ChevronLeft } from '../../../core/ui/icons'
+import { Barcode, ChevronLeft } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
@@ -32,6 +32,7 @@ import { AmountSheet, type Amount } from '../components/AmountSheet'
 import { FoodPickerSheet } from '../components/FoodPickerSheet'
 import { NewFoodSheet } from '../components/NewFoodSheet'
 import { dayPath } from '../routes'
+import { ScanSheet } from '../scanner/ScanSheet'
 import styles from './MealEditorPage.module.css'
 
 type Mode = 'ingredients' | 'manual'
@@ -125,7 +126,8 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [overlay, setOverlay] = useState<
     | { kind: 'pick' }
-    | { kind: 'newFood'; name: string }
+    | { kind: 'scan' }
+    | { kind: 'newFood'; name: string; barcode?: string }
     | { kind: 'amount'; food: FoodDto; index: number | null }
     | null
   >(null)
@@ -295,6 +297,10 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
               <button type="button" className={styles.addIngredient} onClick={() => setOverlay({ kind: 'pick' })}>
                 {fr.meal.addIngredient}
               </button>
+              <button type="button" className={styles.scan} onClick={() => setOverlay({ kind: 'scan' })}>
+                <Barcode />
+                {fr.scan.open}
+              </button>
             </div>
           </section>
 
@@ -433,10 +439,18 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
           onCreate={(foodName) => setOverlay({ kind: 'newFood', name: foodName })}
         />
       )}
+      {overlay?.kind === 'scan' && (
+        <ScanSheet
+          onClose={() => setOverlay(null)}
+          onFound={(food) => setOverlay({ kind: 'amount', food, index: null })}
+          onMissing={(barcode, suggestedName) => setOverlay({ kind: 'newFood', name: suggestedName ?? '', barcode })}
+        />
+      )}
       {overlay?.kind === 'newFood' && (
         <NewFoodSheet
           name={overlay.name}
-          onClose={() => setOverlay({ kind: 'pick' })}
+          barcode={overlay.barcode}
+          onClose={() => setOverlay({ kind: overlay.barcode ? 'scan' : 'pick' })}
           onCreated={(food) => setOverlay({ kind: 'amount', food, index: null })}
         />
       )}

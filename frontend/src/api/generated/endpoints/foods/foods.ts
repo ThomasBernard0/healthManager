@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  BarcodeLookupDto,
   CreateFoodDto,
   FoodDto,
   FoodsSearchParams
@@ -35,6 +36,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const foodsLookupBarcode = (
+    code: string,
+ options?: SecondParameter<typeof apiClient<BarcodeLookupDto>>,) => {
+      return apiClient<BarcodeLookupDto>(
+      {url: `/api/foods/barcode/${code}`, method: 'GET'
+    },
+      options);
+    }
   export const foodsGet = (
     id: string,
  options?: SecondParameter<typeof apiClient<FoodDto>>,) => {
@@ -45,4 +54,5 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     }
   export type FoodsSearchResult = NonNullable<Awaited<ReturnType<typeof foodsSearch>>>
 export type FoodsCreateResult = NonNullable<Awaited<ReturnType<typeof foodsCreate>>>
+export type FoodsLookupBarcodeResult = NonNullable<Awaited<ReturnType<typeof foodsLookupBarcode>>>
 export type FoodsGetResult = NonNullable<Awaited<ReturnType<typeof foodsGet>>>
