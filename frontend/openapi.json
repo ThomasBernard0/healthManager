@@ -252,49 +252,6 @@
         ]
       }
     },
-    "/api/log-entries/{id}/duplicate": {
-      "post": {
-        "operationId": "LogEntries_duplicate",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DuplicateLogEntryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogEntryDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "log-entries"
-        ]
-      }
-    },
     "/api/meals": {
       "get": {
         "operationId": "Meals_list",
@@ -1053,12 +1010,6 @@
       "UpdateLogEntryDto": {
         "type": "object",
         "properties": {
-          "quantity": {
-            "type": "number",
-            "example": 1.5,
-            "minimum": 0.25,
-            "maximum": 20
-          },
           "time": {
             "type": "string",
             "example": "13:00"
@@ -1068,24 +1019,6 @@
             "example": "2026-10-03"
           }
         }
-      },
-      "DuplicateLogEntryDto": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "example": "2026-10-05",
-            "description": "Day to copy the entry to"
-          },
-          "time": {
-            "type": "string",
-            "example": "12:30",
-            "description": "Defaults to the original time"
-          }
-        },
-        "required": [
-          "date"
-        ]
       },
       "MealMode": {
         "type": "string",
@@ -1618,6 +1551,11 @@
             "example": "2026-10-04",
             "description": "Today in Europe/Paris"
           },
+          "earliestDate": {
+            "type": "string",
+            "example": "2026-01-15",
+            "description": "Earliest browsable date: first day with data, else today"
+          },
           "goal": {
             "nullable": true,
             "description": "Goal applying on that date",
@@ -1655,6 +1593,7 @@
         "required": [
           "date",
           "today",
+          "earliestDate",
           "goal",
           "eaten",
           "left",
@@ -1713,6 +1652,11 @@
             "example": "2026-10-04",
             "description": "Today in Europe/Paris"
           },
+          "earliestDate": {
+            "type": "string",
+            "example": "2026-01-15",
+            "description": "Earliest browsable date: first day with data, else today"
+          },
           "days": {
             "description": "Monday → Sunday",
             "type": "array",
@@ -1765,6 +1709,7 @@
         "required": [
           "monday",
           "today",
+          "earliestDate",
           "days",
           "eaten",
           "target",

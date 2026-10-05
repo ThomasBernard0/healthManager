@@ -20,7 +20,7 @@ import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
 import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
-import { DuplicateLogEntryDto, UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
+import { UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 import { LogEntriesService } from './log-entries.service.js';
 
 @ApiTags('log-entries')
@@ -56,16 +56,6 @@ export class LogEntriesController {
     @Body() dto: UpdateLogEntryDto,
   ): Promise<LogEntryDto> {
     return this.entries.update(id, dto);
-  }
-
-  @Post(':id/duplicate')
-  @ApiCreatedResponse({ type: LogEntryDto })
-  @ApiNotFoundResponse()
-  duplicate(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: DuplicateLogEntryDto,
-  ): Promise<LogEntryDto> {
-    return this.entries.duplicate(id, dto);
   }
 
   @Delete(':id')

@@ -14,6 +14,8 @@ export interface DaySummaryDto {
   date: string;
   /** Today in Europe/Paris */
   today: string;
+  /** Earliest browsable date: first day with data, else today */
+  earliestDate: string;
   /**
    * Goal applying on that date
    * @nullable

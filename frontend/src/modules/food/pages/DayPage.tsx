@@ -38,6 +38,9 @@ function Day({ date }: { date: string }) {
   const data = summary.data?.date === date ? summary.data : undefined
   const today = data?.today ?? parisToday()
   const entry = data?.entries.find((e) => e.id === entryParam.value)
+  // No browsing before the first day with data (today when there is none).
+  const earliest = summary.data?.earliestDate
+  const canGoBack = earliest !== undefined && date > earliest
   const desktop = useIsDesktop()
   // Desktop: the mini week chart needs the per-day totals of the week.
   const monday = weekStart(date)
@@ -45,6 +48,8 @@ function Day({ date }: { date: string }) {
     () => (desktop ? summaryWeek(monday) : Promise.resolve(undefined)),
     `${monday}#${version}#${summary.data?.eaten.kcal}#${desktop}`
   )
+
+  if (data && date < data.earliestDate) return <Navigate to={dayPath(data.earliestDate)} replace />
 
   const overlays = (
     <>
@@ -83,7 +88,6 @@ function Day({ date }: { date: string }) {
       {entry && (
         <EntrySheet
           entry={entry}
-          today={today}
           onClose={entryParam.close}
           onChanged={summary.reload}
         />
@@ -99,6 +103,7 @@ function Day({ date }: { date: string }) {
           previousLabel={fr.days.previous}
           nextLabel={fr.days.next}
           onPrevious={() => navigate(dayPath(addDays(date, -1)))}
+          previousDisabled={!canGoBack}
           onNext={() => navigate(dayPath(addDays(date, 1)))}
           currentLabel={fr.desktop.today}
           onCurrent={() => navigate(dayPath())}
@@ -135,6 +140,7 @@ function Day({ date }: { date: string }) {
             type="button"
             className={styles.arrow}
             aria-label={fr.days.previous}
+            disabled={!canGoBack}
             onClick={() => navigate(dayPath(addDays(date, -1)))}
           >
             <ChevronLeft size={18} />

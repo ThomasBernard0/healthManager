@@ -1,5 +1,6 @@
 import {
   addDays,
+  earliestDate,
   isIsoDate,
   parisNowTime,
   parisToday,
@@ -46,6 +47,15 @@ describe('weeks', () => {
       '2026-10-25', // clocks go back this Sunday
     ]);
     expect(addDays('2026-10-25', 1)).toBe('2026-10-26');
+  });
+});
+
+describe('earliestDate', () => {
+  it('is the first day with data, else today', () => {
+    expect(earliestDate('2026-01-15', '2026-10-05')).toBe('2026-01-15');
+    expect(earliestDate(null, '2026-10-05')).toBe('2026-10-05');
+    // Only future days logged: today is still reachable.
+    expect(earliestDate('2026-10-08', '2026-10-05')).toBe('2026-10-05');
   });
 });
 

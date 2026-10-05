@@ -62,13 +62,9 @@ export const fr = {
     addOn: (day: string) => `Ajouter au ${day}`,
   },
   entry: {
-    quantity: 'Quantité',
     decrease: 'Diminuer la quantité',
     increase: 'Augmenter la quantité',
     time: 'Heure',
-    duplicateTo: 'Dupliquer vers',
-    duplicate: 'Dupliquer',
-    duplicated: 'Repas dupliqué',
     delete: 'Supprimer',
     deleted: 'Repas supprimé',
     undo: 'Annuler',

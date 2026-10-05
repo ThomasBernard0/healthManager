@@ -2,7 +2,9 @@ import {
   addDays,
   averagePerDay,
   dailyTarget,
+  earliestDate,
   elapsedDays,
+  fromUtcDate,
   goalForDate,
   parisToday,
   subtractNutrients,
@@ -30,7 +32,7 @@ export class SummaryService {
   ) {}
 
   async day(date: string): Promise<DaySummaryDto> {
-    const { monday, goals, entries: weekEntries } = await this.loadWeek(date);
+    const { monday, goals, entries: weekEntries, earliest } = await this.loadWeek(date);
     const entries = weekEntries.filter((e) => e.date === date);
 
     const goal = goalForDate(goals, date);
@@ -41,6 +43,7 @@ export class SummaryService {
     return {
       date,
       today: parisToday(),
+      earliestDate: earliest,
       goal,
       eaten,
       left: goal ? subtractNutrients(dailyTarget(goal), eaten) : null,
@@ -56,7 +59,7 @@ export class SummaryService {
 
   /** The week containing `date`: each day against its own goal, totals and averages. */
   async week(date: string): Promise<WeekSummaryDto> {
-    const { monday, goals, entries } = await this.loadWeek(date);
+    const { monday, goals, entries, earliest } = await this.loadWeek(date);
     const today = parisToday();
 
     const days = weekDays(monday).map((day) => {
@@ -73,6 +76,7 @@ export class SummaryService {
     return {
       monday,
       today,
+      earliestDate: earliest,
       days,
       eaten,
       target,
@@ -82,17 +86,26 @@ export class SummaryService {
     };
   }
 
-  private async loadWeek(
-    date: string,
-  ): Promise<{ monday: string; goals: GoalDto[]; entries: LogEntryDto[] }> {
+  private async loadWeek(date: string): Promise<{
+    monday: string;
+    goals: GoalDto[];
+    entries: LogEntryDto[];
+    earliest: string;
+  }> {
     const monday = weekStart(date);
-    const [goals, rows] = await Promise.all([
+    const [goals, rows, first] = await Promise.all([
       this.goals.findAll(),
       this.prisma.logEntry.findMany({
         where: { date: { gte: toUtcDate(monday), lte: toUtcDate(addDays(monday, 6)) } },
         orderBy: [{ time: 'asc' }, { createdAt: 'asc' }],
       }),
+      this.prisma.logEntry.findFirst({ orderBy: { date: 'asc' }, select: { date: true } }),
     ]);
-    return { monday, goals, entries: rows.map(toLogEntryDto) };
+    return {
+      monday,
+      goals,
+      entries: rows.map(toLogEntryDto),
+      earliest: earliestDate(first ? fromUtcDate(first.date) : null, parisToday()),
+    };
   }
 }

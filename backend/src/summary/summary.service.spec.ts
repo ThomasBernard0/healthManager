@@ -32,7 +32,7 @@ const goal = (validFrom: string, dailyKcal: number) => ({
 });
 
 describe('SummaryService.day', () => {
-  const logEntry = { findMany: vi.fn() };
+  const logEntry = { findMany: vi.fn(), findFirst: vi.fn() };
   const goals = { findAll: vi.fn() };
   const service = new SummaryService(
     { logEntry } as unknown as PrismaService,
@@ -49,8 +49,19 @@ describe('SummaryService.day', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    goals.findAll.mockResolvedValue([goal('2026-01-01', 2200), goal('2026-09-30', 2400)]);
+    goals.findAll.mockResolvedValue([
+      goal('2026-01-01', 2200),
+      goal('2026-09-30', 2400),
+    ]);
     logEntry.findMany.mockResolvedValue(week);
+    logEntry.findFirst.mockResolvedValue({ date: toUtcDate('2026-01-15') });
+  });
+
+  it('gives the earliest browsable date: the first day with data, else today', async () => {
+    expect((await service.day('2026-09-30')).earliestDate).toBe('2026-01-15');
+    logEntry.findFirst.mockResolvedValue(null);
+    const day = await service.day('2026-09-30');
+    expect(day.earliestDate).toBe(day.today);
   });
 
   it('queries the Monday→Sunday window of the date', async () => {
@@ -63,9 +74,19 @@ describe('SummaryService.day', () => {
   it('computes the day: entries of that date, eaten, left against that day’s goal', async () => {
     const day = await service.day('2026-09-30');
     expect(day.entries.map((e) => e.total.kcal)).toEqual([400, 1200]);
-    expect(day.eaten).toEqual({ kcal: 1600, protein: 31.5, carbs: 60, fat: 15 });
+    expect(day.eaten).toEqual({
+      kcal: 1600,
+      protein: 31.5,
+      carbs: 60,
+      fat: 15,
+    });
     expect(day.goal?.dailyKcal).toBe(2400);
-    expect(day.left).toEqual({ kcal: 800, protein: 118.5, carbs: 170, fat: 55 });
+    expect(day.left).toEqual({
+      kcal: 800,
+      protein: 118.5,
+      carbs: 170,
+      fat: 55,
+    });
   });
 
   it('keeps the old goal for days before the change', async () => {
@@ -98,7 +119,7 @@ describe('SummaryService.day', () => {
 });
 
 describe('SummaryService.week', () => {
-  const logEntry = { findMany: vi.fn() };
+  const logEntry = { findMany: vi.fn(), findFirst: vi.fn() };
   const goals = { findAll: vi.fn() };
   const service = new SummaryService(
     { logEntry } as unknown as PrismaService,
@@ -108,7 +129,10 @@ describe('SummaryService.week', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Goal raised from 2 200 to 2 400 on Wednesday 2026-09-30.
-    goals.findAll.mockResolvedValue([goal('2026-01-01', 2200), goal('2026-09-30', 2400)]);
+    goals.findAll.mockResolvedValue([
+      goal('2026-01-01', 2200),
+      goal('2026-09-30', 2400),
+    ]);
     logEntry.findMany.mockResolvedValue([
       entry('2026-09-28', '12:00', 2000),
       entry('2026-09-30', '08:10', 400),
@@ -121,15 +145,25 @@ describe('SummaryService.week', () => {
     const week = await service.week('2026-10-02');
     expect(week.monday).toBe('2026-09-28');
     expect(week.days.map((d) => d.date)).toEqual([
-      '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04',
+      '2026-09-28',
+      '2026-09-29',
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-02',
+      '2026-10-03',
+      '2026-10-04',
     ]);
   });
 
   it('compares each day with its own goal: Mon?Tue 2 200, Wed?Sun 2 400, week 16 400', async () => {
     const week = await service.week('2026-09-28');
-    expect(week.days.map((d) => d.target?.kcal)).toEqual([2200, 2200, 2400, 2400, 2400, 2400, 2400]);
+    expect(week.days.map((d) => d.target?.kcal)).toEqual([
+      2200, 2200, 2400, 2400, 2400, 2400, 2400,
+    ]);
     expect(week.target?.kcal).toBe(16400);
-    expect(week.days.map((d) => d.eaten.kcal)).toEqual([2000, 0, 1600, 0, 0, 0, 300]);
+    expect(week.days.map((d) => d.eaten.kcal)).toEqual([
+      2000, 0, 1600, 0, 0, 0, 300,
+    ]);
     expect(week.days[0].left?.kcal).toBe(200);
   });
 
@@ -137,7 +171,10 @@ describe('SummaryService.week', () => {
     const week = await service.week('2026-09-28');
     const sum = week.days.reduce((s, d) => s + d.eaten.kcal, 0);
     expect(week.eaten.kcal).toBe(sum);
-    expect(week.eaten.protein).toBeCloseTo(week.days.reduce((s, d) => s + d.eaten.protein, 0), 5);
+    expect(week.eaten.protein).toBeCloseTo(
+      week.days.reduce((s, d) => s + d.eaten.protein, 0),
+      5,
+    );
     expect(week.left?.kcal).toBe(16400 - 3900);
   });
 

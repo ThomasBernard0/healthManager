@@ -261,3 +261,10 @@ a.stat:hover {
 .desktop {
   min-height: 100dvh;
 }
+
+/* Before the first day with data. */
+.arrow:disabled {
+  color: var(--color-border-strong);
+  border-color: var(--color-border);
+  cursor: default;
+}

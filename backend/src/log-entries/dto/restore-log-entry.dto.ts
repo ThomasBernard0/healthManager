@@ -14,7 +14,7 @@ import {
 import { NutrientsDto } from '../../common/nutrients.dto.js';
 import { IsLocalDate, IsLocalTime } from '../../common/validators.js';
 import { LOG_KINDS, type LogKindValue } from './log-entry.dto.js';
-import { MAX_QUANTITY, MIN_QUANTITY } from './update-log-entry.dto.js';
+import { MAX_QUANTITY, MIN_QUANTITY } from './log-meal.dto.js';
 
 /** Re-creates a deleted entry as it was (undo). */
 export class RestoreLogEntryDto {

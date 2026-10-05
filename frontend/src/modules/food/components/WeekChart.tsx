@@ -6,13 +6,15 @@ import styles from './WeekChart.module.css'
 interface WeekChartProps {
   days: WeekDayDto[]
   today: string
+  /** Days before it (the first day with data) can't be opened. */
+  earliest: string
   onOpenDay: (date: string) => void
   /** desktop: taller, value above each bar, "Lun…Dim" labels (the table beside it says "dépassé de"). */
   variant?: 'mobile' | 'desktop'
 }
 
 /** Bar per day against that day's target (dashed); over target = over colour + "dépassé de N". */
-export function WeekChart({ days, today, onOpenDay, variant = 'mobile' }: WeekChartProps) {
+export function WeekChart({ days, today, earliest, onOpenDay, variant = 'mobile' }: WeekChartProps) {
   const desktop = variant === 'desktop'
   const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0])) * (desktop ? 1.2 : 1.12)
   const pct = (kcal: number) => `${(kcal / max) * 100}%`
@@ -45,6 +47,7 @@ export function WeekChart({ days, today, onOpenDay, variant = 'mobile' }: WeekCh
               key={d.date}
               type="button"
               className={styles.column}
+              disabled={d.date < earliest}
               aria-label={fr.week.openDay(formatShortDay(d.date), formatInt(d.eaten.kcal))}
               onClick={() => onOpenDay(d.date)}
             >

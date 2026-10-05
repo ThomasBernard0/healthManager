@@ -63,6 +63,14 @@ export function weekStart(date: string): string {
   return addDays(date, -weekdayIndex(date));
 }
 
+/**
+ * The earliest date one can browse to: the first day with data, or today when there is none yet
+ * (the future is always open).
+ */
+export function earliestDate(firstDataDate: string | null, today: string): string {
+  return firstDataDate !== null && firstDataDate < today ? firstDataDate : today;
+}
+
 /** The 7 dates of the week starting `monday`. */
 export function weekDays(monday: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i));

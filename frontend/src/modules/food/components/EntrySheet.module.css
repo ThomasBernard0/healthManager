@@ -25,17 +25,3 @@
   font-size: var(--font-size-13);
   color: var(--color-on-inverse-muted);
 }
-
-.duplicate {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-8);
-}
-
-.duplicate button {
-  min-height: var(--size-input);
-}
-
-.grow {
-  flex: 1;
-}

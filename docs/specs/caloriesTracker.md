@@ -55,7 +55,7 @@ No meal-time categories: a day is one list of meals, ordered by time.
 
 ### 1 · Aujourd'hui (Jour view)
 
-Top bar: just the module title "Alimentation" (later it becomes the switch between modules); no settings icon, no bottom tab bar. Date switcher, Jour/Semaine toggle. Ring = kcal left **today**; beside it eaten, objectif du jour with a pencil icon (tap → Mon objectif), week total (opens Semaine). Macro bars for today. One card "Repas du jour": every meal eaten that day in a single list ordered by time, each row showing time, name, P/G/L and kcal; header shows the count and the day total. No meal-time categories (no breakfast/lunch/dinner). Tap an entry: edit quantity or time, duplicate to another day, delete with undo. Floating "Ajouter" opens Ajout rapide; a meal is logged at the current time (editable).
+Top bar: just the module title "Alimentation" (later it becomes the switch between modules); no settings icon, no bottom tab bar. Date switcher, Jour/Semaine toggle. Ring = kcal left **today**; beside it eaten, objectif du jour with a pencil icon (tap → Mon objectif), week total (opens Semaine). Macro bars for today. One card "Repas du jour": every meal eaten that day in a single list ordered by time, each row showing time, name, P/G/L and kcal; header shows the count and the day total. No meal-time categories (no breakfast/lunch/dinner). Tap an entry: edit its time, delete with undo (no quantity edit, no duplicating to another day). Browsing back stops at the first day with data (today when there is none); the future stays open. Floating "Ajouter" opens Ajout rapide; a meal is logged at the current time (editable).
 
 ### 2 · Ajout rapide
 

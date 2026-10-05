@@ -30,10 +30,14 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
             return (
               <tr key={d.date}>
                 <td className={styles.dayCol}>
-                  <Link to={dayPath(d.date)}>
-                    {label}
-                    {isToday && ` · ${fr.desktop.inProgress}`}
-                  </Link>
+                  {d.date < week.earliestDate ? (
+                    label
+                  ) : (
+                    <Link to={dayPath(d.date)}>
+                      {label}
+                      {isToday && ` · ${fr.desktop.inProgress}`}
+                    </Link>
+                  )}
                 </td>
                 <td className={styles.kcal}>{formatInt(d.eaten.kcal)}</td>
                 <td>{formatInt(d.eaten.protein)}</td>

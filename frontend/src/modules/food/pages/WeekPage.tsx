@@ -36,6 +36,13 @@ function Week({ monday }: { monday: string }) {
   // Jour shows today in the current week, else the Monday of the week viewed.
   const dayTarget = monday === thisMonday ? today : monday
   const desktop = useIsDesktop()
+  // No browsing before the week of the first day with data (this week when there is none).
+  const earliest = summary.data?.earliestDate
+  const canGoBack = earliest !== undefined && monday > weekStart(earliest)
+
+  if (data && monday < weekStart(data.earliestDate)) {
+    return <Navigate to={weekPath(weekStart(data.earliestDate))} replace />
+  }
 
   const error = summary.status === 'error' && !data && (
     <div className={styles.card} role="alert">
@@ -62,6 +69,7 @@ function Week({ monday }: { monday: string }) {
           previousLabel={fr.week.previous}
           nextLabel={fr.week.next}
           onPrevious={() => navigate(weekPath(addDays(monday, -7)))}
+          previousDisabled={!canGoBack}
           onNext={() => navigate(weekPath(addDays(monday, 7)))}
           currentLabel={fr.desktop.thisWeek}
           onCurrent={() => navigate(weekPath())}
@@ -84,6 +92,7 @@ function Week({ monday }: { monday: string }) {
                     variant="desktop"
                     days={data.days}
                     today={today}
+                    earliest={data.earliestDate}
                     onOpenDay={(date) => navigate(dayPath(date))}
                   />
                 </div>
@@ -106,6 +115,7 @@ function Week({ monday }: { monday: string }) {
             type="button"
             className={styles.arrow}
             aria-label={fr.week.previous}
+            disabled={!canGoBack}
             onClick={() => navigate(weekPath(addDays(monday, -7)))}
           >
             <ChevronLeft size={18} />
@@ -138,7 +148,11 @@ function Week({ monday }: { monday: string }) {
       {data && (
         <>
           <WeekRingCard data={data} isCurrent={monday === thisMonday} />
-          <WeekChart days={data.days} today={today} onOpenDay={(date) => navigate(dayPath(date))} />
+          <WeekChart
+            days={data.days}
+            today={today}
+            earliest={data.earliestDate}
+            onOpenDay={(date) => navigate(dayPath(date))} />
           <div className={styles.tiles}>
             <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
             <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />

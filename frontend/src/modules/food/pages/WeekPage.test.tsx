@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { summaryWeek } from '../../../api/generated/endpoints/summary/summary'
@@ -11,7 +11,7 @@ const n = (kcal: number, protein = 0, carbs = 0, fat = 0) => ({ kcal, protein, c
 const DATES = ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']
 const EATEN = [2050, 1980, 2380, 1820, 1940, 2490, 1460]
 
-function week(targets: number[] = Array(7).fill(2200)): WeekSummaryDto {
+function week(targets: number[] = Array(7).fill(2200), earliestDate = '2026-01-15'): WeekSummaryDto {
   const days = DATES.map((date, i) => ({
     date,
     eaten: n(EATEN[i]),
@@ -22,6 +22,7 @@ function week(targets: number[] = Array(7).fill(2200)): WeekSummaryDto {
   return {
     monday: '2026-09-28',
     today: '2026-10-04',
+    earliestDate,
     days,
     eaten: n(14120, 917, 1500, 463),
     target: n(target),
@@ -93,6 +94,21 @@ describe('WeekPage', () => {
     renderWeek()
     await user.click(await screen.findByRole('button', { name: /^Mer 30 sept : 2\s380 kcal$/ }))
     expect(screen.getByTestId('where')).toHaveTextContent('/jour/2026-09-30')
+  })
+
+  it('stops at the week of the first day with data; days before it can’t be opened', async () => {
+    vi.mocked(summaryWeek).mockResolvedValue(week(undefined, '2026-09-30'))
+    renderWeek()
+    await screen.findByText('Par jour')
+    expect(screen.getByRole('button', { name: 'Semaine précédente' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Mar 29 sept/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Mer 30 sept/ })).toBeEnabled()
+  })
+
+  it('sends an older week to the week of the first day with data', async () => {
+    vi.mocked(summaryWeek).mockImplementation(async (monday) => ({ ...week(undefined, '2026-09-30'), monday }))
+    renderWeek('/semaine/2026-08-03')
+    await waitFor(() => expect(summaryWeek).toHaveBeenLastCalledWith('2026-09-28'))
   })
 
   it('normalizes any date of the week to its Monday and loads it', async () => {
