@@ -248,4 +248,20 @@ describe('MealEditorPage (Nouveau repas)', () => {
     expect(mealsRemove).toHaveBeenCalledWith('m1')
     expect(await screen.findByText('jour')).toBeInTheDocument()
   })
+  it('has no Scanner on desktop (camera feature): + Ingrédient only', () => {
+    const original = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('min-width'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia
+    try {
+      renderEditor()
+      expect(screen.getByRole('button', { name: '+ Ingrédient' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Scanner' })).toBeNull()
+    } finally {
+      window.matchMedia = original
+    }
+  })
 })

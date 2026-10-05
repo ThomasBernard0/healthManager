@@ -132,8 +132,8 @@ After editing `shared/src`, rebuild it so the apps see the change.
 - **Barcodes**: validated with `normalizeBarcode` (shared, GTIN check digit) on both sides. The frontend never calls
   Open Food Facts: `GET /api/foods/barcode/:code` returns the food known by that barcode, else imports the OFF
   product once (`source: off`, serving → "portion" unit), else `{ food: null, suggestedName }` → "Mon aliment"
-  created with the barcode. Camera scan on mobile (native `BarcodeDetector`, else the ZXing wasm ponyfill loaded
-  on demand from our origin); typed barcode on desktop. `zxing-wasm` is pinned to the exact version
+  created with the barcode. Camera scan on mobile only (native `BarcodeDetector`, else the ZXing wasm ponyfill loaded
+  on demand from our origin); no Scanner button on desktop. `zxing-wasm` is pinned to the exact version
   `barcode-detector` expects (a test checks it): bump them together.
 - **PWA**: the service worker precaches the app shell only; `/api` is never cached (offline → "Chargement impossible").
   It updates itself (`autoUpdate`). Not active in `vite` dev; test it on a build served by Nest.

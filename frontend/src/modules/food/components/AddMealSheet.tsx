@@ -72,24 +72,24 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
 
   return (
     <Sheet title={fr.add.title} onClose={onClose}>
-      <div className={styles.actions}>
-        <button type="button" className={styles.action} onClick={() => onNewMeal()}>
-          <Plus />
-          <span>{fr.add.newMeal}</span>
-        </button>
-        <button type="button" className={styles.action} onClick={onQuickEntry}>
-          <Bolt />
-          <span>{fr.add.quickEntry}</span>
-        </button>
-      </div>
+      <button type="button" className={styles.action} onClick={onQuickEntry}>
+        <Bolt />
+        <span>{fr.add.quickEntry}</span>
+      </button>
 
       <div className={styles.listHeader}>
         <h3 className={styles.listTitle}>
           {fr.add.myMeals} <span className={styles.count}>· {all.length}</span>
         </h3>
-        <Link to={MEALS_PATH} className={styles.manage}>
-          {fr.add.manage}
-        </Link>
+        <div className={styles.headerLinks}>
+          <button type="button" className={styles.newMeal} onClick={() => onNewMeal()}>
+            <Plus size={14} />
+            {fr.add.newMeal}
+          </button>
+          <Link to={MEALS_PATH} className={styles.manage}>
+            {fr.add.manage}
+          </Link>
+        </div>
       </div>
 
       <label className={styles.search}>
