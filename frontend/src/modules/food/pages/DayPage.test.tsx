@@ -159,7 +159,8 @@ describe('DayPage', () => {
       expect.objectContaining({ mealId: 'm1', date: DATE, quantity: 1 }),
     )
     expect(await screen.findByText('Shaker protéiné ajouté', {}, { timeout: 3000 })).toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).toBeNull()
+    // Closing the sheet is a navigation (search param removed): it can land just after the toast.
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
   it('searches Mes repas without accents or case, and offers to create a missing meal', async () => {
