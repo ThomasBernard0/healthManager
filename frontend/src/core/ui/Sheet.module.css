@@ -29,6 +29,10 @@
   outline: none;
 }
 
+.panel > * {
+  flex-shrink: 0;
+}
+
 .handle {
   align-self: center;
   width: var(--space-40);

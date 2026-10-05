@@ -89,6 +89,40 @@
         ]
       }
     },
+    "/api/log-entries/meal": {
+      "post": {
+        "operationId": "LogEntries_logMeal",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogMealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
     "/api/log-entries/quick": {
       "post": {
         "operationId": "LogEntries_createQuick",
@@ -261,6 +295,288 @@
         ]
       }
     },
+    "/api/meals": {
+      "get": {
+        "operationId": "Meals_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Accent/case-insensitive, matches anywhere in the name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MealSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      },
+      "post": {
+        "operationId": "Meals_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/meals/{id}": {
+      "get": {
+        "operationId": "Meals_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      },
+      "put": {
+        "operationId": "Meals_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      },
+      "patch": {
+        "operationId": "Meals_setFlags",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMealFlagsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealSummaryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "meals"
+        ]
+      }
+    },
+    "/api/foods": {
+      "get": {
+        "operationId": "Foods_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Accent/case-insensitive, every word must match",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FoodDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      },
+      "post": {
+        "operationId": "Foods_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFoodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      }
+    },
+    "/api/foods/{id}": {
+      "get": {
+        "operationId": "Foods_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      }
+    },
     "/api/summary/days/{date}": {
       "get": {
         "operationId": "Summary_day",
@@ -425,32 +741,12 @@
           "fat"
         ]
       },
-      "CreateQuickEntryDto": {
+      "LogMealDto": {
         "type": "object",
         "properties": {
-          "kcal": {
-            "type": "number",
-            "example": 640,
-            "minimum": 0,
-            "maximum": 20000
-          },
-          "protein": {
-            "type": "number",
-            "example": 48,
-            "minimum": 0,
-            "maximum": 5000
-          },
-          "carbs": {
-            "type": "number",
-            "example": 72,
-            "minimum": 0,
-            "maximum": 5000
-          },
-          "fat": {
-            "type": "number",
-            "example": 16,
-            "minimum": 0,
-            "maximum": 5000
+          "mealId": {
+            "type": "string",
+            "format": "uuid"
           },
           "date": {
             "type": "string",
@@ -458,23 +754,21 @@
           },
           "time": {
             "type": "string",
-            "example": "20:30"
+            "example": "12:45"
           },
-          "label": {
-            "type": "string",
-            "example": "Restaurant italien",
-            "minLength": 1,
-            "maxLength": 120
+          "quantity": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0.25,
+            "maximum": 20,
+            "description": "Portions"
           }
         },
         "required": [
-          "kcal",
-          "protein",
-          "carbs",
-          "fat",
+          "mealId",
           "date",
           "time",
-          "label"
+          "quantity"
         ]
       },
       "LogKind": {
@@ -585,6 +879,58 @@
           "total"
         ]
       },
+      "CreateQuickEntryDto": {
+        "type": "object",
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "example": 640,
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "protein": {
+            "type": "number",
+            "example": 48,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "carbs": {
+            "type": "number",
+            "example": 72,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "fat": {
+            "type": "number",
+            "example": 16,
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "time": {
+            "type": "string",
+            "example": "20:30"
+          },
+          "label": {
+            "type": "string",
+            "example": "Restaurant italien",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "kcal",
+          "protein",
+          "carbs",
+          "fat",
+          "date",
+          "time",
+          "label"
+        ]
+      },
       "RestoreLogEntryDto": {
         "type": "object",
         "properties": {
@@ -668,6 +1014,426 @@
         },
         "required": [
           "date"
+        ]
+      },
+      "MealMode": {
+        "type": "string",
+        "enum": [
+          "ingredients",
+          "manual"
+        ]
+      },
+      "MealTotalsSource": {
+        "type": "string",
+        "enum": [
+          "ingredients",
+          "manual",
+          "override"
+        ],
+        "description": "Which totals are in use"
+      },
+      "MealSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fajitas poulet"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MealMode"
+              }
+            ]
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "totals": {
+            "description": "One portion",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "totalsSource": {
+            "description": "Which totals are in use",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MealTotalsSource"
+              }
+            ]
+          },
+          "timesEaten": {
+            "type": "number",
+            "example": 12,
+            "description": "Number of times logged"
+          },
+          "lastEatenOn": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-10-03",
+            "description": "Last day it was logged"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mode",
+          "isFavorite",
+          "archived",
+          "totals",
+          "totalsSource",
+          "timesEaten",
+          "lastEatenOn"
+        ]
+      },
+      "FoodSource": {
+        "type": "string",
+        "enum": [
+          "custom",
+          "ciqual",
+          "off"
+        ]
+      },
+      "FoodUnitDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "c. à s.",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "grams": {
+            "type": "number",
+            "example": 10,
+            "minimum": 0.1,
+            "maximum": 2000
+          }
+        },
+        "required": [
+          "label",
+          "grams"
+        ]
+      },
+      "FoodDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Riz blanc, cuit, non salé"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoodSource"
+              }
+            ]
+          },
+          "per100g": {
+            "description": "Per 100 g",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodUnitDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "source",
+          "per100g",
+          "units"
+        ]
+      },
+      "MealItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "food": {
+            "$ref": "#/components/schemas/FoodDto"
+          },
+          "grams": {
+            "type": "number",
+            "example": 220
+          },
+          "unitLabel": {
+            "type": "string",
+            "nullable": true,
+            "example": "c. à s.",
+            "description": "Unit it was entered with"
+          },
+          "unitCount": {
+            "type": "number",
+            "nullable": true,
+            "example": 1
+          },
+          "nutrients": {
+            "description": "grams / 100 × per100g",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "food",
+          "grams",
+          "unitLabel",
+          "unitCount",
+          "nutrients"
+        ]
+      },
+      "MealDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fajitas poulet"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MealMode"
+              }
+            ]
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "totals": {
+            "description": "One portion",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "totalsSource": {
+            "description": "Which totals are in use",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MealTotalsSource"
+              }
+            ]
+          },
+          "timesEaten": {
+            "type": "number",
+            "example": 12,
+            "description": "Number of times logged"
+          },
+          "lastEatenOn": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-10-03",
+            "description": "Last day it was logged"
+          },
+          "items": {
+            "description": "Ingredients mode",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealItemDto"
+            }
+          },
+          "manualTotals": {
+            "nullable": true,
+            "description": "Manual mode totals",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "override": {
+            "nullable": true,
+            "description": "Manual correction of the totals",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mode",
+          "isFavorite",
+          "archived",
+          "totals",
+          "totalsSource",
+          "timesEaten",
+          "lastEatenOn",
+          "items",
+          "manualTotals",
+          "override"
+        ]
+      },
+      "MealItemInputDto": {
+        "type": "object",
+        "properties": {
+          "foodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grams": {
+            "type": "number",
+            "example": 220,
+            "minimum": 0.1,
+            "maximum": 5000
+          },
+          "unitLabel": {
+            "type": "string",
+            "nullable": true,
+            "example": "c. à s."
+          },
+          "unitCount": {
+            "type": "number",
+            "nullable": true,
+            "example": 1
+          }
+        },
+        "required": [
+          "foodId",
+          "grams"
+        ]
+      },
+      "SaveMealDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Salade de pâtes au thon",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MealMode"
+              }
+            ]
+          },
+          "items": {
+            "description": "Required (≥ 1) in ingredients mode, ignored in manual mode",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MealItemInputDto"
+            }
+          },
+          "manualTotals": {
+            "nullable": true,
+            "description": "Required in manual mode",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "override": {
+            "nullable": true,
+            "description": "Manual correction; null clears it",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "isFavorite": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "mode",
+          "items",
+          "isFavorite"
+        ]
+      },
+      "UpdateMealFlagsDto": {
+        "type": "object",
+        "properties": {
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateFoodDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Granola maison",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "brand": {
+            "type": "string",
+            "example": "Bjorg",
+            "maxLength": 80
+          },
+          "per100g": {
+            "description": "Per 100 g",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodUnitDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "per100g"
         ]
       },
       "NutrientsDeltaDto": {

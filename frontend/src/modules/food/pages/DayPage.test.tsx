@@ -2,15 +2,21 @@ import { parisToday } from '@healthmanager/shared'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { logEntriesCreateQuick } from '../../../api/generated/endpoints/log-entries/log-entries'
+import {
+  logEntriesCreateQuick,
+  logEntriesLogMeal,
+} from '../../../api/generated/endpoints/log-entries/log-entries'
+import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
-import type { DaySummaryDto, LogEntryDto } from '../../../api/generated/model'
+import type { DaySummaryDto, LogEntryDto, MealSummaryDto } from '../../../api/generated/model'
 import { ToastProvider } from '../../../core/ui/Toast'
 import DayPage from './DayPage'
 
 vi.mock('../../../api/generated/endpoints/summary/summary', () => ({ summaryDay: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/meals/meals', () => ({ mealsList: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
   logEntriesCreateQuick: vi.fn(),
+  logEntriesLogMeal: vi.fn(),
   logEntriesUpdate: vi.fn(),
   logEntriesDuplicate: vi.fn(),
   logEntriesRemove: vi.fn(),
@@ -95,7 +101,9 @@ describe('DayPage', () => {
     const user = userEvent.setup()
     renderDay()
 
+    vi.mocked(mealsList).mockResolvedValue([])
     await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
+    await user.click(screen.getByRole('button', { name: 'Saisie rapide' }))
     const dialog = screen.getByRole('dialog', { name: 'Saisie rapide' })
     await user.type(within(dialog).getByLabelText('Calories'), '950')
     await user.type(within(dialog).getByLabelText('Protéines en grammes'), '38,5')
@@ -120,5 +128,75 @@ describe('DayPage', () => {
     renderDay('/jour')
     await screen.findByRole('heading', { name: 'Repas du jour' })
     expect(summaryDay).toHaveBeenCalledWith(parisToday())
+  })
+
+  const meal = (id: string, name: string, extra: Partial<MealSummaryDto> = {}): MealSummaryDto => ({
+    id,
+    name,
+    mode: 'manual',
+    isFavorite: false,
+    archived: false,
+    totals: n(250, 30, 22, 5),
+    totalsSource: 'manual',
+    timesEaten: 3,
+    lastEatenOn: '2026-10-03',
+    ...extra,
+  })
+
+  it('logs a saved meal in 2 taps from Aujourd’hui (Ajouter, +) at ×1', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(mealsList).mockResolvedValue([meal('m1', 'Shaker protéiné', { isFavorite: true }), meal('m2', 'Fajitas poulet')])
+    vi.mocked(logEntriesLogMeal).mockResolvedValue(entry('x', '10:00', 'Shaker protéiné', 250))
+    const user = userEvent.setup()
+    renderDay()
+
+    await user.click(await screen.findByRole('button', { name: 'Ajouter' })) // tap 1
+    await user.click(await screen.findByRole('button', { name: 'Ajouter Shaker protéiné' })) // tap 2
+
+    expect(logEntriesLogMeal).toHaveBeenCalledWith(
+      expect.objectContaining({ mealId: 'm1', date: DATE, quantity: 1 }),
+    )
+    expect(await screen.findByText('Shaker protéiné ajouté')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('searches Mes repas without accents or case, and offers to create a missing meal', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(mealsList).mockResolvedValue([meal('m1', 'Shaker protéiné'), meal('m2', 'Fajitas poulet')])
+    const user = userEvent.setup()
+    renderDay()
+
+    await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ajouter un repas' })
+    expect(text(dialog)).toContain('Mes repas · 2')
+    expect(text(dialog)).toContain('250 kcal · P 30 · G 22 · L 5 · hier')
+
+    const search = within(dialog).getByLabelText('Chercher dans mes repas')
+    await user.type(search, 'FAJIT')
+    expect(within(dialog).getByText('Fajitas poulet')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Shaker protéiné')).toBeNull()
+
+    await user.clear(search)
+    await user.type(search, 'proteine')
+    expect(within(dialog).getByText('Shaker protéiné')).toBeInTheDocument()
+
+    await user.clear(search)
+    await user.type(search, 'Gaspacho')
+    expect(within(dialog).getByRole('button', { name: 'Créer « Gaspacho »' })).toBeInTheDocument()
+  })
+
+  it('logs ×0,5 or ×2 with the stepper', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(mealsList).mockResolvedValue([meal('m2', 'Fajitas poulet')])
+    vi.mocked(logEntriesLogMeal).mockResolvedValue(entry('x', '10:00', 'Fajitas poulet', 500))
+    const user = userEvent.setup()
+    renderDay()
+
+    await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
+    await user.click(await screen.findByRole('button', { name: /Fajitas poulet/, expanded: false }))
+    await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
+    await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
+    await user.click(screen.getByRole('button', { name: 'Ajouter ×2' }))
+    expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm2', quantity: 2 }))
   })
 })

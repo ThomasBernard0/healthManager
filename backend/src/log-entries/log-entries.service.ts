@@ -6,22 +6,17 @@ import {
   toUtcDate,
 } from '@healthmanager/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { num } from '../common/decimal.js';
+import { num, toNutrients } from '../common/decimal.js';
 import type { LogEntry } from '../generated/prisma/client.js';
+import { MealsService } from '../meals/meals.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
+import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
 import { DuplicateLogEntryDto, UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 
-export function entrySnapshot(entry: LogEntry): Nutrients {
-  return {
-    kcal: entry.kcal,
-    protein: num(entry.protein),
-    carbs: num(entry.carbs),
-    fat: num(entry.fat),
-  };
-}
+export const entrySnapshot = (entry: LogEntry): Nutrients => toNutrients(entry);
 
 export function toLogEntryDto(entry: LogEntry): LogEntryDto {
   const snapshot = entrySnapshot(entry);
@@ -41,7 +36,27 @@ export function toLogEntryDto(entry: LogEntry): LogEntryDto {
 
 @Injectable()
 export class LogEntriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly meals: MealsService,
+  ) {}
+
+  /** Logs a saved meal; its totals are frozen, so editing the meal later never changes this day. */
+  async logMeal(dto: LogMealDto): Promise<LogEntryDto> {
+    const { name, totals } = await this.meals.snapshot(dto.mealId);
+    const entry = await this.prisma.logEntry.create({
+      data: {
+        date: toUtcDate(dto.date),
+        time: dto.time,
+        kind: 'meal',
+        mealId: dto.mealId,
+        label: name,
+        quantity: dto.quantity,
+        ...totals,
+      },
+    });
+    return toLogEntryDto(entry);
+  }
 
   async createQuick(dto: CreateQuickEntryDto): Promise<LogEntryDto> {
     const entry = await this.prisma.logEntry.create({

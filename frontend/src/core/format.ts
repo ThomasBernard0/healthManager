@@ -57,6 +57,17 @@ export function formatDayTitle(date: string, today: string): string {
   return capitalize(new Intl.DateTimeFormat('fr-FR', { weekday: 'long', timeZone: 'UTC' }).format(toUtcDate(date)))
 }
 
+const weekday = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', timeZone: 'UTC' })
+const shortDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+
+/** When a meal was last eaten: "aujourd'hui", "hier", "samedi" (this past week), else "12 sept.". */
+export function formatLastEaten(date: string, today: string): string {
+  if (date === today) return fr.add.today
+  if (date === addDays(today, -1)) return fr.add.yesterday
+  if (date >= addDays(today, -6) && date < today) return weekday.format(toUtcDate(date))
+  return shortDate.format(toUtcDate(date))
+}
+
 /** Parses a typed number, accepting a French decimal comma. Empty → null. */
 export function parseNumber(value: string): number | null {
   const trimmed = value.trim().replace(',', '.')

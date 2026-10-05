@@ -19,7 +19,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "start:deploy": "prisma migrate deploy && node dist/main",
+    "start:deploy": "prisma migrate deploy && node dist/scripts/import-ciqual.js && node dist/main",
     "export:openapi": "npm run build && node dist/scripts/export-openapi.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

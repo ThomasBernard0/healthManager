@@ -62,3 +62,24 @@ export const Bolt = (p: IconProps) => (
     <path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z" />
   </Icon>
 )
+
+export const Search = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-3.5-3.5" />
+  </Icon>
+)
+
+/** Filled star (favourite). */
+export const Star = (p: IconProps) => (
+  <Icon size={14} fill="currentColor" stroke="none" {...p}>
+    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />
+  </Icon>
+)
+
+/** Outlined star (not a favourite). */
+export const StarOutline = (p: IconProps) => (
+  <Icon size={14} {...p}>
+    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />
+  </Icon>
+)
