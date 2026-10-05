@@ -96,6 +96,9 @@ After editing `shared/src`, rebuild it so the apps see the change.
 
 > **Windows/PowerShell:** the npm shim drops arguments after `--` (`npm run dev -- --port 5173` runs `vite 5173`).
 > Call the tool directly instead: `npx vite --port 5173`, `npx prisma migrate dev --name <x>`.
+> **Never write source files with `Add-Content`/`Set-Content`/`Out-File` in Windows PowerShell 5.1**: they use the ANSI
+> code page (or a BOM), and the bundler on Linux CI rejects the result. Use an editor/the Edit tool, or
+> `[IO.File]::WriteAllText(path, text, (New-Object Text.UTF8Encoding $false))`.
 
 ## Conventions
 
