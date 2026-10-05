@@ -27,6 +27,7 @@ import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { Barcode, ChevronLeft } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
+import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { AmountSheet, type Amount } from '../components/AmountSheet'
 import { FoodPickerSheet } from '../components/FoodPickerSheet'
@@ -122,6 +123,8 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   const [saveToMeals, setSaveToMeals] = useState(true)
   const [favorite, setFavorite] = useState(meal?.isFavorite ?? false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // The barcode scanner is a phone feature (camera): no Scanner button on desktop.
+  const desktop = useIsDesktop()
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [overlay, setOverlay] = useState<
     | { kind: 'pick' }
@@ -299,10 +302,12 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
               <button type="button" className={styles.addIngredient} onClick={() => setOverlay({ kind: 'pick' })}>
                 {fr.meal.addIngredient}
               </button>
-              <button type="button" className={styles.scan} onClick={() => setOverlay({ kind: 'scan' })}>
-                <Barcode />
-                {fr.scan.open}
-              </button>
+              {!desktop && (
+                <button type="button" className={styles.scan} onClick={() => setOverlay({ kind: 'scan' })}>
+                  <Barcode />
+                  {fr.scan.open}
+                </button>
+              )}
             </div>
           </section>
 
