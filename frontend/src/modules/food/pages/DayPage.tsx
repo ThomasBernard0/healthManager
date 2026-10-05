@@ -1,4 +1,4 @@
-import { addDays, isIsoDate, parisToday } from '@healthmanager/shared'
+import { addDays, isIsoDate, parisToday, weekStart } from '@healthmanager/shared'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
 import type { DaySummaryDto, LogEntryDto } from '../../../api/generated/model'
@@ -12,8 +12,9 @@ import { useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
 import { AddMealSheet } from '../components/AddMealSheet'
 import { EntrySheet } from '../components/EntrySheet'
+import { ViewToggle } from '../components/ViewToggle'
 import { QuickEntrySheet } from '../components/QuickEntrySheet'
-import { dayPath, GOAL_PATH, newMealPath } from '../routes'
+import { dayPath, GOAL_PATH, newMealPath, weekPath } from '../routes'
 import styles from './DayPage.module.css'
 
 /** Aujourd'hui (Jour view): the selected day, its meals, and the week so far. */
@@ -58,6 +59,7 @@ function Day({ date }: { date: string }) {
             <ChevronRight size={18} />
           </button>
         </div>
+        <ViewToggle dayTo={dayPath(date)} weekTo={weekPath(weekStart(date))} />
       </header>
 
       {summary.status === 'error' && !data && (
@@ -161,7 +163,7 @@ function SummaryCard({ data, isToday }: { data: DaySummaryDto; isToday: boolean 
             </div>
             <div className={styles.statValue}>{goal ? formatInt(goal.dailyKcal) : fr.common.noValue}</div>
           </Link>
-          <div className={styles.stat}>
+          <Link to={weekPath(week.monday)} className={styles.stat}>
             <div className={styles.statLabel}>{fr.day.week}</div>
             <div className={styles.weekValue}>
               {formatInt(week.eaten.kcal)} / {week.target ? formatInt(week.target.kcal) : fr.common.noValue}
@@ -169,7 +171,7 @@ function SummaryCard({ data, isToday }: { data: DaySummaryDto; isToday: boolean 
             {week.left && week.left.kcal < 0 && (
               <div className={styles.overLine}>{fr.over(formatInt(-week.left.kcal))}</div>
             )}
-          </div>
+          </Link>
         </div>
       </div>
 

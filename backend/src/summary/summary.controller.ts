@@ -2,6 +2,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import { parseDateParam } from '../common/validators.js';
 import { DaySummaryDto } from './dto/day-summary.dto.js';
+import { WeekSummaryDto } from './dto/week-summary.dto.js';
 import { SummaryService } from './summary.service.js';
 
 @ApiTags('summary')
@@ -14,5 +15,13 @@ export class SummaryController {
   @ApiOkResponse({ type: DaySummaryDto })
   day(@Param('date') date: string): Promise<DaySummaryDto> {
     return this.summary.day(parseDateParam(date));
+  }
+
+  /** The week (Monday → Sunday) containing `date`. */
+  @Get('weeks/:date')
+  @ApiParam({ name: 'date', example: '2026-09-28', description: 'Any day of the week' })
+  @ApiOkResponse({ type: WeekSummaryDto })
+  week(@Param('date') date: string): Promise<WeekSummaryDto> {
+    return this.summary.week(parseDateParam(date));
   }
 }

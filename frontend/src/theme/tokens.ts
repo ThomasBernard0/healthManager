@@ -79,6 +79,7 @@ export const tokens = {
     '64': '64px',
   },
   radius: {
+    xs: '2px',
     bar: '3px',
     sm: '6px',
     md: '9px',
@@ -130,6 +131,8 @@ export const tokens = {
     timeColumn: '42px',
     numberInput: '72px',
     segment: '38px',
+    toggle: '36px',
+    chart: '180px',
     checkbox: '22px',
     ring: '150px',
     ringDesktop: '168px',

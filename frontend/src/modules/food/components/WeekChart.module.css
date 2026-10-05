@@ -1,0 +1,95 @@
+/* Transcribed from design/mobile-4-semaine.html */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-18);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}
+
+.chart {
+  position: relative;
+  height: var(--size-chart);
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-10);
+  align-items: end;
+}
+
+.targets {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.targets line {
+  stroke: var(--color-reference);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.column {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+
+.bar,
+.over,
+.current {
+  width: 100%;
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-xs) var(--radius-xs);
+}
+
+.bar {
+  background: var(--color-accent);
+}
+
+.over {
+  background: var(--color-over);
+}
+
+.current {
+  background: var(--color-accent-light);
+}
+
+.labels {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-10);
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.todayLabel {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink);
+}
+
+.overList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-12);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-over);
+}
