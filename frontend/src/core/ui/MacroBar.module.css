@@ -49,7 +49,7 @@
   color: var(--color-over);
 }
 
-/* Desktop (design/bureau-jour.html): "Protéines ........ 88 / 150 g" then an 8 px bar. */
+/* Desktop (design/bureau-jour.html): "ProtÃ©ines ........ 88 / 150 g" then an 8 px bar. */
 .row {
   display: flex;
   justify-content: space-between;

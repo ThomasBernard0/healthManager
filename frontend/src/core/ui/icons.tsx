@@ -84,7 +84,7 @@ export const StarOutline = (p: IconProps) => (
   </Icon>
 )
 
-/** ? (options menu) */
+/** "⋯" (options menu) */
 export const Dots = (p: IconProps) => (
   <Icon size={18} fill="currentColor" stroke="none" {...p}>
     <circle cx="5" cy="12" r="1.8" />
