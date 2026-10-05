@@ -7,13 +7,15 @@ import styles from './Sheet.module.css'
 interface SheetProps {
   title: string
   onClose: () => void
+  /** The back arrow's action (defaults to onClose). */
+  onBack?: () => void
   /** "back" shows a back arrow on the left, "close" an X on the right. */
   dismiss?: 'back' | 'close'
   children: ReactNode
 }
 
 /** Bottom sheet on mobile, centred dialog on desktop (≥ 1024 px). */
-export function Sheet({ title, onClose, dismiss = 'close', children }: SheetProps) {
+export function Sheet({ title, onClose, onBack, dismiss = 'close', children }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
 
@@ -41,7 +43,7 @@ export function Sheet({ title, onClose, dismiss = 'close', children }: SheetProp
       type="button"
       className={styles.iconButton}
       aria-label={dismiss === 'back' ? fr.common.back : fr.common.close}
-      onClick={onClose}
+      onClick={dismiss === 'back' ? (onBack ?? onClose) : onClose}
       data-dismiss
     >
       {dismiss === 'back' ? <ChevronLeft /> : <Close />}

@@ -10,9 +10,10 @@ import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
+import { AddMealSheet } from '../components/AddMealSheet'
 import { EntrySheet } from '../components/EntrySheet'
 import { QuickEntrySheet } from '../components/QuickEntrySheet'
-import { dayPath, GOAL_PATH } from '../routes'
+import { dayPath, GOAL_PATH, newMealPath } from '../routes'
 import styles from './DayPage.module.css'
 
 /** Aujourd'hui (Jour view): the selected day, its meals, and the week so far. */
@@ -75,16 +76,31 @@ function Day({ date }: { date: string }) {
         </>
       )}
 
-      <button type="button" className={styles.fab} onClick={() => add.open('saisie')}>
+      <button type="button" className={styles.fab} onClick={() => add.open('repas')}>
         <Plus />
         {fr.day.add}
       </button>
+
+      {add.value === 'repas' && (
+        <AddMealSheet
+          date={date}
+          today={today}
+          onClose={add.close}
+          onQuickEntry={() => add.swap('saisie')}
+          onNewMeal={(name) =>
+            navigate(newMealPath(date) + (name ? `&nom=${encodeURIComponent(name)}` : ''), { replace: true })
+          }
+          onLogged={summary.reload}
+        />
+      )}
 
       {add.value === 'saisie' && (
         <QuickEntrySheet
           date={date}
           today={today}
           onClose={add.close}
+          onBack={() => add.swap('repas')}
+          onSaveInstead={(draft) => navigate(newMealPath(date), { replace: true, state: { draft } })}
           onLogged={() => {
             add.close()
             summary.reload()

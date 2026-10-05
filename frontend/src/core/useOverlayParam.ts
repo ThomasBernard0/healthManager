@@ -22,6 +22,21 @@ export function useOverlayParam(name: string) {
     [name, setParams],
   )
 
+  /** Swaps to another overlay in place (no new history entry): back still closes it. */
+  const swap = useCallback(
+    (next: string) => {
+      setParams(
+        (p) => {
+          const copy = new URLSearchParams(p)
+          copy.set(name, next)
+          return copy
+        },
+        { replace: true },
+      )
+    },
+    [name, setParams],
+  )
+
   const close = useCallback(() => {
     if (location.key !== 'default') {
       navigate(-1)
@@ -37,5 +52,5 @@ export function useOverlayParam(name: string) {
     }
   }, [location.key, name, navigate, setParams])
 
-  return { value, open, close }
+  return { value, open, swap, close }
 }

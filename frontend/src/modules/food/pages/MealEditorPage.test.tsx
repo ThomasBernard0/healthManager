@@ -1,0 +1,152 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { foodsCreate, foodsSearch } from '../../../api/generated/endpoints/foods/foods'
+import {
+  logEntriesCreateQuick,
+  logEntriesLogMeal,
+} from '../../../api/generated/endpoints/log-entries/log-entries'
+import { mealsCreate } from '../../../api/generated/endpoints/meals/meals'
+import type { FoodDto, MealDto } from '../../../api/generated/model'
+import MealEditorPage from './MealEditorPage'
+
+vi.mock('../../../api/generated/endpoints/foods/foods', () => ({ foodsSearch: vi.fn(), foodsCreate: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/meals/meals', () => ({
+  mealsCreate: vi.fn(),
+  mealsGet: vi.fn(),
+  mealsUpdate: vi.fn(),
+  mealsSetFlags: vi.fn(),
+}))
+vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
+  logEntriesLogMeal: vi.fn(),
+  logEntriesCreateQuick: vi.fn(),
+}))
+
+const food = (id: string, name: string, kcal: number, protein: number, carbs: number, fat: number, units: FoodDto['units'] = []): FoodDto => ({
+  id,
+  name,
+  brand: null,
+  source: 'ciqual',
+  per100g: { kcal, protein, carbs, fat },
+  units,
+})
+
+const pasta = food('f1', 'Pâtes cuites', 158, 5.8, 30.5, 0.9)
+const oil = food('f2', 'Huile d’olive', 900, 0, 0, 100, [{ label: 'c. à s.', grams: 13 }])
+
+const text = (el: HTMLElement) => (el.textContent ?? '').replace(/[  ]/g, ' ')
+
+function renderEditor(path = '/repas/nouveau?date=2026-10-04') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/repas/nouveau" element={<MealEditorPage />} />
+        <Route path="/jour/:date" element={<div>jour</div>} />
+        <Route path="/jour" element={<div>jour</div>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+async function addIngredient(user: ReturnType<typeof userEvent.setup>, query: string, pick: string, amount?: string, unit?: string) {
+  await user.click(screen.getByRole('button', { name: '+ Ingrédient' }))
+  await user.type(screen.getByLabelText('Chercher un aliment'), query)
+  await user.click(await screen.findByRole('button', { name: new RegExp(`^${pick}`) }))
+  const dialog = screen.getByRole('dialog', { name: pick })
+  if (unit) await user.click(within(dialog).getByRole('radio', { name: unit }))
+  if (amount) {
+    const input = within(dialog).getByLabelText(`Quantité de ${pick}`)
+    await user.clear(input)
+    await user.type(input, amount)
+  }
+  await user.click(within(dialog).getByRole('button', { name: 'Valider' }))
+}
+
+describe('MealEditorPage (Nouveau repas)', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(foodsSearch).mockImplementation(async ({ q } = {}) =>
+      [pasta, oil].filter((f) => !q || f.name.toLowerCase().includes(q.toLowerCase().slice(0, 4))),
+    )
+  })
+
+  it('sums ingredients live (grams and units), then saves to Mes repas and logs it', async () => {
+    vi.mocked(mealsCreate).mockResolvedValue({ id: 'm1' } as MealDto)
+    const user = userEvent.setup()
+    renderEditor()
+
+    await user.type(screen.getByLabelText('Nom'), 'Salade de pâtes')
+    await addIngredient(user, 'pâtes', 'Pâtes cuites', '220')
+    await addIngredient(user, 'huile', 'Huile d’olive', '1', 'c. à s.')
+
+    // 220 g pasta = 348 kcal; 1 c. à s. (13 g) oil = 117 kcal → 465
+    expect(text(document.body)).toContain('1 c. à s.')
+    expect(text(document.body)).toContain('465 kcal')
+
+    await user.click(screen.getByRole('button', { name: 'Enregistrer et ajouter au 4 octobre' }))
+    expect(mealsCreate).toHaveBeenCalledWith({
+      name: 'Salade de pâtes',
+      mode: 'ingredients',
+      items: [
+        { foodId: 'f1', grams: 220, unitLabel: null, unitCount: null },
+        { foodId: 'f2', grams: 13, unitLabel: 'c. à s.', unitCount: 1 },
+      ],
+      manualTotals: null,
+      override: null,
+      isFavorite: false,
+    })
+    expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm1', date: '2026-10-04', quantity: 1 }))
+    expect(await screen.findByText('jour')).toBeInTheDocument()
+  })
+
+  it('can correct the total and shows that the corrected total is used', async () => {
+    vi.mocked(mealsCreate).mockResolvedValue({ id: 'm1' } as MealDto)
+    const user = userEvent.setup()
+    renderEditor()
+    await user.type(screen.getByLabelText('Nom'), 'Pâtes')
+    await addIngredient(user, 'pâtes', 'Pâtes cuites', '100')
+    await user.click(screen.getByRole('button', { name: 'Corriger' }))
+    expect(screen.getByText('Total corrigé')).toBeInTheDocument()
+    const kcal = screen.getByLabelText('Calories')
+    await user.clear(kcal)
+    await user.type(kcal, '200')
+    await user.click(screen.getByRole('button', { name: /^Enregistrer et ajouter/ }))
+    expect(vi.mocked(mealsCreate).mock.calls[0][0].override).toEqual({ kcal: 200, protein: 5.8, carbs: 30.5, fat: 0.9 })
+  })
+
+  it('creates "Mon aliment" when the food is not in the database', async () => {
+    vi.mocked(foodsCreate).mockResolvedValue(food('f9', 'Granola maison', 450, 10, 60, 18))
+    const user = userEvent.setup()
+    renderEditor()
+    await user.click(screen.getByRole('button', { name: '+ Ingrédient' }))
+    await user.type(screen.getByLabelText('Chercher un aliment'), 'Granola maison')
+    await user.click(await screen.findByRole('button', { name: 'Créer « Granola maison »' }))
+    const dialog = screen.getByRole('dialog', { name: 'Mon aliment' })
+    await user.type(within(dialog).getByLabelText('Calories'), '450')
+    await user.type(within(dialog).getByLabelText('Protéines en grammes'), '10')
+    await user.type(within(dialog).getByLabelText('Glucides en grammes'), '60')
+    await user.type(within(dialog).getByLabelText('Lipides en grammes'), '18')
+    await user.click(within(dialog).getByRole('button', { name: 'Créer' }))
+    expect(foodsCreate).toHaveBeenCalledWith({
+      name: 'Granola maison',
+      per100g: { kcal: 450, protein: 10, carbs: 60, fat: 18 },
+      units: [],
+    })
+    expect(await screen.findByRole('dialog', { name: 'Granola maison' })).toBeInTheDocument()
+  })
+
+  it('without "Enregistrer dans mes repas", logs a one-time entry with the totals', async () => {
+    const user = userEvent.setup()
+    renderEditor('/repas/nouveau?date=2026-10-04&nom=Brunch')
+    expect(screen.getByLabelText('Nom')).toHaveValue('Brunch')
+    await user.click(screen.getByRole('radio', { name: 'Saisir les totaux' }))
+    await user.type(screen.getByLabelText('Calories'), '900')
+    await user.type(screen.getByLabelText('Protéines en grammes'), '35')
+    await user.click(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' }))
+    await user.click(screen.getByRole('button', { name: 'Ajouter au 4 octobre' }))
+    expect(mealsCreate).not.toHaveBeenCalled()
+    expect(logEntriesCreateQuick).toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2026-10-04', label: 'Brunch', kcal: 900, protein: 35, carbs: 0, fat: 0 }),
+    )
+  })
+})

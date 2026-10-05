@@ -5,6 +5,7 @@ import { formatDayMonth, parseNumber } from '../../../core/format'
 import { Sheet } from '../../../core/ui/Sheet'
 import form from '../../../core/ui/form.module.css'
 import { fr } from '../../../i18n/fr'
+import type { MealDraft } from '../pages/MealEditorPage'
 import styles from './QuickEntrySheet.module.css'
 
 interface QuickEntrySheetProps {
@@ -12,7 +13,11 @@ interface QuickEntrySheetProps {
   date: string
   today: string
   onClose: () => void
+  /** Back to Ajouter un repas. */
+  onBack: () => void
   onLogged: () => void
+  /** "Plutôt l'enregistrer dans Mes repas": continue in Nouveau repas with these values. */
+  onSaveInstead: (draft: MealDraft) => void
 }
 
 const MACROS = [
@@ -24,7 +29,7 @@ const MACROS = [
 type MacroKey = (typeof MACROS)[number]['key']
 
 /** Saisie rapide: a one-time meal, logged once and never saved to Mes repas. */
-export function QuickEntrySheet({ date, today, onClose, onLogged }: QuickEntrySheetProps) {
+export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSaveInstead }: QuickEntrySheetProps) {
   const [name, setName] = useState('')
   const [kcal, setKcal] = useState('')
   const [macros, setMacros] = useState<Record<MacroKey, string>>({ protein: '', carbs: '', fat: '' })
@@ -61,7 +66,7 @@ export function QuickEntrySheet({ date, today, onClose, onLogged }: QuickEntrySh
   }
 
   return (
-    <Sheet title={fr.quick.title} onClose={onClose} dismiss="back">
+    <Sheet title={fr.quick.title} onClose={onClose} onBack={onBack} dismiss="back">
       <form className={styles.form} onSubmit={submit}>
         <label className={form.field}>
           {fr.quick.name}
@@ -130,6 +135,13 @@ export function QuickEntrySheet({ date, today, onClose, onLogged }: QuickEntrySh
 
         <button className={form.primary} type="submit" disabled={!valid || state === 'saving'}>
           {date === today ? fr.quick.addToday : fr.quick.addOn(formatDayMonth(date))}
+        </button>
+        <button
+          type="button"
+          className={styles.saveInstead}
+          onClick={() => onSaveInstead({ name: name.trim(), manual: { kcal, ...macros }, time })}
+        >
+          {fr.quickSave}
         </button>
       </form>
     </Sheet>

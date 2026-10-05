@@ -4,3 +4,14 @@
   flex-direction: column;
   gap: var(--space-16);
 }
+
+.saveInstead {
+  align-self: center;
+  min-height: var(--size-touch);
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+}

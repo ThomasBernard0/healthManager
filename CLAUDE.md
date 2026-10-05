@@ -28,6 +28,7 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
+  data/ciqual/           CIQUAL 2020 foods (TSV, Licence Ouverte) + convert.mjs (from the ANSES XML)
   prisma/                schema.prisma + migrations/
   prisma7.config.ts      Prisma CLI config (schema path, DATABASE_URL)
   src/
@@ -38,7 +39,7 @@ backend/                 NestJS API
     access/              global AccessGuard (X-Access-Key), @Public() for /api/health
     common/              NutrientsDto, Decimal helpers, date/time validators
     <domain>/            one module per domain: *.module.ts, *.controller.ts, *.service.ts, dto/
-    scripts/             export-openapi.ts
+    scripts/             export-openapi.ts, import-ciqual.ts (runs on every deploy, idempotent)
     generated/prisma/    Prisma client (generated, gitignored)
   test/                  e2e tests (*.e2e-spec.ts)
 frontend/                React SPA
@@ -64,7 +65,7 @@ Root:
 | Command                 | What it does                                                          |
 | ----------------------- | --------------------------------------------------------------------- |
 | `npm run build`         | `npm ci` both apps, `prisma generate` + `nest build`, `vite build`    |
-| `npm start`             | `prisma migrate deploy` then start Nest (used by Railway)             |
+| `npm start`             | `prisma migrate deploy`, CIQUAL import, then start Nest (Railway)    |
 | `npm run api:sync`      | `export:openapi` (backend) + `generate-client` (frontend)             |
 | `npm run lint` / `test` | lint / unit tests (`shared`, backend, frontend)                       |
 | `npm run dev:backend` / `dev:frontend` | dev servers                                            |
@@ -79,6 +80,7 @@ Backend (`cd backend`):
 | `npm run export:openapi`                 | build + write `../frontend/openapi.json` (no DB needed)      |
 | `npx prisma migrate dev --name <x>`     | create + apply a dev migration (needs a DB)                  |
 | `npm run prisma:generate`                | regenerate the Prisma client                                 |
+| `node dist/scripts/import-ciqual.js`     | load CIQUAL foods into `Food` (new codes only; `--force` updates) |
 
 Frontend (`cd frontend`):
 
@@ -154,6 +156,8 @@ $env:_ = "$env:APPDATA\npm\node_modules\@railway\cli\bin\railway.exe"
 - `source.checkSuites: true` = Railway waits for the GitHub `backend`/`frontend` checks before deploying.
 - Secrets are declared with `preserve()` (kept as set on Railway, never committed). Set them by hand:
   `& $env:_ variables --set "ACCESS_KEY=<long random>" -s app`.
+  **Never pipe a secret from Windows PowerShell 5.1** (`… | railway variable set X --stdin`): it prepends a
+  UTF-8 BOM to the value. Pass it as an argument, then check its length with `railway variables -s app --json`.
 
 ## Environment variables
 

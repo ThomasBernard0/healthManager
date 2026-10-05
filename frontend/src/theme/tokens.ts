@@ -129,6 +129,8 @@ export const tokens = {
     fabClearance: '120px',
     timeColumn: '42px',
     numberInput: '72px',
+    segment: '38px',
+    checkbox: '22px',
     ring: '150px',
     ringDesktop: '168px',
     content: '1120px',

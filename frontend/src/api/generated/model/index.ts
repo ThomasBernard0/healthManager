@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './createFoodDto';
 export * from './createQuickEntryDto';
 export * from './currentGoalDto';
 export * from './currentGoalDtoGoal';
@@ -12,16 +13,34 @@ export * from './daySummaryDto';
 export * from './daySummaryDtoGoal';
 export * from './daySummaryDtoLeft';
 export * from './duplicateLogEntryDto';
+export * from './foodDto';
+export * from './foodSource';
+export * from './foodUnitDto';
+export * from './foodsSearchParams';
 export * from './goalDto';
 export * from './healthResponseDto';
 export * from './healthResponseDtoStatus';
 export * from './logEntryDto';
 export * from './logKind';
+export * from './logMealDto';
+export * from './mealDto';
+export * from './mealDtoManualTotals';
+export * from './mealDtoOverride';
+export * from './mealItemDto';
+export * from './mealItemInputDto';
+export * from './mealMode';
+export * from './mealSummaryDto';
+export * from './mealTotalsSource';
+export * from './mealsListParams';
 export * from './nutrientsDeltaDto';
 export * from './nutrientsDto';
 export * from './restoreLogEntryDto';
+export * from './saveMealDto';
+export * from './saveMealDtoManualTotals';
+export * from './saveMealDtoOverride';
 export * from './updateGoalDto';
 export * from './updateLogEntryDto';
+export * from './updateMealFlagsDto';
 export * from './weekProgressDto';
 export * from './weekProgressDtoLeft';
 export * from './weekProgressDtoTarget';

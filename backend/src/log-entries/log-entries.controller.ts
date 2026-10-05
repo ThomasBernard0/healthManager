@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
+import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
 import { DuplicateLogEntryDto, UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 import { LogEntriesService } from './log-entries.service.js';
@@ -26,6 +27,14 @@ import { LogEntriesService } from './log-entries.service.js';
 @Controller('log-entries')
 export class LogEntriesController {
   constructor(private readonly entries: LogEntriesService) {}
+
+  /** Logs a saved meal (×quantity portions) with its totals frozen. */
+  @Post('meal')
+  @ApiCreatedResponse({ type: LogEntryDto })
+  @ApiNotFoundResponse()
+  logMeal(@Body() dto: LogMealDto): Promise<LogEntryDto> {
+    return this.entries.logMeal(dto);
+  }
 
   @Post('quick')
   @ApiCreatedResponse({ type: LogEntryDto })

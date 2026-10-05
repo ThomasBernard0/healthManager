@@ -1,0 +1,186 @@
+/* Transcribed from design/mobile-2-ajouter-un-repas.html */
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+.action {
+  min-height: var(--space-64);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-12);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+  text-align: left;
+}
+
+.action svg {
+  flex-shrink: 0;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: calc(var(--space-6) * -1);
+}
+
+.listTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
+}
+
+.count {
+  font-family: var(--font-body);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-muted);
+}
+
+.manage {
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  min-height: var(--size-touch);
+  margin-block: calc(var(--space-10) * -1);
+  display: inline-flex;
+  align-items: center;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--size-input);
+  padding: 0 var(--space-14);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-muted);
+}
+
+.search:focus-within {
+  border-color: var(--color-accent);
+}
+
+.search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--font-size-14);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-12) 0 var(--space-16);
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+}
+
+.item + .item {
+  border-top: 1px solid var(--color-divider);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-10) 0;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--color-ink);
+  min-height: var(--size-touch);
+  justify-content: center;
+}
+
+.name {
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.star {
+  color: var(--color-carbs);
+  flex-shrink: 0;
+}
+
+.meta {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.plus,
+.plusPrimary {
+  width: var(--size-touch);
+  height: var(--size-touch);
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plus {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  color: var(--color-ink);
+}
+
+.plusPrimary {
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.portions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 0 0 var(--space-12);
+}
+
+.stepper {
+  flex: 1;
+}
+
+.portions button:last-child {
+  min-height: var(--size-input);
+}
+
+.create {
+  width: 100%;
+  min-height: var(--size-row);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  padding: 0;
+}
