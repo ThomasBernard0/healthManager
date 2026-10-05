@@ -218,7 +218,6 @@ describe('MealEditorPage (Nouveau repas)', () => {
     renderEditor()
     expect(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Favori' })).not.toBeChecked()
-    expect(screen.queryByLabelText('Heure du repas')).toBeNull()
     expect(document.querySelector('input[type="time"]')).toBeNull()
   })
 

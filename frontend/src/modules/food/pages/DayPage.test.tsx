@@ -107,13 +107,13 @@ describe('DayPage', () => {
     const dialog = screen.getByRole('dialog', { name: 'Saisie rapide' })
     await user.type(within(dialog).getByLabelText('Calories'), '950')
     await user.type(within(dialog).getByLabelText('Protéines en grammes'), '38,5')
-    await user.clear(within(dialog).getByLabelText('Heure du repas'))
-    await user.type(within(dialog).getByLabelText('Heure du repas'), '20:30')
+    // No time field: logged at the current time.
+    expect(dialog.querySelector('input[type="time"]')).toBeNull()
     await user.click(within(dialog).getByRole('button', { name: 'Ajouter à aujourd’hui' }))
 
     expect(logEntriesCreateQuick).toHaveBeenCalledWith({
       date: DATE,
-      time: '20:30',
+      time: expect.stringMatching(/^([01]\d|2[0-3]):[0-5]\d$/),
       label: 'Repas',
       kcal: 950,
       protein: 38.5,

@@ -7,7 +7,6 @@ import {
   parisToday,
   roundKcal,
   roundMacro,
-  TIME_PATTERN,
 } from '@healthmanager/shared'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -48,7 +47,6 @@ interface Ingredient extends Amount {
 export interface MealDraft {
   name?: string
   manual?: NutrientFields
-  time?: string
 }
 
 const EMPTY_FIELDS: NutrientFields = { kcal: '', protein: '', carbs: '', fat: '' }
@@ -172,8 +170,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
 
   async function submit() {
     if (!valid) return
-    // Logged now (or at the time typed in Saisie rapide before switching here).
-    const time = draft?.time && TIME_PATTERN.test(draft.time) ? draft.time : parisNowTime()
+    const time = parisNowTime()
     setState('saving')
     try {
       if (meal) {
