@@ -8,7 +8,8 @@ import type {
   CreateQuickEntryDto,
   LogEntryDto,
   LogMealDto,
-  RestoreLogEntryDto
+  RestoreLogEntryDto,
+  UpdateLogEntryDto
 } from '../../model';
 
 import { apiClient } from '../../../http';
@@ -47,6 +48,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const logEntriesUpdate = (
+    id: string,
+    updateLogEntryDto: UpdateLogEntryDto,
+ options?: SecondParameter<typeof apiClient<LogEntryDto>>,) => {
+      return apiClient<LogEntryDto>(
+      {url: `/api/log-entries/${id}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateLogEntryDto
+    },
+      options);
+    }
   export const logEntriesRemove = (
     id: string,
  options?: SecondParameter<typeof apiClient<void>>,) => {
@@ -58,4 +70,5 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export type LogEntriesLogMealResult = NonNullable<Awaited<ReturnType<typeof logEntriesLogMeal>>>
 export type LogEntriesCreateQuickResult = NonNullable<Awaited<ReturnType<typeof logEntriesCreateQuick>>>
 export type LogEntriesRestoreResult = NonNullable<Awaited<ReturnType<typeof logEntriesRestore>>>
+export type LogEntriesUpdateResult = NonNullable<Awaited<ReturnType<typeof logEntriesUpdate>>>
 export type LogEntriesRemoveResult = NonNullable<Awaited<ReturnType<typeof logEntriesRemove>>>

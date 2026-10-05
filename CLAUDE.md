@@ -127,7 +127,7 @@ After editing `shared/src`, rebuild it so the apps see the change.
   macros are grams to 0.1 g (`Decimal`); round only in the UI.
 - **Desktop (≥ 1024 px)**: same routes and data; components switch layout with `useIsDesktop()`.
   Sheets use search params (`?ajout=…`, back button closes them); Nouveau repas and Mon objectif are
-  modal routes opened with `state.background` (dialog on desktop, full screen on mobile). After a change
+  modal routes opened with `state.background` (`ModalFrame`: centred dialog on desktop, bottom sheet on mobile). After a change
   made in a dialog call `invalidateData()` so the page underneath reloads (`useDataVersion()` in its key).
 - **Barcodes**: validated with `normalizeBarcode` (shared, GTIN check digit) on both sides. The frontend never calls
   Open Food Facts: `GET /api/foods/barcode/:code` returns the food known by that barcode, else imports the OFF

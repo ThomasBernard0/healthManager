@@ -1,5 +1,10 @@
-import { useState } from 'react'
-import { logEntriesRemove, logEntriesRestore } from '../../../api/generated/endpoints/log-entries/log-entries'
+import { TIME_PATTERN } from '@healthmanager/shared'
+import { useState, type FormEvent } from 'react'
+import {
+  logEntriesRemove,
+  logEntriesRestore,
+  logEntriesUpdate,
+} from '../../../api/generated/endpoints/log-entries/log-entries'
 import type { LogEntryDto } from '../../../api/generated/model'
 import { formatInt, formatMacros } from '../../../core/format'
 import { Sheet } from '../../../core/ui/Sheet'
@@ -15,10 +20,26 @@ interface EntrySheetProps {
   onChanged: () => void
 }
 
-/** Tap on a logged meal: its totals, and delete it (with undo). Time and portions are set when logging. */
+/** Tap on a logged meal: its totals, change its time (starts at the logged time), delete it (with undo). */
 export function EntrySheet({ entry, onClose, onChanged }: EntrySheetProps) {
   const toast = useToast()
+  const [time, setTime] = useState(entry.time)
   const [state, setState] = useState<'idle' | 'busy' | 'error'>('idle')
+  const changed = time !== entry.time
+
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    if (!changed || !TIME_PATTERN.test(time)) return
+    setState('busy')
+    try {
+      await logEntriesUpdate(entry.id, { time })
+    } catch {
+      setState('error')
+      return
+    }
+    onClose()
+    onChanged()
+  }
 
   async function remove() {
     setState('busy')
@@ -58,10 +79,22 @@ export function EntrySheet({ entry, onClose, onChanged }: EntrySheetProps) {
         <span className={styles.totalMacros}>{formatMacros(entry.total)}</span>
       </div>
 
-      <div className={styles.time}>
-        <span>{fr.entry.time}</span>
-        <span className={styles.timeValue}>{entry.time}</span>
-      </div>
+      <form className={styles.form} onSubmit={(e) => void save(e)}>
+        <label className={form.row}>
+          <span>{fr.entry.time}</span>
+          <input
+            className={form.inlineInput}
+            type="time"
+            aria-label={fr.entry.timeLabel}
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            required
+          />
+        </label>
+        <button className={form.primary} type="submit" disabled={!changed || state === 'busy'}>
+          {fr.common.save}
+        </button>
+      </form>
 
       {state === 'error' && (
         <div className={form.error} role="alert">

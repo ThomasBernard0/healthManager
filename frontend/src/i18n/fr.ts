@@ -64,6 +64,7 @@ export const fr = {
   },
   entry: {
     time: 'Heure',
+    timeLabel: 'Heure du repas',
     delete: 'Supprimer',
     deleted: 'Repas supprimé',
     undo: 'Annuler',

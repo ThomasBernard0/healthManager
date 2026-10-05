@@ -113,7 +113,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
 
       {meals.data && (visible.length > 0 || trimmed) && (
         <ul className={styles.list}>
-          {visible.map((meal, index) => (
+          {visible.map((meal) => (
             <li key={meal.id} className={styles.item}>
               <div className={styles.row}>
                 <div className={styles.rowMain}>
@@ -133,7 +133,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
                 </div>
                 <button
                   type="button"
-                  className={index === 0 && !trimmed ? styles.plusPrimary : styles.plus}
+                  className={styles.plus}
                   aria-label={fr.add.addMeal(meal.name)}
                   disabled={busy}
                   onClick={() => void log(meal)}

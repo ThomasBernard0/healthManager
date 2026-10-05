@@ -4,7 +4,7 @@ import styles from './ModalFrame.module.css'
 
 /**
  * A route shown over the page it was opened from (location.state.background):
- * full screen on mobile, a centred dialog (max 560 px) on desktop. Escape or the scrim go back.
+ * a bottom sheet on mobile, a centred dialog (max 560 px) on desktop. Escape or the scrim go back.
  */
 export function ModalFrame({ label, children }: { label: string; children: ReactNode }) {
   const navigate = useNavigate()

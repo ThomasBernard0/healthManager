@@ -133,8 +133,7 @@
   color: var(--color-muted);
 }
 
-.plus,
-.plusPrimary {
+.plus {
   width: var(--size-touch);
   height: var(--size-touch);
   flex-shrink: 0;
@@ -142,15 +141,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.plus {
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-card);
-  color: var(--color-ink);
-}
-
-.plusPrimary {
   border: none;
   background: var(--color-accent);
   color: var(--color-on-accent);
@@ -174,10 +164,9 @@
   display: none;
 }
 
-/* Desktop dialog (design/bureau-ajouter-un-repas.html): search first, list without a card. */
+/* Desktop dialog: same order as mobile (actions, Mes repas, search, list), list without a card. */
 @media (min-width: 1024px) {
   .search {
-    order: 1;
     height: var(--size-touch);
     padding: 0 var(--space-12);
     background: var(--color-ground);
@@ -193,30 +182,17 @@
     padding: 1px var(--space-6);
   }
 
-  .actions {
-    order: 2;
-  }
-
-  .listHeader {
-    order: 3;
-    margin-bottom: 0;
-    padding-bottom: var(--space-8);
-    border-bottom: 1px solid var(--color-border);
-  }
-
   .listTitle {
     font-size: var(--font-size-16);
   }
 
   .list {
-    order: 4;
     background: transparent;
     padding: 0;
     border-radius: 0;
   }
 
-  .plus,
-  .plusPrimary {
+  .plus {
     width: var(--size-desktop-control);
     height: var(--size-desktop-control);
     border-radius: var(--radius-md);

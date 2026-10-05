@@ -55,7 +55,7 @@ No meal-time categories: a day is one list of meals, ordered by time.
 
 ### 1 · Aujourd'hui (Jour view)
 
-Top bar: just the module title "Alimentation" (later it becomes the switch between modules); no settings icon, no bottom tab bar. Date switcher, Jour/Semaine toggle. Ring = kcal left **today**; beside it eaten, objectif du jour with a pencil icon (tap → Mon objectif), week total (opens Semaine). Macro bars for today. One card "Repas du jour": every meal eaten that day in a single list ordered by time, each row showing time, name, P/G/L and kcal; header shows the count and the day total. No meal-time categories (no breakfast/lunch/dinner). Tap an entry: see its totals and time, delete with undo (time and portions are set when logging; no editing, no duplicating to another day). Browsing back stops at the first day with data (today when there is none); the future stays open. Floating "Ajouter" opens Ajout rapide; a meal is logged at the current time (editable).
+Top bar: just the module title "Alimentation" (later it becomes the switch between modules); no settings icon, no bottom tab bar. Date switcher, Jour/Semaine toggle. Ring = kcal left **today**; beside it eaten, objectif du jour with a pencil icon (tap → Mon objectif), week total (opens Semaine). Macro bars for today. One card "Repas du jour": every meal eaten that day in a single list ordered by time, each row showing time, name, P/G/L and kcal; header shows the count and the day total. No meal-time categories (no breakfast/lunch/dinner). Tap an entry: change its time (starts at the time it was logged; Enregistrer), delete with undo (no portion edit, no duplicating to another day). Browsing back stops at the first day with data (today when there is none); the future stays open. Floating "Ajouter" opens Ajout rapide; a meal is logged at the current time (editable).
 
 ### 2 · Ajout rapide
 
@@ -63,7 +63,7 @@ Bottom sheet (dialog on desktop). A search bar over **one single list, "Mes repa
 
 ### 3 · Nouveau repas
 
-Two modes. Par ingrédients: add foods from search or with the **Scanner** button (camera barcode scan → Open Food Facts → ask grams; on desktop, type the barcode number), set grams or a unit; each ingredient row shows its own kcal and P/G/L, and the meal total (kcal + P/G/L) is their sum, computed live. Macros always come from the ingredient (per 100 g): a food not in the database is created once as "Mon aliment" with its kcal, P, G, L per 100 g, then reused. Saisir les totaux: type kcal, protein, carbs, fat. Either way the total can be overridden. Toggles: enregistrer dans mes repas, favori (checked by default). Primary action: save and log it to today.
+Two modes. Par ingrédients: add foods from search or with the **Scanner** button (camera barcode scan → Open Food Facts → ask grams; on desktop, type the barcode number), set grams or a unit; each ingredient row shows its own kcal and P/G/L, and the meal total (kcal + P/G/L) is their sum, computed live. Macros always come from the ingredient (per 100 g): a food not in the database is created once as "Mon aliment" with its kcal, P, G, L per 100 g, then reused. Saisir les totaux: type kcal, protein, carbs, fat. Either way the total can be overridden. Toggles: enregistrer dans mes repas, favori (checked by default). Primary action: save and log it to today, at the current time (no time field). Opens as a modal over the page (bottom sheet on mobile, dialog on desktop).
 
 ### 3b · Saisie rapide
 
