@@ -248,6 +248,34 @@ describe('MealEditorPage (Nouveau repas)', () => {
     expect(mealsRemove).toHaveBeenCalledWith('m1')
     expect(await screen.findByText('jour')).toBeInTheDocument()
   })
+
+  it('keeps the mode of a saved meal: shown, not switchable', async () => {
+    vi.mocked(mealsGet).mockResolvedValue({
+      id: 'm1',
+      name: 'Pomme',
+      mode: 'manual',
+      isFavorite: false,
+      totals: { kcal: 80, protein: 0, carbs: 20, fat: 0 },
+      totalsSource: 'manual',
+      timesEaten: 2,
+      lastEatenOn: '2026-10-03',
+      items: [],
+      manualTotals: { kcal: 80, protein: 0, carbs: 20, fat: 0 },
+      override: null,
+    } as MealDto)
+    renderEditor('/repas/m1')
+    expect(await screen.findByText('Saisir les totaux')).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByText('Par ingrédients')).toBeNull()
+    expect(screen.getByLabelText('Calories')).toHaveValue('80')
+  })
+
+  it('lets a new meal choose its mode', () => {
+    renderEditor()
+    expect(screen.getByRole('radio', { name: 'Par ingrédients' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Saisir les totaux' })).toBeInTheDocument()
+  })
+
   it('has no Scanner on desktop (camera feature): + Ingrédient only', () => {
     const original = window.matchMedia
     window.matchMedia = ((query: string) => ({

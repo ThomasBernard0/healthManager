@@ -256,20 +256,25 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
         />
       </label>
 
-      <div className={styles.segmented} role="radiogroup">
-        {(['ingredients', 'manual'] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            role="radio"
-            aria-checked={mode === m}
-            className={mode === m ? styles.segmentActive : styles.segment}
-            onClick={() => setMode(m)}
-          >
-            {m === 'ingredients' ? fr.meal.byIngredients : fr.meal.byTotals}
-          </button>
-        ))}
-      </div>
+      {isNew ? (
+        <div className={styles.segmented} role="radiogroup">
+          {(['ingredients', 'manual'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={mode === m}
+              className={mode === m ? styles.segmentActive : styles.segment}
+              onClick={() => setMode(m)}
+            >
+              {m === 'ingredients' ? fr.meal.byIngredients : fr.meal.byTotals}
+            </button>
+          ))}
+        </div>
+      ) : (
+        // A saved meal keeps its mode: switching would drop its ingredients (or its typed totals).
+        <div className={styles.modeFixed}>{mode === 'ingredients' ? fr.meal.byIngredients : fr.meal.byTotals}</div>
+      )}
 
       {mode === 'ingredients' ? (
         <>
