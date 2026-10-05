@@ -20,20 +20,8 @@
   color: var(--color-on-inverse-muted);
 }
 
-/* "Heure ........ 08:10", read-only. */
-.time {
+.form {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-12);
-  min-height: var(--size-row);
-  border-radius: var(--radius-lg);
-  background: var(--color-card);
-  padding: 0 var(--space-14);
-  font-size: var(--font-size-15);
-  color: var(--color-ink);
-}
-
-.timeValue {
-  font-variant-numeric: tabular-nums;
+  flex-direction: column;
+  gap: var(--space-16);
 }

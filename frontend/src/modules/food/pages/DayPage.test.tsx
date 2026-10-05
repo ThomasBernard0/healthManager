@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import {
   logEntriesCreateQuick,
   logEntriesLogMeal,
+  logEntriesUpdate,
 } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
@@ -198,18 +199,24 @@ describe('DayPage', () => {
     expect(within(dialog).queryByRole('button', { name: 'Augmenter la quantité' })).toBeNull()
     expect(within(dialog).getByRole('button', { name: 'Ajouter Fajitas poulet' })).toBeInTheDocument()
   })
-  it('shows a logged meal read-only: totals and time, only Supprimer', async () => {
+  it('changes the time of a logged meal (starts at the logged time); no quantity, no duplicate', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(logEntriesUpdate).mockResolvedValue(entry('a', '08:30', 'Bol yaourt grec', 420))
     const user = userEvent.setup()
     renderDay()
     await user.click(await screen.findByRole('button', { name: /Bol yaourt grec/ }))
     const dialog = screen.getByRole('dialog', { name: 'Bol yaourt grec' })
     expect(text(dialog)).toContain('420 kcal')
-    expect(text(dialog)).toContain('Heure08:10')
-    expect(dialog.querySelector('input')).toBeNull()
-    expect(within(dialog).queryByRole('button', { name: 'Enregistrer' })).toBeNull()
     expect(within(dialog).queryByText(/Dupliquer|Quantité/)).toBeNull()
-    expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument()
+    const time = within(dialog).getByLabelText('Heure du repas')
+    expect(time).toHaveValue('08:10')
+    const save = within(dialog).getByRole('button', { name: 'Enregistrer' })
+    expect(save).toBeDisabled()
+
+    await user.clear(time)
+    await user.type(time, '08:30')
+    await user.click(save)
+    expect(logEntriesUpdate).toHaveBeenCalledWith('a', { time: '08:30' })
   })
   it('can’t go back before the first day with data', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary({ earliestDate: DATE }))

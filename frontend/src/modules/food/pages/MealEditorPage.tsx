@@ -125,7 +125,6 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   // New meals start as favourites.
   const [favorite, setFavorite] = useState(meal?.isFavorite ?? true)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [time, setTime] = useState(draft?.time ?? parisNowTime())
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [overlay, setOverlay] = useState<
     | { kind: 'pick' }
@@ -149,8 +148,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   const valid =
     (!saving || name.trim().length > 0) &&
     (mode === 'ingredients' ? ingredients.length > 0 : manualTotals !== null) &&
-    (override === null || overrideTotals !== null) &&
-    (!isNew || TIME_PATTERN.test(time))
+    (override === null || overrideTotals !== null)
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(dayPath()))
 
@@ -175,6 +173,8 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
 
   async function submit() {
     if (!valid) return
+    // Logged now (or at the time typed in Saisie rapide before switching here).
+    const time = draft?.time && TIME_PATTERN.test(draft.time) ? draft.time : parisNowTime()
     setState('saving')
     try {
       if (meal) {
@@ -402,18 +402,6 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
           <label className={styles.toggle}>
             <span>{fr.meal.favorite}</span>
             <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
-          </label>
-        )}
-        {isNew && (
-          <label className={styles.toggle}>
-            <span>{fr.meal.time}</span>
-            <input
-              className={form.inlineInput}
-              type="time"
-              aria-label={fr.quick.timeLabel}
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-            />
           </label>
         )}
       </section>

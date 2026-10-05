@@ -1,19 +1,29 @@
+/* Mobile: a bottom sheet over the page (like Sheet); desktop: a centred dialog. */
 .root {
   position: fixed;
   inset: 0;
   z-index: 40;
-  overflow-y: auto;
-  background: var(--color-ground);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .scrim {
-  display: none;
+  position: absolute;
+  inset: 0;
+  background: var(--color-scrim);
 }
 
 .panel {
   position: relative;
+  width: 100%;
+  max-width: var(--size-mobile);
+  max-height: 94dvh;
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--color-ground);
-  min-height: 100%;
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
 }
 
 /* The page inside keeps its own padding; it should not force a full-height viewport. */
@@ -23,23 +33,20 @@
 
 @media (min-width: 1024px) {
   .root {
-    background: transparent;
+    justify-content: flex-start;
+    overflow-y: auto;
     padding: var(--space-64) var(--space-16);
   }
 
   .scrim {
-    display: block;
     position: fixed;
-    inset: 0;
-    background: var(--color-scrim);
   }
 
   .panel {
     max-width: var(--size-dialog);
-    min-height: 0;
-    margin: 0 auto;
+    max-height: none;
+    overflow: hidden;
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-dialog);
-    overflow: hidden;
   }
 }

@@ -214,9 +214,11 @@ describe('MealEditorPage (Nouveau repas)', () => {
       expect.objectContaining({ date: '2026-10-04', label: 'Brunch', kcal: 900, protein: 35, carbs: 0, fat: 0 }),
     )
   })
-  it('starts a new meal as a favourite', () => {
+  it('starts a new meal as a favourite, with no time field (logged when saved)', () => {
     renderEditor()
     expect(screen.getByRole('checkbox', { name: 'Favori' })).toBeChecked()
+    expect(screen.queryByLabelText('Heure du repas')).toBeNull()
+    expect(document.querySelector('input[type="time"]')).toBeNull()
   })
 
   it('deletes a saved meal for good, after confirming', async () => {

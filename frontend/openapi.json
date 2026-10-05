@@ -186,6 +186,47 @@
       }
     },
     "/api/log-entries/{id}": {
+      "patch": {
+        "operationId": "LogEntries_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      },
       "delete": {
         "operationId": "LogEntries_remove",
         "parameters": [
@@ -980,6 +1021,18 @@
           "label",
           "quantity",
           "snapshot"
+        ]
+      },
+      "UpdateLogEntryDto": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "example": "13:00"
+          }
+        },
+        "required": [
+          "time"
         ]
       },
       "MealMode": {
