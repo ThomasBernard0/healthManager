@@ -47,6 +47,22 @@ export default function App() {
                 </ModalFrame>
               }
             />
+            <Route
+              path={MEALS_PATH}
+              element={
+                <ModalFrame label={fr.add.myMeals}>
+                  <MealsPage />
+                </ModalFrame>
+              }
+            />
+            <Route
+              path={`${MEALS_PATH}/:id`}
+              element={
+                <ModalFrame label={fr.meal.editTitle}>
+                  <MealEditorPage />
+                </ModalFrame>
+              }
+            />
             <Route path="*" element={null} />
           </Routes>
         )}

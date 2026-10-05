@@ -1,12 +1,13 @@
 import { matchesSearch, parisToday, searchKey } from '@healthmanager/shared'
 import { useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, type Location } from 'react-router-dom'
 import { mealsList, mealsRemove, mealsSetFavorite } from '../../../api/generated/endpoints/meals/meals'
 import type { MealSummaryDto } from '../../../api/generated/model'
 import { formatInt, formatLastEaten, formatMacros } from '../../../core/format'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronLeft, Search, Star, StarOutline, Trash } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
+import { invalidateData } from '../../../core/dataVersion'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { dayPath, editMealPath } from '../routes'
@@ -29,6 +30,9 @@ export default function MealsPage() {
   )
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(dayPath()))
+  // Shown as a dialog over a page: Modifier le repas opens over that same page (back returns here).
+  const background = (location.state as { background?: Location } | null)?.background
+  const edit = (id: string) => navigate(editMealPath(id), background ? { state: { background } } : undefined)
 
   async function toggleFavorite(meal: MealSummaryDto) {
     const next = !(favorites[meal.id] ?? meal.isFavorite)
@@ -45,6 +49,7 @@ export default function MealsPage() {
     setDeleting('busy')
     try {
       await mealsRemove(toDelete.id)
+      invalidateData()
     } catch {
       setDeleting('error')
       return
@@ -96,7 +101,7 @@ export default function MealsPage() {
                 >
                   {favorite ? <Star size={20} /> : <StarOutline size={20} />}
                 </button>
-                <button type="button" className={styles.main} onClick={() => navigate(editMealPath(meal.id))}>
+                <button type="button" className={styles.main} onClick={() => edit(meal.id)}>
                   <span className={styles.name}>{meal.name}</span>
                   <span className={styles.meta}>
                     {[
