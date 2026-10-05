@@ -122,8 +122,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
   )
   const [override, setOverride] = useState<NutrientFields | null>(meal?.override ? toFields(meal.override) : null)
   const [saveToMeals, setSaveToMeals] = useState(true)
-  // New meals start as favourites.
-  const [favorite, setFavorite] = useState(meal?.isFavorite ?? true)
+  const [favorite, setFavorite] = useState(meal?.isFavorite ?? false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [overlay, setOverlay] = useState<

@@ -19,9 +19,3 @@
   font-size: var(--font-size-13);
   color: var(--color-on-inverse-muted);
 }
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-}
