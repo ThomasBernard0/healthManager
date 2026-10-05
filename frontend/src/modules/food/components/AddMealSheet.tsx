@@ -1,6 +1,6 @@
 import { matchesSearch, parisNowTime, searchKey } from '@healthmanager/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { logEntriesLogMeal, logEntriesRemove } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import type { MealSummaryDto } from '../../../api/generated/model'
@@ -11,6 +11,7 @@ import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
+import { asBackground } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
 import { MEALS_PATH } from '../routes'
 import styles from './AddMealSheet.module.css'
@@ -34,6 +35,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
   const [busy, setBusy] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const desktop = useIsDesktop()
+  const location = useLocation()
 
   // "/" jumps to the search (desktop shortcut), unless already typing somewhere.
   useEffect(() => {
@@ -86,7 +88,8 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
             <Plus size={14} />
             {fr.add.newMeal}
           </button>
-          <Link to={MEALS_PATH} className={styles.manage}>
+          {/* Gérer opens over the page, in place of this sheet (like Nouveau repas). */}
+          <Link to={MEALS_PATH} replace state={{ background: asBackground(location) }} className={styles.manage}>
             {fr.add.manage}
           </Link>
         </div>
