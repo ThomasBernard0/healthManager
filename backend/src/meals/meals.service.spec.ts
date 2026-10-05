@@ -127,6 +127,14 @@ describe('MealsService', () => {
     await expect(service.create({ ...base, mode: 'ingredients' })).rejects.toThrow(/items/);
   });
 
+  it('refuses to change the mode of a saved meal (it would drop its totals or ingredients)', async () => {
+    prisma.meal.findUnique.mockResolvedValue(meal('m', 'Pomme'));
+    await expect(
+      service.update('m', { name: 'Pomme', mode: 'ingredients', items: [{ foodId: 'pates', grams: 100 }], isFavorite: false }),
+    ).rejects.toThrow(/mode/);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it('editing a meal never touches past log entries', async () => {
     prisma.meal.findUnique.mockResolvedValue(meal('m', 'Pomme'));
     prisma.$transaction.mockResolvedValue([]);

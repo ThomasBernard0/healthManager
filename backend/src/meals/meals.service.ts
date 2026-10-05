@@ -120,7 +120,11 @@ export class MealsService {
 
   /** Replaces a saved meal. Past log entries keep their snapshot, so earlier days do not change. */
   async update(id: string, dto: SaveMealDto): Promise<MealDto> {
-    await this.getOrThrow(id);
+    const existing = await this.getOrThrow(id);
+    // A meal keeps its mode: switching would drop its ingredients (or its typed totals).
+    if (dto.mode !== existing.mode) {
+      throw new BadRequestException('The mode of a saved meal cannot change');
+    }
     await this.validate(dto);
     await this.prisma.$transaction([
       this.prisma.mealItem.deleteMany({ where: { mealId: id } }),

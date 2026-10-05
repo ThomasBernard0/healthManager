@@ -67,6 +67,13 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* Editing a saved meal: its mode, shown but not switchable. */
+.modeFixed {
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-muted);
+}
+
 .card {
   background: var(--color-card);
   border-radius: var(--radius-card);
