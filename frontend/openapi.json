@@ -607,6 +607,38 @@
           "summary"
         ]
       }
+    },
+    "/api/summary/weeks/{date}": {
+      "get": {
+        "operationId": "Summary_week",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "description": "Any day of the week",
+            "schema": {
+              "example": "2026-09-28",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "summary"
+        ]
+      }
     }
   },
   "info": {
@@ -1561,6 +1593,117 @@
           "left",
           "entries",
           "week"
+        ]
+      },
+      "WeekDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-30"
+          },
+          "eaten": {
+            "$ref": "#/components/schemas/NutrientsDto"
+          },
+          "target": {
+            "nullable": true,
+            "description": "Daily target of that day (its own goal)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "left": {
+            "nullable": true,
+            "description": "target − eaten (negative when over)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDeltaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "date",
+          "eaten",
+          "target",
+          "left"
+        ]
+      },
+      "WeekSummaryDto": {
+        "type": "object",
+        "properties": {
+          "monday": {
+            "type": "string",
+            "example": "2026-09-28",
+            "description": "Monday starting the week"
+          },
+          "today": {
+            "type": "string",
+            "example": "2026-10-04",
+            "description": "Today in Europe/Paris"
+          },
+          "days": {
+            "description": "Monday → Sunday",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeekDayDto"
+            }
+          },
+          "eaten": {
+            "description": "Sum of the 7 days",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "target": {
+            "nullable": true,
+            "description": "Sum of the 7 daily targets",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "left": {
+            "nullable": true,
+            "description": "target − eaten (negative when over)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDeltaDto"
+              }
+            ]
+          },
+          "elapsedDays": {
+            "type": "number",
+            "example": 7,
+            "description": "Days of the week started by today (0 for a future week)"
+          },
+          "average": {
+            "description": "Average per elapsed day",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "monday",
+          "today",
+          "days",
+          "eaten",
+          "target",
+          "left",
+          "elapsedDays",
+          "average"
         ]
       }
     }

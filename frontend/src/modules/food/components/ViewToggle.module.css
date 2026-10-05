@@ -1,0 +1,39 @@
+/* Transcribed from design/mobile-1-aujourdhui.html and mobile-4-semaine.html */
+.toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  background: var(--color-track);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+}
+
+.option,
+.active {
+  height: var(--size-toggle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-14);
+  text-decoration: none;
+}
+
+.option {
+  color: var(--color-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.option:hover {
+  color: var(--color-ink);
+}
+
+.active {
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+.active:hover {
+  color: var(--color-ink);
+}

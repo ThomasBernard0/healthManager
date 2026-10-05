@@ -4,6 +4,8 @@ import {
   formatLongDate,
   formatMacros,
   formatQuantity,
+  formatWeekRange,
+  formatWeekTitle,
   parseNumber,
 } from './format'
 
@@ -31,5 +33,18 @@ describe('format', () => {
     expect(parseNumber(' 950 ')).toBe(950)
     expect(parseNumber('')).toBeNull()
     expect(parseNumber('abc')).toBeNull()
+  })
+})
+
+describe('week formats', () => {
+  it('formats the week range like the design', () => {
+    expect(formatWeekRange('2026-09-28')).toBe('Lun 28 sept – Dim 4 oct')
+  })
+
+  it('names the week relative to this one', () => {
+    expect(formatWeekTitle('2026-10-05', '2026-10-05')).toBe('Cette semaine')
+    expect(formatWeekTitle('2026-09-28', '2026-10-05')).toBe('Semaine dernière')
+    expect(formatWeekTitle('2026-10-12', '2026-10-05')).toBe('Semaine prochaine')
+    expect(formatWeekTitle('2026-09-21', '2026-10-05')).toBe('Semaine du 21 septembre')
   })
 })

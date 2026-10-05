@@ -96,3 +96,54 @@ describe('SummaryService.day', () => {
     expect(day.week.target).toBeNull();
   });
 });
+
+describe('SummaryService.week', () => {
+  const logEntry = { findMany: vi.fn() };
+  const goals = { findAll: vi.fn() };
+  const service = new SummaryService(
+    { logEntry } as unknown as PrismaService,
+    goals as unknown as GoalsService,
+  );
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    // Goal raised from 2 200 to 2 400 on Wednesday 2026-09-30.
+    goals.findAll.mockResolvedValue([goal('2026-01-01', 2200), goal('2026-09-30', 2400)]);
+    logEntry.findMany.mockResolvedValue([
+      entry('2026-09-28', '12:00', 2000),
+      entry('2026-09-30', '08:10', 400),
+      entry('2026-09-30', '12:45', 600, 2),
+      entry('2026-10-04', '23:30', 300), // Sunday 23:30 counts in this week
+    ]);
+  });
+
+  it('returns the 7 days Monday ? Sunday of any date of the week', async () => {
+    const week = await service.week('2026-10-02');
+    expect(week.monday).toBe('2026-09-28');
+    expect(week.days.map((d) => d.date)).toEqual([
+      '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04',
+    ]);
+  });
+
+  it('compares each day with its own goal: Mon?Tue 2 200, Wed?Sun 2 400, week 16 400', async () => {
+    const week = await service.week('2026-09-28');
+    expect(week.days.map((d) => d.target?.kcal)).toEqual([2200, 2200, 2400, 2400, 2400, 2400, 2400]);
+    expect(week.target?.kcal).toBe(16400);
+    expect(week.days.map((d) => d.eaten.kcal)).toEqual([2000, 0, 1600, 0, 0, 0, 300]);
+    expect(week.days[0].left?.kcal).toBe(200);
+  });
+
+  it('week total equals the sum of its seven days', async () => {
+    const week = await service.week('2026-09-28');
+    const sum = week.days.reduce((s, d) => s + d.eaten.kcal, 0);
+    expect(week.eaten.kcal).toBe(sum);
+    expect(week.eaten.protein).toBeCloseTo(week.days.reduce((s, d) => s + d.eaten.protein, 0), 5);
+    expect(week.left?.kcal).toBe(16400 - 3900);
+  });
+
+  it('averages over the days elapsed (7 for a past week)', async () => {
+    const week = await service.week('2026-09-28');
+    expect(week.elapsedDays).toBe(7);
+    expect(week.average.kcal).toBe(Math.round(3900 / 7));
+  });
+});

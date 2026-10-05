@@ -68,6 +68,28 @@ export function formatLastEaten(date: string, today: string): string {
   return shortDate.format(toUtcDate(date))
 }
 
+const noDot = (s: string) => s.replace(/\.$/, '')
+const shortWeekday = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', timeZone: 'UTC' })
+const shortMonth = new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'UTC' })
+
+/** "Lun 28 sept" */
+export function formatShortDay(date: string): string {
+  const d = toUtcDate(date)
+  return `${capitalize(noDot(shortWeekday.format(d)))} ${d.getUTCDate()} ${noDot(shortMonth.format(d))}`
+}
+
+/** "Lun 28 sept – Dim 4 oct" */
+export const formatWeekRange = (monday: string): string =>
+  `${formatShortDay(monday)} – ${formatShortDay(addDays(monday, 6))}`
+
+/** "Cette semaine" / "Semaine dernière" / "Semaine prochaine" / "Semaine du 21 septembre". */
+export function formatWeekTitle(monday: string, thisMonday: string): string {
+  if (monday === thisMonday) return fr.week.thisWeek
+  if (monday === addDays(thisMonday, -7)) return fr.week.lastWeek
+  if (monday === addDays(thisMonday, 7)) return fr.week.nextWeek
+  return fr.week.weekOf(formatDayMonth(monday))
+}
+
 /** Parses a typed number, accepting a French decimal comma. Empty → null. */
 export function parseNumber(value: string): number | null {
   const trimmed = value.trim().replace(',', '.')

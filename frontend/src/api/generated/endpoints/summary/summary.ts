@@ -5,7 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  DaySummaryDto
+  DaySummaryDto,
+  WeekSummaryDto
 } from '../../model';
 
 import { apiClient } from '../../../http';
@@ -22,4 +23,13 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const summaryWeek = (
+    date: string,
+ options?: SecondParameter<typeof apiClient<WeekSummaryDto>>,) => {
+      return apiClient<WeekSummaryDto>(
+      {url: `/api/summary/weeks/${date}`, method: 'GET'
+    },
+      options);
+    }
   export type SummaryDayResult = NonNullable<Awaited<ReturnType<typeof summaryDay>>>
+export type SummaryWeekResult = NonNullable<Awaited<ReturnType<typeof summaryWeek>>>
