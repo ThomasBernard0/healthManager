@@ -1,0 +1,72 @@
+/* Transcribed from design/bureau-jour.html header */
+.bar {
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inner {
+  max-width: var(--size-header);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-24);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-24);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-20);
+}
+
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.arrow,
+.current {
+  height: var(--size-desktop-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  color: var(--color-ink);
+}
+
+.arrow {
+  width: var(--size-desktop-control);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.current {
+  padding: 0 var(--space-14);
+  font-size: var(--font-size-14);
+}
+
+.arrow:hover,
+.current:hover {
+  border-color: var(--color-border-strong);
+}
+
+.label {
+  margin: 0;
+  min-width: var(--size-period-label);
+  text-align: center;
+  font-size: var(--font-size-15);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Inline toggle: auto-width options instead of the mobile 50/50 grid. */
+.toggle nav {
+  display: flex;
+}
+
+.toggle a {
+  height: var(--size-desktop-toggle);
+  padding: 0 var(--space-18);
+}

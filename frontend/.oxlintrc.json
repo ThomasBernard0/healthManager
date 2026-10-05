@@ -4,6 +4,7 @@
   "ignorePatterns": ["src/api/generated/**", "dist/**"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-globals": ["error", { "name": "location", "message": "Use useLocation() (react-router) or window.location explicitly." }]
   }
 }

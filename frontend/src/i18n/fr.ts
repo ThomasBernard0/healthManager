@@ -73,6 +73,18 @@ export const fr = {
     deleted: 'Repas supprimé',
     undo: 'Annuler',
   },
+  desktop: {
+    today: 'Aujourd’hui',
+    thisWeek: 'Cette semaine',
+    options: (name: string) => `Options pour ${name}`,
+    seeWeek: 'Voir la semaine',
+    remaining: (n: string) => `${n} restantes`,
+    inProgress: 'en cours',
+    searchKey: '/',
+    table: { day: 'Jour', kcal: 'kcal', p: 'P', g: 'G', l: 'L', gap: 'Écart', week: 'Semaine' },
+    /** Weekday short names, Monday first. */
+    shortDays: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+  },
   view: {
     day: 'Jour',
     week: 'Semaine',
@@ -104,6 +116,7 @@ export const fr = {
     myMeals: 'Mes repas',
     manage: 'Gérer',
     search: 'Chercher un repas (shaker, fajitas…)',
+    searchDesktop: 'Chercher dans mes repas (shaker, fajitas…)',
     searchLabel: 'Chercher dans mes repas',
     create: (name: string) => `Créer « ${name} »`,
     favorite: 'Favori',

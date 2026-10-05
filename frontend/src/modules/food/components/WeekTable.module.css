@@ -1,0 +1,79 @@
+/* Transcribed from design/bureau-semaine.html */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-10) var(--space-24);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-14);
+  min-width: var(--size-table-min);
+  text-align: right;
+}
+
+.table th {
+  color: var(--color-muted);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-12) 0;
+}
+
+.table td {
+  padding: var(--space-10) 0;
+}
+
+.table tbody tr {
+  border-top: 1px solid var(--color-divider);
+}
+
+.dayCol {
+  text-align: left;
+}
+
+.table th.dayCol {
+  text-align: left;
+}
+
+.dayCol a {
+  text-decoration: none;
+}
+
+.dayCol a:hover {
+  text-decoration: underline;
+}
+
+.table tbody tr:not(.total) .dayCol a {
+  color: var(--color-ink);
+}
+
+.kcal {
+  font-weight: var(--font-weight-semibold);
+}
+
+.total {
+  font-weight: var(--font-weight-semibold);
+}
+
+.table tbody tr.total {
+  border-top: 2px solid var(--color-ink);
+}
+
+.table tr.total td {
+  padding: var(--space-12) 0;
+}
+
+.under {
+  color: var(--color-accent);
+}
+
+.over {
+  color: var(--color-over);
+  font-weight: var(--font-weight-semibold);
+}
+
+.muted {
+  color: var(--color-muted);
+}

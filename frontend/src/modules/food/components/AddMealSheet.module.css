@@ -184,3 +184,56 @@
   text-align: left;
   padding: 0;
 }
+
+.key {
+  display: none;
+}
+
+/* Desktop dialog (design/bureau-ajouter-un-repas.html): search first, list without a card. */
+@media (min-width: 1024px) {
+  .search {
+    order: 1;
+    height: var(--size-touch);
+    padding: 0 var(--space-12);
+    background: var(--color-ground);
+    border-color: transparent;
+  }
+
+  .key {
+    display: inline-block;
+    font: inherit;
+    font-size: var(--font-size-12);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    padding: 1px var(--space-6);
+  }
+
+  .actions {
+    order: 2;
+  }
+
+  .listHeader {
+    order: 3;
+    margin-bottom: 0;
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .listTitle {
+    font-size: var(--font-size-16);
+  }
+
+  .list {
+    order: 4;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .plus,
+  .plusPrimary {
+    width: var(--size-desktop-control);
+    height: var(--size-desktop-control);
+    border-radius: var(--radius-md);
+  }
+}

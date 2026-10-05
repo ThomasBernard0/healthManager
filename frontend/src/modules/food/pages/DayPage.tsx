@@ -1,19 +1,23 @@
 import { addDays, isIsoDate, parisToday, weekStart } from '@healthmanager/shared'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { summaryDay, summaryWeek } from '../../../api/generated/endpoints/summary/summary'
 import type { DaySummaryDto, LogEntryDto } from '../../../api/generated/model'
 import { formatDayTitle, formatInt, formatLongDate, formatMacros, formatQuantity } from '../../../core/format'
 import { ChevronLeft, ChevronRight, Pencil, Plus } from '../../../core/ui/icons'
 import { MacroBar } from '../../../core/ui/MacroBar'
 import { Ring } from '../../../core/ui/Ring'
 import form from '../../../core/ui/form.module.css'
+import { useDataVersion } from '../../../core/dataVersion'
 import { useAsync } from '../../../core/useAsync'
-import { useOverlayParam } from '../../../core/useOverlayParam'
+import { useIsDesktop } from '../../../core/useIsDesktop'
+import { asBackground, useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
 import { AddMealSheet } from '../components/AddMealSheet'
+import { DayDesktop } from '../components/DayDesktop'
 import { EntrySheet } from '../components/EntrySheet'
 import { ViewToggle } from '../components/ViewToggle'
 import { QuickEntrySheet } from '../components/QuickEntrySheet'
+import { TopBar } from '../components/TopBar'
 import { dayPath, GOAL_PATH, newMealPath, weekPath } from '../routes'
 import styles from './DayPage.module.css'
 
@@ -26,12 +30,101 @@ export default function DayPage() {
 
 function Day({ date }: { date: string }) {
   const navigate = useNavigate()
-  const summary = useAsync(() => summaryDay(date), date)
+  const location = useLocation()
+  const version = useDataVersion()
+  const summary = useAsync(() => summaryDay(date), `${date}#${version}`)
   const add = useOverlayParam('ajout')
   const entryParam = useOverlayParam('entree')
   const data = summary.data?.date === date ? summary.data : undefined
   const today = data?.today ?? parisToday()
   const entry = data?.entries.find((e) => e.id === entryParam.value)
+  const desktop = useIsDesktop()
+  // Desktop: the mini week chart needs the per-day totals of the week.
+  const monday = weekStart(date)
+  const week = useAsync(
+    () => (desktop ? summaryWeek(monday) : Promise.resolve(undefined)),
+    `${monday}#${version}#${summary.data?.eaten.kcal}#${desktop}`
+  )
+
+  const overlays = (
+    <>
+      {add.value === 'repas' && (
+        <AddMealSheet
+          date={date}
+          today={today}
+          onClose={add.close}
+          onQuickEntry={() => add.swap('saisie')}
+          onNewMeal={(name) =>
+            navigate(newMealPath(date) + (name ? `&nom=${encodeURIComponent(name)}` : ''), {
+              replace: true,
+              state: { background: asBackground(location) },
+            })
+          }
+          onLogged={summary.reload}
+        />
+      )}
+
+      {add.value === 'saisie' && (
+        <QuickEntrySheet
+          date={date}
+          today={today}
+          onClose={add.close}
+          onBack={() => add.swap('repas')}
+          onSaveInstead={(draft) =>
+            navigate(newMealPath(date), { replace: true, state: { draft, background: asBackground(location) } })
+          }
+          onLogged={() => {
+            add.close()
+            summary.reload()
+          }}
+        />
+      )}
+
+      {entry && (
+        <EntrySheet
+          entry={entry}
+          today={today}
+          onClose={entryParam.close}
+          onChanged={summary.reload}
+        />
+      )}
+    </>
+  )
+
+  if (desktop) {
+    return (
+      <div className={styles.desktop}>
+        <TopBar
+          label={formatLongDate(date)}
+          previousLabel={fr.days.previous}
+          nextLabel={fr.days.next}
+          onPrevious={() => navigate(dayPath(addDays(date, -1)))}
+          onNext={() => navigate(dayPath(addDays(date, 1)))}
+          currentLabel={fr.desktop.today}
+          onCurrent={() => navigate(dayPath())}
+          dayTo={dayPath(date)}
+          weekTo={weekPath(monday)}
+        />
+        {summary.status === 'error' && !data && (
+          <div className={styles.card} role="alert">
+            <span className={form.error}>{fr.common.loadError}</span>
+            <button type="button" className={form.secondary} onClick={summary.reload}>
+              {fr.common.retry}
+            </button>
+          </div>
+        )}
+        {data && (
+          <DayDesktop
+            data={data}
+            week={week.data}
+            onOpenEntry={(e) => entryParam.open(e.id)}
+            onAdd={() => add.open('repas')}
+          />
+        )}
+        {overlays}
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -83,46 +176,13 @@ function Day({ date }: { date: string }) {
         {fr.day.add}
       </button>
 
-      {add.value === 'repas' && (
-        <AddMealSheet
-          date={date}
-          today={today}
-          onClose={add.close}
-          onQuickEntry={() => add.swap('saisie')}
-          onNewMeal={(name) =>
-            navigate(newMealPath(date) + (name ? `&nom=${encodeURIComponent(name)}` : ''), { replace: true })
-          }
-          onLogged={summary.reload}
-        />
-      )}
-
-      {add.value === 'saisie' && (
-        <QuickEntrySheet
-          date={date}
-          today={today}
-          onClose={add.close}
-          onBack={() => add.swap('repas')}
-          onSaveInstead={(draft) => navigate(newMealPath(date), { replace: true, state: { draft } })}
-          onLogged={() => {
-            add.close()
-            summary.reload()
-          }}
-        />
-      )}
-
-      {entry && (
-        <EntrySheet
-          entry={entry}
-          today={today}
-          onClose={entryParam.close}
-          onChanged={summary.reload}
-        />
-      )}
+      {overlays}
     </div>
   )
 }
 
 function SummaryCard({ data, isToday }: { data: DaySummaryDto; isToday: boolean }) {
+  const location = useLocation()
   const { goal, eaten, left, week } = data
   const overBy = left !== null && left.kcal < 0 ? -left.kcal : null
 
@@ -157,7 +217,7 @@ function SummaryCard({ data, isToday }: { data: DaySummaryDto; isToday: boolean 
             <div className={styles.statLabel}>{fr.day.eaten}</div>
             <div className={styles.statValue}>{formatInt(eaten.kcal)}</div>
           </div>
-          <Link to={GOAL_PATH} className={styles.stat} aria-label={fr.day.editDailyGoal}>
+          <Link to={GOAL_PATH} state={{ background: location }} className={styles.stat} aria-label={fr.day.editDailyGoal}>
             <div className={styles.statLabel}>
               {fr.day.dailyGoal} <Pencil className={styles.pencil} />
             </div>

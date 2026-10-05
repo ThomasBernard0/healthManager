@@ -22,6 +22,7 @@ import {
   mealsUpdate,
 } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto, SaveMealDto } from '../../../api/generated/model'
+import { invalidateData } from '../../../core/dataVersion'
 import { formatDayMonth, formatDecimal, formatInt, formatMacros, parseNumber } from '../../../core/format'
 import { ChevronLeft } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
@@ -173,6 +174,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
     try {
       if (meal) {
         await mealsUpdate(meal.id, dto())
+        invalidateData()
         back()
         return
       }
@@ -187,6 +189,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
           ...computed.totals,
         })
       }
+      invalidateData()
       navigate(dayPath(date), { replace: true })
     } catch {
       setState('error')

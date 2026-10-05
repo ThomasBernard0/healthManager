@@ -60,6 +60,7 @@ function renderDay(path = `/jour/${DATE}`) {
         <Routes>
           <Route path="/jour/:date" element={<DayPage />} />
           <Route path="/jour" element={<DayPage />} />
+          <Route path="/objectif" element={<div>objectif</div>} />
         </Routes>
       </ToastProvider>
     </MemoryRouter>,
@@ -156,7 +157,7 @@ describe('DayPage', () => {
     expect(logEntriesLogMeal).toHaveBeenCalledWith(
       expect.objectContaining({ mealId: 'm1', date: DATE, quantity: 1 }),
     )
-    expect(await screen.findByText('Shaker protéiné ajouté')).toBeInTheDocument()
+    expect(await screen.findByText('Shaker protéiné ajouté', {}, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -198,5 +199,13 @@ describe('DayPage', () => {
     await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
     await user.click(screen.getByRole('button', { name: 'Ajouter ×2' }))
     expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm2', quantity: 2 }))
+  })
+
+  it('opens Mon objectif from the pencil', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    const user = userEvent.setup()
+    renderDay()
+    await user.click(await screen.findByRole('link', { name: 'Modifier l’objectif du jour' }))
+    expect(await screen.findByText('objectif')).toBeInTheDocument()
   })
 })

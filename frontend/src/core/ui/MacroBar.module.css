@@ -48,3 +48,24 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-over);
 }
+
+/* Desktop (design/bureau-jour.html): "Protéines ........ 88 / 150 g" then an 8 px bar. */
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.inline .label {
+  font-size: var(--font-size-14);
+  color: var(--color-ink);
+}
+
+.inline .value {
+  font-size: var(--font-size-14);
+}
+
+.inline .track {
+  height: var(--space-8);
+  border-radius: var(--radius-sm);
+}

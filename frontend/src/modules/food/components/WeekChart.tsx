@@ -7,16 +7,20 @@ interface WeekChartProps {
   days: WeekDayDto[]
   today: string
   onOpenDay: (date: string) => void
+  /** desktop: taller, value above each bar, "Lun…Dim" labels (the table beside it says "dépassé de"). */
+  variant?: 'mobile' | 'desktop'
 }
 
 /** Bar per day against that day's target (dashed); over target = over colour + "dépassé de N". */
-export function WeekChart({ days, today, onOpenDay }: WeekChartProps) {
-  const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0])) * 1.12
+export function WeekChart({ days, today, onOpenDay, variant = 'mobile' }: WeekChartProps) {
+  const desktop = variant === 'desktop'
+  const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0])) * (desktop ? 1.2 : 1.12)
   const pct = (kcal: number) => `${(kcal / max) * 100}%`
   const overDays = days.filter((d) => d.left && d.left.kcal < 0)
+  const labels = desktop ? fr.desktop.shortDays : fr.week.initials
 
   return (
-    <section className={styles.card}>
+    <section className={`${styles.card} ${desktop ? styles.desktop : ''}`}>
       <h2 className={styles.title}>{fr.week.perDay}</h2>
       <div className={styles.chart}>
         <svg className={styles.targets} viewBox="0 0 700 100" preserveAspectRatio="none" aria-hidden="true">
@@ -44,7 +48,12 @@ export function WeekChart({ days, today, onOpenDay }: WeekChartProps) {
               aria-label={fr.week.openDay(formatShortDay(d.date), formatInt(d.eaten.kcal))}
               onClick={() => onOpenDay(d.date)}
             >
-              {d.eaten.kcal > 0 && <span className={cls} style={{ height: pct(d.eaten.kcal) }} />}
+              <span className={styles.stack} style={{ height: pct(d.eaten.kcal) }}>
+                {desktop && d.eaten.kcal > 0 && (
+                  <span className={over ? styles.valueOver : styles.value}>{formatInt(d.eaten.kcal)}</span>
+                )}
+                {d.eaten.kcal > 0 && <span className={cls} />}
+              </span>
             </button>
           )
         })}
@@ -52,11 +61,11 @@ export function WeekChart({ days, today, onOpenDay }: WeekChartProps) {
       <div className={styles.labels} aria-hidden="true">
         {days.map((d, i) => (
           <span key={d.date} className={d.date === today ? styles.todayLabel : undefined}>
-            {fr.week.initials[i]}
+            {labels[i]}
           </span>
         ))}
       </div>
-      {overDays.length > 0 && (
+      {!desktop && overDays.length > 0 && (
         <ul className={styles.overList}>
           {overDays.map((d) => (
             <li key={d.date}>

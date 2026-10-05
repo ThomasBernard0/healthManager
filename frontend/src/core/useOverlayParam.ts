@@ -1,5 +1,14 @@
 import { useCallback } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams, type Location } from 'react-router-dom'
+
+/** The page itself, without open sheets (?ajout, ?entree): what a dialog route is shown over. */
+export function asBackground(location: Location): Location {
+  const params = new URLSearchParams(location.search)
+  params.delete('ajout')
+  params.delete('entree')
+  const search = params.toString()
+  return { ...location, search: search ? `?${search}` : '' }
+}
 
 /**
  * A sheet/dialog driven by a search param (?name=value), so the back button closes it.
