@@ -57,8 +57,6 @@ export const fr = {
     proteinGrams: 'Protéines en grammes',
     carbsGrams: 'Glucides en grammes',
     fatGrams: 'Lipides en grammes',
-    time: 'Heure',
-    timeLabel: 'Heure du repas',
     addToday: 'Ajouter à aujourd’hui',
     addOn: (day: string) => `Ajouter au ${day}`,
   },

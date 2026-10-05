@@ -67,7 +67,7 @@ Two modes. Par ingrédients: add foods from search or with the **Scanner** butto
 
 ### 3b · Saisie rapide
 
-For a one-time meal (restaurant, a pastry at a friend's). Fields: name (optional, default "Repas"), kcal (required), protein, carbs, fat, time (defaults to now). "Ajouter à aujourd'hui" logs it as a quick entry; it never appears in Mes repas. A link "Plutôt l'enregistrer" switches to Nouveau repas with the values kept.
+For a one-time meal (restaurant, a pastry at a friend's). Fields: name (optional, default "Repas"), kcal (required), protein, carbs, fat (no time field: logged at the current time). "Ajouter à aujourd'hui" logs it as a quick entry; it never appears in Mes repas. A link "Plutôt l'enregistrer" switches to Nouveau repas with the values kept.
 
 ### 4 · Semaine (Semaine view)
 

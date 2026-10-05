@@ -1,4 +1,4 @@
-import { parisNowTime, roundKcal, roundMacro, TIME_PATTERN } from '@healthmanager/shared'
+import { parisNowTime, roundKcal, roundMacro } from '@healthmanager/shared'
 import { useState, type FormEvent } from 'react'
 import { logEntriesCreateQuick } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { formatDayMonth, parseNumber } from '../../../core/format'
@@ -28,12 +28,11 @@ const MACROS = [
 
 type MacroKey = (typeof MACROS)[number]['key']
 
-/** Saisie rapide: a one-time meal, logged once and never saved to Mes repas. */
+/** Saisie rapide: a one-time meal, logged once at the current time and never saved to Mes repas. */
 export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSaveInstead }: QuickEntrySheetProps) {
   const [name, setName] = useState('')
   const [kcal, setKcal] = useState('')
   const [macros, setMacros] = useState<Record<MacroKey, string>>({ protein: '', carbs: '', fat: '' })
-  const [time, setTime] = useState(() => parisNowTime())
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
 
   const kcalValue = parseNumber(kcal)
@@ -41,8 +40,7 @@ export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSave
   const valid =
     kcalValue !== null &&
     kcalValue >= 0 &&
-    macroValues.every((v) => v === null || v >= 0) &&
-    TIME_PATTERN.test(time)
+    macroValues.every((v) => v === null || v >= 0)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -52,7 +50,7 @@ export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSave
     try {
       await logEntriesCreateQuick({
         date,
-        time,
+        time: parisNowTime(),
         label: name.trim() || fr.quick.defaultName,
         kcal: roundKcal(kcalValue ?? 0),
         protein,
@@ -115,18 +113,6 @@ export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSave
           ))}
         </div>
 
-        <label className={form.row}>
-          <span>{fr.quick.time}</span>
-          <input
-            className={form.inlineInput}
-            type="time"
-            aria-label={fr.quick.timeLabel}
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-        </label>
-
         {state === 'error' && (
           <div className={form.error} role="alert">
             {fr.common.saveError}
@@ -139,7 +125,7 @@ export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSave
         <button
           type="button"
           className={styles.saveInstead}
-          onClick={() => onSaveInstead({ name: name.trim(), manual: { kcal, ...macros }, time })}
+          onClick={() => onSaveInstead({ name: name.trim(), manual: { kcal, ...macros } })}
         >
           {fr.quickSave}
         </button>
