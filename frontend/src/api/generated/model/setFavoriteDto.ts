@@ -5,7 +5,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface UpdateLogEntryDto {
-  time?: string;
-  date?: string;
+export interface SetFavoriteDto {
+  isFavorite: boolean;
 }

@@ -9,7 +9,7 @@ import type {
   MealSummaryDto,
   MealsListParams,
   SaveMealDto,
-  UpdateMealFlagsDto
+  SetFavoriteDto
 } from '../../model';
 
 import { apiClient } from '../../../http';
@@ -56,14 +56,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
-  export const mealsSetFlags = (
+  export const mealsSetFavorite = (
     id: string,
-    updateMealFlagsDto: UpdateMealFlagsDto,
+    setFavoriteDto: SetFavoriteDto,
  options?: SecondParameter<typeof apiClient<MealSummaryDto>>,) => {
       return apiClient<MealSummaryDto>(
       {url: `/api/meals/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: updateMealFlagsDto
+      data: setFavoriteDto
+    },
+      options);
+    }
+  export const mealsRemove = (
+    id: string,
+ options?: SecondParameter<typeof apiClient<void>>,) => {
+      return apiClient<void>(
+      {url: `/api/meals/${id}`, method: 'DELETE'
     },
       options);
     }
@@ -71,4 +79,5 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 export type MealsCreateResult = NonNullable<Awaited<ReturnType<typeof mealsCreate>>>
 export type MealsGetResult = NonNullable<Awaited<ReturnType<typeof mealsGet>>>
 export type MealsUpdateResult = NonNullable<Awaited<ReturnType<typeof mealsUpdate>>>
-export type MealsSetFlagsResult = NonNullable<Awaited<ReturnType<typeof mealsSetFlags>>>
+export type MealsSetFavoriteResult = NonNullable<Awaited<ReturnType<typeof mealsSetFavorite>>>
+export type MealsRemoveResult = NonNullable<Awaited<ReturnType<typeof mealsRemove>>>

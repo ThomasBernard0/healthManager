@@ -22,9 +22,6 @@ export class MealSummaryDto {
   @ApiProperty()
   isFavorite: boolean;
 
-  @ApiProperty()
-  archived: boolean;
-
   @ApiProperty({ type: NutrientsDto, description: 'One portion' })
   totals: NutrientsDto;
 

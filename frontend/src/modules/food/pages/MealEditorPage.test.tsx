@@ -6,7 +6,7 @@ import {
   logEntriesCreateQuick,
   logEntriesLogMeal,
 } from '../../../api/generated/endpoints/log-entries/log-entries'
-import { mealsCreate } from '../../../api/generated/endpoints/meals/meals'
+import { mealsCreate, mealsGet, mealsRemove } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto } from '../../../api/generated/model'
 import MealEditorPage from './MealEditorPage'
 
@@ -19,7 +19,7 @@ vi.mock('../../../api/generated/endpoints/meals/meals', () => ({
   mealsCreate: vi.fn(),
   mealsGet: vi.fn(),
   mealsUpdate: vi.fn(),
-  mealsSetFlags: vi.fn(),
+  mealsRemove: vi.fn(),
 }))
 vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
   logEntriesLogMeal: vi.fn(),
@@ -45,6 +45,7 @@ function renderEditor(path = '/repas/nouveau?date=2026-10-04') {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/repas/nouveau" element={<MealEditorPage />} />
+        <Route path="/repas/:id" element={<MealEditorPage />} />
         <Route path="/jour/:date" element={<div>jour</div>} />
         <Route path="/jour" element={<div>jour</div>} />
       </Routes>
@@ -97,7 +98,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
       ],
       manualTotals: null,
       override: null,
-      isFavorite: false,
+      isFavorite: true,
     })
     expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm1', date: '2026-10-04', quantity: 1 }))
     expect(await screen.findByText('jour')).toBeInTheDocument()
@@ -212,5 +213,37 @@ describe('MealEditorPage (Nouveau repas)', () => {
     expect(logEntriesCreateQuick).toHaveBeenCalledWith(
       expect.objectContaining({ date: '2026-10-04', label: 'Brunch', kcal: 900, protein: 35, carbs: 0, fat: 0 }),
     )
+  })
+  it('starts a new meal as a favourite', () => {
+    renderEditor()
+    expect(screen.getByRole('checkbox', { name: 'Favori' })).toBeChecked()
+  })
+
+  it('deletes a saved meal for good, after confirming', async () => {
+    vi.mocked(mealsGet).mockResolvedValue({
+      id: 'm1',
+      name: 'Pomme',
+      mode: 'manual',
+      isFavorite: false,
+      totals: { kcal: 80, protein: 0, carbs: 20, fat: 0 },
+      totalsSource: 'manual',
+      timesEaten: 2,
+      lastEatenOn: '2026-10-03',
+      items: [],
+      manualTotals: { kcal: 80, protein: 0, carbs: 20, fat: 0 },
+      override: null,
+    } as MealDto)
+    const user = userEvent.setup()
+    renderEditor('/repas/m1')
+    await user.click(await screen.findByRole('button', { name: 'Supprimer' }))
+    const confirm = screen.getByRole('dialog', { name: 'Supprimer « Pomme » ?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Annuler' }))
+    expect(mealsRemove).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Supprimer' }))
+    expect(mealsRemove).toHaveBeenCalledWith('m1')
+    expect(await screen.findByText('jour')).toBeInTheDocument()
   })
 })

@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import {
   logEntriesCreateQuick,
   logEntriesLogMeal,
-  logEntriesUpdate,
 } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
@@ -137,7 +136,6 @@ describe('DayPage', () => {
     name,
     mode: 'manual',
     isFavorite: false,
-    archived: false,
     totals: n(250, 30, 22, 5),
     totalsSource: 'manual',
     timesEaten: 3,
@@ -188,39 +186,31 @@ describe('DayPage', () => {
     expect(within(dialog).getByRole('button', { name: 'Créer « Gaspacho »' })).toBeInTheDocument()
   })
 
-  it('logs ×0,5 or ×2 with the stepper', async () => {
+  it('logs a saved meal once with +: no portion stepper', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())
     vi.mocked(mealsList).mockResolvedValue([meal('m2', 'Fajitas poulet')])
-    vi.mocked(logEntriesLogMeal).mockResolvedValue(entry('x', '10:00', 'Fajitas poulet', 500))
     const user = userEvent.setup()
     renderDay()
-
     await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
-    await user.click(await screen.findByRole('button', { name: /Fajitas poulet/, expanded: false }))
-    await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
-    await user.click(screen.getByRole('button', { name: 'Augmenter la quantité' }))
-    await user.click(screen.getByRole('button', { name: 'Ajouter ×2' }))
-    expect(logEntriesLogMeal).toHaveBeenCalledWith(expect.objectContaining({ mealId: 'm2', quantity: 2 }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ajouter un repas' })
+    await within(dialog).findByText('Fajitas poulet')
+    expect(within(dialog).queryByRole('button', { name: /^Fajitas poulet/ })).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Augmenter la quantité' })).toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Ajouter Fajitas poulet' })).toBeInTheDocument()
   })
-
-  it('edits only the time of a logged meal: no quantity, no duplicate', async () => {
+  it('shows a logged meal read-only: totals and time, only Supprimer', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())
-    vi.mocked(logEntriesUpdate).mockResolvedValue(entry('a', '08:30', 'Bol yaourt grec', 420))
     const user = userEvent.setup()
     renderDay()
     await user.click(await screen.findByRole('button', { name: /Bol yaourt grec/ }))
     const dialog = screen.getByRole('dialog', { name: 'Bol yaourt grec' })
-    expect(within(dialog).queryByText('Quantité')).toBeNull()
-    expect(within(dialog).queryByRole('button', { name: 'Augmenter la quantité' })).toBeNull()
-    expect(within(dialog).queryByText(/Dupliquer/)).toBeNull()
-
-    const time = dialog.querySelector('input[type="time"]') as HTMLInputElement
-    await user.clear(time)
-    await user.type(time, '08:30')
-    await user.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
-    expect(logEntriesUpdate).toHaveBeenCalledWith('a', { time: '08:30' })
+    expect(text(dialog)).toContain('420 kcal')
+    expect(text(dialog)).toContain('Heure08:10')
+    expect(dialog.querySelector('input')).toBeNull()
+    expect(within(dialog).queryByRole('button', { name: 'Enregistrer' })).toBeNull()
+    expect(within(dialog).queryByText(/Dupliquer|Quantité/)).toBeNull()
+    expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument()
   })
-
   it('can’t go back before the first day with data', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary({ earliestDate: DATE }))
     renderDay()
@@ -243,7 +233,6 @@ describe('DayPage', () => {
     renderDay('/jour/2026-09-01')
     await waitFor(() => expect(summaryDay).toHaveBeenLastCalledWith('2026-10-02'))
   })
-
   it('opens Mon objectif from the pencil', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())
     const user = userEvent.setup()

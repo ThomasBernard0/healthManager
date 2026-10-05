@@ -77,14 +77,8 @@ export class SaveMealDto {
   isFavorite: boolean;
 }
 
-export class UpdateMealFlagsDto {
-  @ApiPropertyOptional()
-  @IsOptional()
+export class SetFavoriteDto {
+  @ApiProperty()
   @IsBoolean()
-  isFavorite?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  archived?: boolean;
+  isFavorite: boolean;
 }

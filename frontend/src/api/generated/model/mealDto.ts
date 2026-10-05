@@ -16,7 +16,6 @@ export interface MealDto {
   name: string;
   mode: MealMode;
   isFavorite: boolean;
-  archived: boolean;
   /** One portion */
   totals: NutrientsDto;
   /** Which totals are in use */

@@ -10,5 +10,4 @@ export type MealsListParams = {
  * Accent/case-insensitive, matches anywhere in the name
  */
 q?: string;
-archived?: boolean;
 };
