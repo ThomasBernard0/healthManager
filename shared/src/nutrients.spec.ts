@@ -1,6 +1,7 @@
 import {
   entryNutrients,
   ingredientNutrients,
+  isPlausiblePer100g,
   mealTotals,
   sumNutrients,
 } from './nutrients.js';
@@ -16,6 +17,20 @@ describe('ingredientNutrients', () => {
       carbs: 67.1,
       fat: 2,
     });
+  });
+});
+
+describe('isPlausiblePer100g', () => {
+  it('accepts real foods, including pure fat', () => {
+    expect(isPlausiblePer100g(pasta)).toBe(true);
+    expect(isPlausiblePer100g({ kcal: 900, protein: 0, carbs: 0, fat: 100 })).toBe(true);
+  });
+
+  it('rejects impossible values', () => {
+    expect(isPlausiblePer100g({ kcal: 2100, protein: 5, carbs: 50, fat: 20 })).toBe(false);
+    expect(isPlausiblePer100g({ kcal: 300, protein: 60, carbs: 60, fat: 0 })).toBe(false);
+    expect(isPlausiblePer100g({ kcal: 100, protein: -1, carbs: 0, fat: 0 })).toBe(false);
+    expect(isPlausiblePer100g({ kcal: Number.NaN, protein: 0, carbs: 0, fat: 0 })).toBe(false);
   });
 });
 

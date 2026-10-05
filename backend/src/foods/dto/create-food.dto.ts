@@ -9,6 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { NutrientsDto } from '../../common/nutrients.dto.js';
+import { IsBarcode } from '../../common/validators.js';
 import { FoodUnitDto } from './food.dto.js';
 
 /** "Mon aliment": a food that is not in the database, created once and reused. */
@@ -23,6 +24,11 @@ export class CreateFoodDto {
   @IsString()
   @Length(1, 80)
   brand?: string;
+
+  @ApiPropertyOptional({ example: '3017620422003', description: 'Scanned product missing from Open Food Facts' })
+  @IsOptional()
+  @IsBarcode()
+  barcode?: string;
 
   @ApiProperty({ type: NutrientsDto, description: 'Per 100 g' })
   @ValidateNested()

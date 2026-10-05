@@ -8,6 +8,7 @@
 | API docs | `@nestjs/swagger` → OpenAPI at `/api/docs` (JSON: `/api/docs-json`)                   |
 | Frontend | React 19, Vite 8, TypeScript, React Router 7                                          |
 | Client   | Orval (axios-functions) generated from `frontend/openapi.json`                        |
+| PWA      | `vite-plugin-pwa` (manifest + Workbox service worker); scanner: `barcode-detector` (ZXing wasm) |
 | Shared   | `shared/` (`@healthmanager/shared`): pure domain maths used by both apps              |
 | Tooling  | npm, oxlint, Vitest (all packages), Prettier (backend)                                |
 | Hosting  | Railway project **healthManager**: service `app` + `Postgres`; GitHub Actions CI      |
@@ -39,19 +40,22 @@ backend/                 NestJS API
     access/              global AccessGuard (X-Access-Key), @Public() for /api/health
     common/              NutrientsDto, Decimal helpers, date/time validators
     <domain>/            one module per domain: *.module.ts, *.controller.ts, *.service.ts, dto/
+    foods/open-food-facts.client.ts   Open Food Facts lookup (server-side, 8 s timeout, 502 if unreachable)
     scripts/             export-openapi.ts, import-ciqual.ts (runs on every deploy, idempotent)
     generated/prisma/    Prisma client (generated, gitignored)
   test/                  e2e tests (*.e2e-spec.ts)
 frontend/                React SPA
   openapi.json           exported from backend (committed, never edit)
   orval.config.ts
+  vite.config.ts         React + PWA (manifest, service worker) + theme-color metas, colours from theme tokens
+  public/                favicon.svg, icons/ (PWA + apple-touch PNGs, rendered from the same ring motif)
   src/
     api/http.ts          axios instance + Orval mutator (base URL = VITE_API_URL)
     api/generated/       Orval output (committed, never edit)
     theme/               design tokens (light + dark) — single source for colors/spacing/typography
     i18n/fr.ts           every UI string (French only)
     core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
-    modules/food/        Alimentation module: pages/, components/, routes.ts (Sport/Finances later as modules/<name>)
+    modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts (Sport/Finances later as modules/<name>)
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
@@ -125,6 +129,14 @@ After editing `shared/src`, rebuild it so the apps see the change.
   Sheets use search params (`?ajout=…`, back button closes them); Nouveau repas and Mon objectif are
   modal routes opened with `state.background` (dialog on desktop, full screen on mobile). After a change
   made in a dialog call `invalidateData()` so the page underneath reloads (`useDataVersion()` in its key).
+- **Barcodes**: validated with `normalizeBarcode` (shared, GTIN check digit) on both sides. The frontend never calls
+  Open Food Facts: `GET /api/foods/barcode/:code` returns the food known by that barcode, else imports the OFF
+  product once (`source: off`, serving → "portion" unit), else `{ food: null, suggestedName }` → "Mon aliment"
+  created with the barcode. Camera scan on mobile (native `BarcodeDetector`, else the ZXing wasm ponyfill loaded
+  on demand from our origin); typed barcode on desktop. `zxing-wasm` is pinned to the exact version
+  `barcode-detector` expects (a test checks it): bump them together.
+- **PWA**: the service worker precaches the app shell only; `/api` is never cached (offline → "Chargement impossible").
+  It updates itself (`autoUpdate`). Not active in `vite` dev; test it on a build served by Nest.
 - **All UI strings live in `frontend/src/i18n/fr.ts`** (French only, no helper/explanatory text);
   numbers via `core/format.ts` (`Intl.NumberFormat('fr-FR')`).
 

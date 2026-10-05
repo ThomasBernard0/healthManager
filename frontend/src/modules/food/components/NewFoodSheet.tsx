@@ -1,4 +1,4 @@
-import { roundKcal, roundMacro } from '@healthmanager/shared'
+import { isPlausiblePer100g, roundKcal, roundMacro } from '@healthmanager/shared'
 import { useState, type FormEvent } from 'react'
 import { foodsCreate } from '../../../api/generated/endpoints/foods/foods'
 import type { FoodDto } from '../../../api/generated/model'
@@ -10,6 +10,8 @@ import styles from './NewFoodSheet.module.css'
 
 interface NewFoodSheetProps {
   name: string
+  /** Scanned product missing from Open Food Facts: saved with the food so the next scan finds it. */
+  barcode?: string
   onClose: () => void
   onCreated: (food: FoodDto) => void
 }
@@ -21,7 +23,7 @@ const MACROS = [
 ] as const
 
 /** Mon aliment: a food missing from the database, per 100 g, created once and reused. */
-export function NewFoodSheet({ name: initialName, onClose, onCreated }: NewFoodSheetProps) {
+export function NewFoodSheet({ name: initialName, barcode, onClose, onCreated }: NewFoodSheetProps) {
   const [name, setName] = useState(initialName)
   const [values, setValues] = useState({ kcal: '', protein: '', carbs: '', fat: '' })
   const [unitLabel, setUnitLabel] = useState('')
@@ -38,8 +40,13 @@ export function NewFoodSheet({ name: initialName, onClose, onCreated }: NewFoodS
   const unitValid = !unitLabel.trim() || (grams !== null && grams > 0)
   const valid =
     name.trim().length > 0 &&
-    Object.values(parsed).every((v) => v !== null && v >= 0) &&
-    (parsed.kcal ?? 0) <= 900 &&
+    Object.values(parsed).every((v) => v !== null) &&
+    isPlausiblePer100g({
+      kcal: parsed.kcal ?? 0,
+      protein: parsed.protein ?? 0,
+      carbs: parsed.carbs ?? 0,
+      fat: parsed.fat ?? 0,
+    }) &&
     unitValid
 
   async function submit(e: FormEvent) {
@@ -49,6 +56,7 @@ export function NewFoodSheet({ name: initialName, onClose, onCreated }: NewFoodS
     try {
       const food = await foodsCreate({
         name: name.trim(),
+        ...(barcode ? { barcode } : {}),
         per100g: {
           kcal: roundKcal(parsed.kcal ?? 0),
           protein: roundMacro(parsed.protein ?? 0),
@@ -73,6 +81,13 @@ export function NewFoodSheet({ name: initialName, onClose, onCreated }: NewFoodS
           {fr.food.name}
           <input className={form.input} value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
         </label>
+
+        {barcode && (
+          <div className={styles.barcode}>
+            <span>{fr.scan.barcode}</span>
+            <span className={styles.barcodeValue}>{barcode}</span>
+          </div>
+        )}
 
         <div className={styles.group}>{fr.food.for100g}</div>
 

@@ -5,6 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './barcodeLookupDto';
+export * from './barcodeLookupDtoFood';
 export * from './createFoodDto';
 export * from './createQuickEntryDto';
 export * from './currentGoalDto';

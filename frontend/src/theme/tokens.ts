@@ -28,6 +28,9 @@ const light = {
   onInverseMuted: '#B8C2BC',
   onInverseAccent: '#9CC4AE',
   scrim: 'rgba(23, 32, 27, 0.45)',
+  camera: '#000000',
+  cameraFrame: 'rgba(255, 255, 255, 0.9)',
+  onCamera: '#FFFFFF',
 }
 
 /** Dark theme: same roles, values tuned for contrast on a dark ground. */
@@ -56,6 +59,9 @@ const dark: typeof light = {
   onInverseMuted: '#9AA59F',
   onInverseAccent: '#7FD0A7',
   scrim: 'rgba(0, 0, 0, 0.6)',
+  camera: '#000000',
+  cameraFrame: 'rgba(255, 255, 255, 0.9)',
+  onCamera: '#FFFFFF',
 }
 
 export const tokens = {
@@ -153,6 +159,8 @@ export const tokens = {
     chartColumn: '420px',
     tableColumn: '460px',
     chart: '180px',
+    scanner: '280px',
+    scanFrame: '120px',
     checkbox: '22px',
     ring: '150px',
     ringDesktop: '168px',

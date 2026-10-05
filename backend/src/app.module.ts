@@ -16,6 +16,8 @@ import { SummaryModule } from './summary/summary.module.js';
 // Built SPA (frontend/dist), served so production is a single service.
 // Unknown non-API paths fall back to index.html for client-side routing.
 const frontendDist = join(import.meta.dirname, '..', '..', 'frontend', 'dist');
+// Vite's hashed build files never change; everything else (index.html, sw.js, manifest) revalidates.
+const HASHED_ASSET = /[\\/]assets[\\/]/;
 
 @Module({
   imports: [
@@ -25,6 +27,11 @@ const frontendDist = join(import.meta.dirname, '..', '..', 'frontend', 'dist');
           ServeStaticModule.forRoot({
             rootPath: frontendDist,
             exclude: [`/${API_PREFIX}/{*path}`],
+            serveStaticOptions: {
+              setHeaders: (res, path) => {
+                if (HASHED_ASSET.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+              },
+            },
           }),
         ]
       : []),

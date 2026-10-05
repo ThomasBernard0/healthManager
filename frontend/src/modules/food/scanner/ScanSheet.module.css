@@ -1,0 +1,12 @@
+/* Barcode field and its button on one line. */
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.form button {
+  height: var(--size-input);
+}

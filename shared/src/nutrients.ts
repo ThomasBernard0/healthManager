@@ -21,6 +21,19 @@ export const roundKcal = (kcal: number): number => roundClean(kcal);
 /** Rounds grams to 0.1 g (the storage precision of macros). */
 export const roundMacro = (grams: number): number => roundClean(grams * 10) / 10;
 
+/** Upper bound of kcal per 100 g (pure fat is ~900). */
+export const MAX_KCAL_PER_100G = 900;
+
+/** Per-100 g values a real food can have: nothing negative, ≤ 900 kcal, each macro and their sum ≤ 100 g. */
+export function isPlausiblePer100g(n: Nutrients): boolean {
+  const values = [n.kcal, n.protein, n.carbs, n.fat];
+  return (
+    values.every((v) => Number.isFinite(v) && v >= 0) &&
+    n.kcal <= MAX_KCAL_PER_100G &&
+    n.protein + n.carbs + n.fat <= 100.5
+  );
+}
+
 /** Brings any nutrient values back to storage precision. */
 export function normalizeNutrients(n: Nutrients): Nutrients {
   return {

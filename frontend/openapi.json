@@ -537,6 +537,45 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "A food already has this barcode"
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      }
+    },
+    "/api/foods/barcode/{code}": {
+      "get": {
+        "operationId": "Foods_lookupBarcode",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarcodeLookupDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid EAN/UPC barcode"
+          },
+          "502": {
+            "description": "Open Food Facts unreachable"
           }
         },
         "tags": [
@@ -1434,6 +1473,29 @@
           }
         }
       },
+      "BarcodeLookupDto": {
+        "type": "object",
+        "properties": {
+          "food": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FoodDto"
+              }
+            ]
+          },
+          "suggestedName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Product name when its values are missing"
+          }
+        },
+        "required": [
+          "food",
+          "suggestedName"
+        ]
+      },
       "CreateFoodDto": {
         "type": "object",
         "properties": {
@@ -1447,6 +1509,11 @@
             "type": "string",
             "example": "Bjorg",
             "maxLength": 80
+          },
+          "barcode": {
+            "type": "string",
+            "example": "3017620422003",
+            "description": "Scanned product missing from Open Food Facts"
           },
           "per100g": {
             "description": "Per 100 g",

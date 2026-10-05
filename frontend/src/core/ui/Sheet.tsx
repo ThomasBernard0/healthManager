@@ -11,13 +11,17 @@ interface SheetProps {
   onBack?: () => void
   /** "back" shows a back arrow on the left, "close" an X on the right. */
   dismiss?: 'back' | 'close'
+  /** Focus the first field on open (false: focus the dialog, so no keyboard pops up). */
+  focusFirst?: boolean
   children: ReactNode
 }
 
 /** Bottom sheet on mobile, centred dialog on desktop (≥ 1024 px). */
-export function Sheet({ title, onClose, onBack, dismiss = 'close', children }: SheetProps) {
+export function Sheet({ title, onClose, onBack, dismiss = 'close', focusFirst = true, children }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
+  // Read once, on open.
+  const focusFirstOnOpen = useRef(focusFirst)
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -25,7 +29,7 @@ export function Sheet({ title, onClose, onBack, dismiss = 'close', children }: S
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
-    const first = panel.current?.querySelector<HTMLElement>('input, button:not([data-dismiss])')
+    const first = focusFirstOnOpen.current ? panel.current?.querySelector<HTMLElement>('input, button:not([data-dismiss])') : null
     ;(first ?? panel.current)?.focus()
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'

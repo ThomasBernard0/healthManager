@@ -1,10 +1,18 @@
 import { normalizeNutrients, searchKey, searchTerms } from '@healthmanager/shared';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { toNutrients } from '../common/decimal.js';
 import type { Food } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
 import { FoodDto, FoodUnitDto } from './dto/food.dto.js';
+import { OpenFoodFactsClient } from './open-food-facts.client.js';
+
+/** Household unit added to scanned products that declare a serving size. */
+const SERVING_LABEL = 'portion';
+
+const isUniqueViolation = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002';
 
 export const FOOD_SEARCH_LIMIT = 30;
 /** Candidates fetched before ranking (CIQUAL has ~3 200 foods). */
@@ -47,7 +55,10 @@ export function rankFoods<F extends Pick<Food, 'source' | 'searchName'>>(foods: 
 
 @Injectable()
 export class FoodsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly off: OpenFoodFactsClient,
+  ) {}
 
   /** Accent/case-insensitive search on every word; empty query → my own foods, latest first. */
   async search(query: string): Promise<FoodDto[]> {
@@ -73,18 +84,57 @@ export class FoodsService {
     return toFoodDto(food);
   }
 
+  /**
+   * A scanned barcode (already validated): a food already known by that barcode, else the
+   * Open Food Facts product saved once as a food. Products without usable values are not saved.
+   */
+  async lookupBarcode(barcode: string): Promise<BarcodeLookupDto> {
+    const known = await this.prisma.food.findUnique({ where: { barcode } });
+    if (known) return { food: toFoodDto(known), suggestedName: null };
+
+    const product = await this.off.product(barcode);
+    if (!product) return { food: null, suggestedName: null };
+    if (!product.per100g || !product.name) return { food: null, suggestedName: product.name };
+
+    try {
+      const food = await this.prisma.food.create({
+        data: {
+          name: product.name,
+          searchName: searchKey(product.name),
+          brand: product.brand,
+          source: 'off',
+          barcode,
+          ...product.per100g,
+          units: product.servingGrams ? [{ label: SERVING_LABEL, grams: product.servingGrams }] : [],
+        },
+      });
+      return { food: toFoodDto(food), suggestedName: null };
+    } catch (error) {
+      // Scanned twice at once: the other request saved it first.
+      if (!isUniqueViolation(error)) throw error;
+      const food = await this.prisma.food.findUniqueOrThrow({ where: { barcode } });
+      return { food: toFoodDto(food), suggestedName: null };
+    }
+  }
+
   async create(dto: CreateFoodDto): Promise<FoodDto> {
     const name = dto.name.trim();
-    const food = await this.prisma.food.create({
-      data: {
-        name,
-        searchName: searchKey(name),
-        brand: dto.brand?.trim() || null,
-        source: 'custom',
-        ...normalizeNutrients(dto.per100g),
-        units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),
-      },
-    });
-    return toFoodDto(food);
+    try {
+      const food = await this.prisma.food.create({
+        data: {
+          name,
+          searchName: searchKey(name),
+          brand: dto.brand?.trim() || null,
+          source: 'custom',
+          barcode: dto.barcode ?? null,
+          ...normalizeNutrients(dto.per100g),
+          units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),
+        },
+      });
+      return toFoodDto(food);
+    } catch (error) {
+      if (isUniqueViolation(error)) throw new ConflictException('A food already has this barcode');
+      throw error;
+    }
   }
 }
