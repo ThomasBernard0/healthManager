@@ -41,7 +41,6 @@ export * from './saveMealDtoManualTotals';
 export * from './saveMealDtoOverride';
 export * from './setFavoriteDto';
 export * from './updateGoalDto';
-export * from './updateLogEntryDto';
 export * from './weekDayDto';
 export * from './weekDayDtoLeft';
 export * from './weekDayDtoTarget';

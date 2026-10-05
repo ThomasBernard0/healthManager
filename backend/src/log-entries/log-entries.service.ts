@@ -14,7 +14,6 @@ import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
 import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
-import { UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 
 export const entrySnapshot = (entry: LogEntry): Nutrients => toNutrients(entry);
 
@@ -69,12 +68,6 @@ export class LogEntriesService {
         ...normalizeNutrients(dto),
       },
     });
-    return toLogEntryDto(entry);
-  }
-
-  async update(id: string, dto: UpdateLogEntryDto): Promise<LogEntryDto> {
-    await this.getOrThrow(id);
-    const entry = await this.prisma.logEntry.update({ where: { id }, data: { time: dto.time } });
     return toLogEntryDto(entry);
   }
 

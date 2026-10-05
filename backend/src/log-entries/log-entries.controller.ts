@@ -6,21 +6,18 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
-  Patch,
   Post,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
-  ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
 import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
-import { UpdateLogEntryDto } from './dto/update-log-entry.dto.js';
 import { LogEntriesService } from './log-entries.service.js';
 
 @ApiTags('log-entries')
@@ -46,17 +43,6 @@ export class LogEntriesController {
   @ApiCreatedResponse({ type: LogEntryDto })
   restore(@Body() dto: RestoreLogEntryDto): Promise<LogEntryDto> {
     return this.entries.restore(dto);
-  }
-
-  /** Changes the time of a logged entry. */
-  @Patch(':id')
-  @ApiOkResponse({ type: LogEntryDto })
-  @ApiNotFoundResponse()
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateLogEntryDto,
-  ): Promise<LogEntryDto> {
-    return this.entries.update(id, dto);
   }
 
   @Delete(':id')

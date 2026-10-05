@@ -63,8 +63,6 @@ export const fr = {
     addOn: (day: string) => `Ajouter au ${day}`,
   },
   entry: {
-    time: 'Heure',
-    timeLabel: 'Heure du repas',
     delete: 'Supprimer',
     deleted: 'Repas supprimé',
     undo: 'Annuler',
@@ -134,7 +132,6 @@ export const fr = {
     removeCorrection: 'Annuler la correction',
     saveToMyMeals: 'Enregistrer dans mes repas',
     favorite: 'Favori',
-    time: 'Heure',
     saveAndAddToday: 'Enregistrer et ajouter à aujourd’hui',
     saveAndAddOn: (day: string) => `Enregistrer et ajouter au ${day}`,
     addToday: 'Ajouter à aujourd’hui',
