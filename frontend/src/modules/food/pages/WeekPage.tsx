@@ -1,15 +1,19 @@
 import { addDays, isIsoDate, parisToday, weekStart } from '@healthmanager/shared'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { summaryWeek } from '../../../api/generated/endpoints/summary/summary'
 import type { WeekSummaryDto } from '../../../api/generated/model'
 import { formatInt, formatWeekRange, formatWeekTitle } from '../../../core/format'
 import { ChevronLeft, ChevronRight, Pencil } from '../../../core/ui/icons'
 import { Ring } from '../../../core/ui/Ring'
 import form from '../../../core/ui/form.module.css'
+import { useDataVersion } from '../../../core/dataVersion'
 import { useAsync } from '../../../core/useAsync'
+import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
+import { TopBar } from '../components/TopBar'
 import { ViewToggle } from '../components/ViewToggle'
 import { WeekChart } from '../components/WeekChart'
+import { WeekTable } from '../components/WeekTable'
 import { dayPath, GOAL_PATH, weekPath } from '../routes'
 import styles from './WeekPage.module.css'
 
@@ -24,12 +28,75 @@ export default function WeekPage() {
 
 function Week({ monday }: { monday: string }) {
   const navigate = useNavigate()
-  const summary = useAsync(() => summaryWeek(monday), monday)
+  const version = useDataVersion()
+  const summary = useAsync(() => summaryWeek(monday), `${monday}#${version}`)
   const data = summary.data?.monday === monday ? summary.data : undefined
   const today = data?.today ?? parisToday()
   const thisMonday = weekStart(today)
   // Jour shows today in the current week, else the Monday of the week viewed.
   const dayTarget = monday === thisMonday ? today : monday
+  const desktop = useIsDesktop()
+
+  const error = summary.status === 'error' && !data && (
+    <div className={styles.card} role="alert">
+      <span className={form.error}>{fr.common.loadError}</span>
+      <button type="button" className={form.secondary} onClick={summary.reload}>
+        {fr.common.retry}
+      </button>
+    </div>
+  )
+  const tiles = data && (
+    <div className={styles.tiles}>
+      <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
+      <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />
+      <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
+      <Tile label={fr.week.fatPerDay} value={`${formatInt(data.average.fat)} ${fr.common.grams}`} />
+    </div>
+  )
+
+  if (desktop) {
+    return (
+      <div className={styles.desktopPage}>
+        <TopBar
+          label={formatWeekRange(monday)}
+          previousLabel={fr.week.previous}
+          nextLabel={fr.week.next}
+          onPrevious={() => navigate(weekPath(addDays(monday, -7)))}
+          onNext={() => navigate(weekPath(addDays(monday, 7)))}
+          currentLabel={fr.desktop.thisWeek}
+          onCurrent={() => navigate(weekPath())}
+          dayTo={dayPath(dayTarget)}
+          weekTo={weekPath(monday)}
+        />
+        <main className={styles.desktopMain}>
+          {error}
+          {data && (
+            <>
+              <div className={styles.desktopRow}>
+                <div className={styles.desktopRing}>
+                  <WeekRingCard data={data} isCurrent={monday === thisMonday} variant="desktop" />
+                </div>
+                <div className={styles.desktopTiles}>{tiles}</div>
+              </div>
+              <div className={styles.desktopRow}>
+                <div className={styles.desktopChart}>
+                  <WeekChart
+                    variant="desktop"
+                    days={data.days}
+                    today={today}
+                    onOpenDay={(date) => navigate(dayPath(date))}
+                  />
+                </div>
+                <div className={styles.desktopTable}>
+                  <WeekTable week={data} />
+                </div>
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -84,13 +151,22 @@ function Week({ monday }: { monday: string }) {
   )
 }
 
-function WeekRingCard({ data, isCurrent }: { data: WeekSummaryDto; isCurrent: boolean }) {
+function WeekRingCard({
+  data,
+  isCurrent,
+  variant = 'mobile',
+}: {
+  data: WeekSummaryDto
+  isCurrent: boolean
+  variant?: 'mobile' | 'desktop'
+}) {
+  const location = useLocation()
   const { eaten, target, left } = data
   const overBy = left !== null && left.kcal < 0 ? -left.kcal : null
   return (
     <section className={styles.card}>
       <div className={styles.summaryTop}>
-        <Ring value={eaten.kcal} target={target?.kcal ?? null}>
+        <Ring value={eaten.kcal} target={target?.kcal ?? null} variant={variant}>
           {overBy !== null ? (
             <>
               <div className={`${styles.ringLabel} ${styles.overText}`}>{fr.day.overBy}</div>
@@ -117,7 +193,7 @@ function WeekRingCard({ data, isCurrent }: { data: WeekSummaryDto; isCurrent: bo
             <div className={styles.statLabel}>{fr.day.eaten}</div>
             <div className={styles.statValue}>{formatInt(eaten.kcal)}</div>
           </div>
-          <Link to={GOAL_PATH} className={styles.stat} aria-label={fr.week.editGoal}>
+          <Link to={GOAL_PATH} state={{ background: location }} className={styles.stat} aria-label={fr.week.editGoal}>
             <div className={styles.statLabel}>
               {fr.week.weeklyGoal} <Pencil className={styles.pencil} />
             </div>

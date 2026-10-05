@@ -1,0 +1,309 @@
+/* Transcribed from design/bureau-jour.html */
+
+.main {
+  max-width: var(--size-content);
+  margin: 0 auto;
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.band {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-24) var(--space-28);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-24) var(--space-40);
+}
+
+.ringValue {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-36);
+  line-height: 1;
+}
+
+.ringLabel {
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+  margin-top: var(--space-6);
+}
+
+.overText {
+  color: var(--color-over);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ringValue.overText {
+  font-weight: var(--font-weight-bold);
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+  min-width: var(--size-stats-min);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+a.stat:hover {
+  color: var(--color-ink);
+}
+
+.statLabel {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.pencil {
+  color: var(--color-accent);
+}
+
+.eaten,
+.goal {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+}
+
+.eaten {
+  font-size: var(--font-size-26);
+}
+
+.goal {
+  font-size: var(--font-size-22);
+}
+
+.macros {
+  flex: 0 1 var(--size-band-column);
+  min-width: var(--size-macros-min);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+
+/* Mini week */
+.week {
+  flex: 1 1 var(--size-mini-week);
+  margin-left: auto;
+  border-left: 1px solid var(--color-divider);
+  padding-left: var(--space-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.week:hover {
+  color: var(--color-ink);
+}
+
+.weekHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-12);
+}
+
+.weekLeft,
+.weekOver {
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}
+
+.weekLeft {
+  color: var(--color-accent);
+}
+
+.weekOver {
+  color: var(--color-over);
+}
+
+.weekValue {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-20);
+}
+
+.weekTarget {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-muted);
+}
+
+.miniChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: var(--size-mini-chart);
+}
+
+.miniDay {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+.miniBar,
+.miniOver,
+.miniCurrent {
+  width: var(--size-mini-bar);
+  border-radius: var(--radius-bar) var(--radius-bar) var(--radius-xs) var(--radius-xs);
+  max-height: calc(100% - var(--space-20));
+}
+
+.miniBar {
+  background: var(--color-accent);
+}
+
+.miniOver {
+  background: var(--color-over);
+}
+
+.miniCurrent {
+  background: var(--color-accent-light);
+}
+
+.miniLabel,
+.miniTodayLabel {
+  font-size: var(--font-size-11);
+}
+
+.miniLabel {
+  color: var(--color-muted);
+}
+
+.miniTodayLabel {
+  color: var(--color-ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Meals list */
+.meals {
+  background: var(--color-card);
+  border-radius: var(--radius-list);
+  padding: var(--space-16) var(--space-20) var(--space-8);
+  display: flex;
+  flex-direction: column;
+}
+
+.mealsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-10);
+}
+
+.mealsTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
+}
+
+.mealsActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+}
+
+.mealsMeta {
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.add {
+  height: var(--size-desktop-control);
+  padding: 0 var(--space-16);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+}
+
+.add:hover {
+  background: var(--color-accent-hover);
+}
+
+.row {
+  display: grid;
+  grid-template-columns:
+    var(--size-col-time) minmax(0, 1fr) var(--size-col-macro) var(--size-col-macro) var(--size-col-macro)
+    var(--size-col-kcal) var(--size-col-menu);
+  gap: var(--space-8);
+  align-items: center;
+  padding: var(--space-10) 0;
+  border-top: 1px solid var(--color-divider);
+  font-size: var(--font-size-14);
+}
+
+.time {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--color-ink);
+  font-weight: var(--font-weight-medium);
+  min-height: var(--size-menu-button);
+}
+
+.name:hover {
+  color: var(--color-accent);
+}
+
+.quantity {
+  color: var(--color-muted);
+  font-weight: var(--font-weight-regular);
+}
+
+.macro {
+  color: var(--color-muted);
+  text-align: right;
+}
+
+.kcal {
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.menu {
+  width: var(--size-menu-button);
+  height: var(--size-menu-button);
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu:hover {
+  background: var(--color-track);
+  color: var(--color-ink);
+}

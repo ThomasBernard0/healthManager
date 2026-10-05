@@ -141,3 +141,69 @@ a.stat:hover {
   flex-direction: column;
   gap: var(--space-2);
 }
+
+/* Desktop (design/bureau-semaine.html) */
+.desktopPage {
+  min-height: 100dvh;
+}
+
+.desktopMain {
+  max-width: var(--size-header);
+  margin: 0 auto;
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.desktopRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-20);
+}
+
+.desktopRing,
+.desktopTiles {
+  flex: 1 1 var(--size-week-column);
+  min-width: 0;
+}
+
+.desktopRing > section {
+  height: 100%;
+}
+
+.desktopTiles .tiles {
+  gap: var(--space-12);
+}
+
+.desktopTiles .tile {
+  padding: var(--space-18);
+}
+
+.desktopTiles .statValue {
+  font-size: var(--font-size-24);
+}
+
+.desktopChart {
+  flex: 1 1 var(--size-chart-column);
+  min-width: 0;
+}
+
+.desktopTable {
+  flex: 1 1 var(--size-table-column);
+  min-width: 0;
+}
+
+.desktopMain > .desktopRow:first-child {
+  align-items: stretch;
+}
+
+.desktopTiles .tiles {
+  height: 100%;
+  grid-auto-rows: 1fr;
+}
+
+.desktopRing .statValue {
+  font-size: var(--font-size-24);
+}

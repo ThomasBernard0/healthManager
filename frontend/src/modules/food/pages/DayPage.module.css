@@ -256,3 +256,8 @@ a.stat:hover {
 .fab:hover {
   background: var(--color-accent-hover);
 }
+
+/* Desktop: top bar + centred column (DayDesktop). */
+.desktop {
+  min-height: 100dvh;
+}

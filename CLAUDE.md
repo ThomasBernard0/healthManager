@@ -96,6 +96,9 @@ After editing `shared/src`, rebuild it so the apps see the change.
 
 > **Windows/PowerShell:** the npm shim drops arguments after `--` (`npm run dev -- --port 5173` runs `vite 5173`).
 > Call the tool directly instead: `npx vite --port 5173`, `npx prisma migrate dev --name <x>`.
+> **Never write source files with `Add-Content`/`Set-Content`/`Out-File` in Windows PowerShell 5.1**: they use the ANSI
+> code page (or a BOM), and the bundler on Linux CI rejects the result. Use an editor/the Edit tool, or
+> `[IO.File]::WriteAllText(path, text, (New-Object Text.UTF8Encoding $false))`.
 
 ## Conventions
 
@@ -118,6 +121,10 @@ After editing `shared/src`, rebuild it so the apps see the change.
   and are used by both apps — never re-implement them in a component or a service.
 - Dates are Europe/Paris local `YYYY-MM-DD` strings (Postgres `date`), times are `HH:mm`. kcal are integers,
   macros are grams to 0.1 g (`Decimal`); round only in the UI.
+- **Desktop (≥ 1024 px)**: same routes and data; components switch layout with `useIsDesktop()`.
+  Sheets use search params (`?ajout=…`, back button closes them); Nouveau repas and Mon objectif are
+  modal routes opened with `state.background` (dialog on desktop, full screen on mobile). After a change
+  made in a dialog call `invalidateData()` so the page underneath reloads (`useDataVersion()` in its key).
 - **All UI strings live in `frontend/src/i18n/fr.ts`** (French only, no helper/explanatory text);
   numbers via `core/format.ts` (`Intl.NumberFormat('fr-FR')`).
 

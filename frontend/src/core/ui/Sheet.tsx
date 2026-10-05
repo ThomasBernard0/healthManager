@@ -51,7 +51,7 @@ export function Sheet({ title, onClose, onBack, dismiss = 'close', children }: S
   )
 
   return createPortal(
-    <div className={styles.root}>
+    <div className={styles.root} data-sheet>
       <div className={styles.scrim} onClick={onClose} />
       <div
         ref={panel}

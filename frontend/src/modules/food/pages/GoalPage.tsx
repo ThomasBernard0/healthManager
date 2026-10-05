@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { goalsCurrent, goalsUpdate } from '../../../api/generated/endpoints/goals/goals'
 import type { GoalDto } from '../../../api/generated/model'
+import { invalidateData } from '../../../core/dataVersion'
 import { formatInt, parseNumber } from '../../../core/format'
 import { ChevronLeft } from '../../../core/ui/icons'
 import { Stepper } from '../../../core/ui/Stepper'
@@ -76,6 +77,7 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
         carbs: roundMacro(values.carbs ?? 0),
         fat: roundMacro(values.fat ?? 0),
       })
+      invalidateData()
       onSaved()
     } catch {
       setState('error')

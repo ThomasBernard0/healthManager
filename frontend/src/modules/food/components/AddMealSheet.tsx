@@ -1,5 +1,5 @@
 import { matchesSearch, parisNowTime, searchKey } from '@healthmanager/shared'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { logEntriesLogMeal, logEntriesRemove } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
@@ -11,6 +11,7 @@ import { Stepper } from '../../../core/ui/Stepper'
 import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
+import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { MEALS_PATH } from '../routes'
 import styles from './AddMealSheet.module.css'
@@ -34,6 +35,20 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
   const [expanded, setExpanded] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [busy, setBusy] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const desktop = useIsDesktop()
+
+  // "/" jumps to the search (desktop shortcut), unless already typing somewhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (e.key !== '/' || target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const all = meals.data ?? []
   const visible = useMemo(
@@ -83,8 +98,9 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
       <label className={styles.search}>
         <Search size={18} />
         <input
+          ref={searchRef}
           type="search"
-          placeholder={fr.add.search}
+          placeholder={desktop ? fr.add.searchDesktop : fr.add.search}
           aria-label={fr.add.searchLabel}
           value={query}
           onChange={(e) => {
@@ -92,6 +108,7 @@ export function AddMealSheet({ date, today, onClose, onQuickEntry, onNewMeal, on
             setExpanded(null)
           }}
         />
+        <kbd className={styles.key}>{fr.desktop.searchKey}</kbd>
       </label>
 
       {meals.status === 'error' && !meals.data && (
