@@ -1,5 +1,5 @@
-import { fr } from '../../../i18n/fr'
 import { ChevronLeft, ChevronRight } from '../../../core/ui/icons'
+import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import { ViewToggle } from './ViewToggle'
 import styles from './TopBar.module.css'
 
@@ -24,7 +24,7 @@ export function TopBar(props: TopBarProps) {
   return (
     <header className={styles.bar}>
       <div className={styles.inner}>
-        <div className={styles.title}>{fr.app.title}</div>
+        <ModuleSwitcher current="food" variant="desktop" />
         <div className={styles.switcher}>
           <button type="button" className={styles.arrow} aria-label={props.previousLabel}
             disabled={props.previousDisabled}

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation, type Location } from 'react-router-dom'
 import { AccessGate } from './core/access/AccessGate'
+import { launchPath } from './core/modules'
 import { ModalFrame } from './core/ui/ModalFrame'
 import { ToastProvider } from './core/ui/Toast'
 import { fr } from './i18n/fr'
@@ -9,6 +10,8 @@ import MealEditorPage from './modules/food/pages/MealEditorPage'
 import MealsPage from './modules/food/pages/MealsPage'
 import WeekPage from './modules/food/pages/WeekPage'
 import { GOAL_PATH, MEALS_PATH } from './modules/food/routes'
+import HomePage from './modules/muscu/pages/HomePage'
+import { MUSCU_PATH } from './modules/muscu/routes'
 
 export default function App() {
   const location = useLocation()
@@ -27,7 +30,8 @@ export default function App() {
           <Route path={MEALS_PATH} element={<MealsPage />} />
           <Route path={`${MEALS_PATH}/nouveau`} element={<MealEditorPage />} />
           <Route path={`${MEALS_PATH}/:id`} element={<MealEditorPage />} />
-          <Route path="*" element={<Navigate to="/jour" replace />} />
+          <Route path={MUSCU_PATH} element={<HomePage />} />
+          <Route path="*" element={<Navigate to={launchPath()} replace />} />
         </Routes>
         {background && (
           <Routes>

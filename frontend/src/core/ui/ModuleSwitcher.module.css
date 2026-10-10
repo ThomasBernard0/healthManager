@@ -1,0 +1,63 @@
+/* Transcribed from design/musculation/muscu-1-accueil.html and bureau-muscu-accueil.html */
+.root {
+  position: relative;
+  align-self: flex-start;
+}
+
+.button {
+  height: var(--size-touch);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-17);
+}
+
+.desktop .button {
+  height: var(--size-desktop-control);
+  padding: 0 var(--space-4);
+  gap: var(--space-8);
+  font-size: var(--font-size-20);
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: var(--size-stats-min);
+  padding: var(--space-6);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-dialog);
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  min-height: var(--size-touch);
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  color: var(--color-ink);
+  text-decoration: none;
+  font-size: var(--font-size-15);
+}
+
+.item:hover {
+  background: var(--color-divider);
+}
+
+.item[aria-current='page'] {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+}

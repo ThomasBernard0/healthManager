@@ -5,6 +5,7 @@ import type { DaySummaryDto, LogEntryDto } from '../../../api/generated/model'
 import { formatDayTitle, formatInt, formatLongDate, formatMacros, formatQuantity } from '../../../core/format'
 import { ChevronLeft, ChevronRight, Pencil, Plus } from '../../../core/ui/icons'
 import { MacroBar } from '../../../core/ui/MacroBar'
+import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import { Ring } from '../../../core/ui/Ring'
 import form from '../../../core/ui/form.module.css'
 import { useDataVersion } from '../../../core/dataVersion'
@@ -134,7 +135,7 @@ function Day({ date }: { date: string }) {
   return (
     <div className={styles.page}>
       <header className={styles.top}>
-        <div className={styles.module}>{fr.app.title}</div>
+        <ModuleSwitcher current="food" />
         <div className={styles.switcher}>
           <button
             type="button"

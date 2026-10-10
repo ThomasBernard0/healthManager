@@ -55,7 +55,9 @@ frontend/                React SPA
     theme/               design tokens (light + dark) — single source for colors/spacing/typography
     i18n/fr.ts           every UI string (French only)
     core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
-    modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts (Sport/Finances later as modules/<name>)
+    core/modules.ts      module list + last module per device (launch opens it); core/ui/ModuleSwitcher in each top bar
+    modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
+    modules/muscu/       Musculation module (/muscu/*), spec docs/specs/musculation.md
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
