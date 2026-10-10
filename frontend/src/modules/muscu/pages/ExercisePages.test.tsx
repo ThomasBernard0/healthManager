@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import {
@@ -6,7 +6,9 @@ import {
   exercisesGet,
   exercisesList,
   exercisesUpdate,
+  exercisesHistory,
 } from '../../../api/generated/endpoints/exercises/exercises'
+import { addDays, parisToday } from '@healthmanager/shared'
 import type { ExerciseDto } from '../../../api/generated/model'
 import ExerciseEditPage from './ExerciseEditPage'
 import ExercisePage from './ExercisePage'
@@ -17,6 +19,7 @@ vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({
   exercisesGet: vi.fn(),
   exercisesCreate: vi.fn(),
   exercisesUpdate: vi.fn(),
+  exercisesHistory: vi.fn(),
 }))
 
 const ROWING: ExerciseDto = {
@@ -70,7 +73,39 @@ describe('Exercices', () => {
 })
 
 describe('Fiche exercice', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(exercisesHistory).mockResolvedValue([])
+  })
+
+  it('shows Progression (last 12 weeks) and Historique; tapping a bar shows date, sets and volume', async () => {
+    const today = parisToday()
+    vi.mocked(exercisesGet).mockResolvedValue(ROWING)
+    vi.mocked(exercisesHistory).mockResolvedValue([
+      { sessionId: 's3', date: addDays(today, -7), sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })), feeling: 'ok', preFatigue: 0, volume: 2160, heaviest: 60 },
+      { sessionId: 's2', date: addDays(today, -14), sets: [12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), feeling: 'easy', preFatigue: 3, volume: 2587.5, heaviest: 57.5 },
+      // Older than 12 weeks: in the history, not in the chart.
+      { sessionId: 's1', date: addDays(today, -100), sets: [{ weight: 50, reps: 10 }], feeling: null, preFatigue: 0, volume: 500, heaviest: 50 },
+    ])
+    const user = userEvent.setup()
+    renderAt('/muscu/exercices/r1')
+    const chart = await screen.findByRole('group', { name: 'Charge et volume par séance' })
+    const bars = within(chart).getAllByRole('button')
+    expect(bars).toHaveLength(2)
+
+    await user.click(bars[0])
+    const callout = within(chart).getByRole('status')
+    expect(callout).toHaveTextContent('57,5 kg × 12 · 12 · 11 · 10')
+    expect(callout).toHaveTextContent('2 588 kg')
+    await user.click(screen.getByRole('heading', { name: 'Rowing barre' }))
+    expect(within(chart).queryByRole('status')).toBeNull()
+
+    const history = screen.getByRole('heading', { name: 'Historique' }).closest('section')!
+    expect(within(history).getAllByRole('listitem')).toHaveLength(3)
+    expect(within(history).getByText('60 kg × 10 · 9 · 9 · 8')).toBeInTheDocument()
+    expect(within(history).getAllByRole('img', { name: 'Muscles déjà travaillés' })).toHaveLength(1)
+    expect(within(history).getByText('Facile')).toBeInTheDocument()
+  })
 
   it('shows the name, equipment and muscles as pills', async () => {
     vi.mocked(exercisesGet).mockResolvedValue(ROWING)
@@ -84,7 +119,10 @@ describe('Fiche exercice', () => {
 })
 
 describe('Créer / Modifier l’exercice', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(exercisesHistory).mockResolvedValue([])
+  })
 
   it('cycles a muscle none → secondary → primary → none and creates the exercise', async () => {
     vi.mocked(exercisesCreate).mockResolvedValue({ ...ECARTE, id: 'new1' })

@@ -748,6 +748,42 @@
         ]
       }
     },
+    "/api/exercises/{id}/history": {
+      "get": {
+        "operationId": "Exercises_history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseHistoryEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      }
+    },
     "/api/workouts": {
       "get": {
         "operationId": "Workouts_list",
@@ -2376,6 +2412,85 @@
           "workouts"
         ]
       },
+      "SetResultDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "example": 60,
+            "description": "kg"
+          },
+          "reps": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "weight",
+          "reps"
+        ]
+      },
+      "Feeling": {
+        "type": "string",
+        "enum": [
+          "easy",
+          "ok",
+          "hard"
+        ]
+      },
+      "ExerciseHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Europe/Paris date"
+          },
+          "sets": {
+            "description": "Validated sets, in order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SetResultDto"
+            }
+          },
+          "feeling": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Feeling"
+              }
+            ]
+          },
+          "preFatigue": {
+            "type": "number",
+            "example": 0,
+            "description": "Sets already done on its primary muscles (> 0: battery icon)"
+          },
+          "volume": {
+            "type": "number",
+            "example": 2160,
+            "description": "Σ weight × reps (kg)"
+          },
+          "heaviest": {
+            "type": "number",
+            "example": 60,
+            "description": "Heaviest weight (kg)"
+          }
+        },
+        "required": [
+          "sessionId",
+          "date",
+          "sets",
+          "feeling",
+          "preFatigue",
+          "volume",
+          "heaviest"
+        ]
+      },
       "SaveExerciseDto": {
         "type": "object",
         "properties": {
@@ -2411,24 +2526,6 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles"
-        ]
-      },
-      "SetResultDto": {
-        "type": "object",
-        "properties": {
-          "weight": {
-            "type": "number",
-            "example": 60,
-            "description": "kg"
-          },
-          "reps": {
-            "type": "number",
-            "example": 10
-          }
-        },
-        "required": [
-          "weight",
-          "reps"
         ]
       },
       "WorkoutSummaryExerciseDto": {
@@ -2716,14 +2813,6 @@
         },
         "required": [
           "workoutId"
-        ]
-      },
-      "Feeling": {
-        "type": "string",
-        "enum": [
-          "easy",
-          "ok",
-          "hard"
         ]
       },
       "SessionSetDto": {

@@ -1,5 +1,5 @@
 import type { ExerciseDto, Muscle } from '../../api/generated/model'
-import { groupSets, type SetResult } from '@healthmanager/shared'
+import { groupSets, toUtcDate, type SetResult } from '@healthmanager/shared'
 import { formatDecimal, formatShortDay } from '../../core/format'
 import { fr } from '../../i18n/fr'
 
@@ -46,3 +46,17 @@ export const formatTargets = (targets: SetResult[]): string =>
   groupSets(targets)
     .map((g) => [`${formatWeight(g.weight)} ${fr.muscu.session.kg}`, ...g.reps].join(' · '))
     .join(' / ')
+
+const noDot = (s: string) => s.replace(/\.$/, '')
+const dayShortMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const shortWeekdayDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', timeZone: 'UTC' })
+
+/** "10 août", "7 sept" (chart axis). */
+export const formatChartDate = (date: string): string =>
+  dayShortMonth
+    .formatToParts(toUtcDate(date))
+    .map((p) => (p.type === 'month' ? noDot(p.value) : p.value))
+    .join('')
+
+/** "lun 28" (history rows on mobile). */
+export const formatHistoryDay = (date: string): string => noDot(shortWeekdayDay.format(toUtcDate(date)).replace('.', ''))

@@ -6,6 +6,7 @@
  */
 import type {
   ExerciseDto,
+  ExerciseHistoryEntryDto,
   ExercisesListParams,
   SaveExerciseDto
 } from '../../model';
@@ -54,7 +55,16 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const exercisesHistory = (
+    id: string,
+ options?: SecondParameter<typeof apiClient<ExerciseHistoryEntryDto[]>>,) => {
+      return apiClient<ExerciseHistoryEntryDto[]>(
+      {url: `/api/exercises/${id}/history`, method: 'GET'
+    },
+      options);
+    }
   export type ExercisesListResult = NonNullable<Awaited<ReturnType<typeof exercisesList>>>
 export type ExercisesCreateResult = NonNullable<Awaited<ReturnType<typeof exercisesCreate>>>
 export type ExercisesGetResult = NonNullable<Awaited<ReturnType<typeof exercisesGet>>>
 export type ExercisesUpdateResult = NonNullable<Awaited<ReturnType<typeof exercisesUpdate>>>
+export type ExercisesHistoryResult = NonNullable<Awaited<ReturnType<typeof exercisesHistory>>>

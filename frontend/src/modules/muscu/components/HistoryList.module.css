@@ -1,0 +1,115 @@
+/* Transcribed from design/musculation/muscu-4-fiche-exercice.html and bureau-muscu-exercice.html */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-16);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-16);
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  font-size: var(--font-size-14);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--size-row);
+  padding: var(--space-6) 0;
+  box-sizing: border-box;
+}
+
+.row + .row {
+  border-top: 1px solid var(--color-divider);
+}
+
+.date {
+  width: var(--size-col-time);
+  flex-shrink: 0;
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.sets {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.feeling {
+  flex-shrink: 0;
+  font-size: var(--font-size-12);
+}
+
+.easy {
+  color: var(--color-protein);
+}
+
+.hard {
+  color: var(--color-over);
+}
+
+/* Desktop table */
+.tableCard {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-10) var(--space-24);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: var(--size-table-min);
+  border-collapse: collapse;
+  font-size: var(--font-size-14);
+}
+
+.caption {
+  text-align: left;
+  padding: var(--space-8) 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
+}
+
+.table th {
+  padding: var(--space-12) 0;
+  text-align: left;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.table td {
+  padding: var(--space-12) var(--space-8) var(--space-12) 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+.table .end {
+  text-align: right;
+  padding-right: 0;
+}
+
+.dateCell {
+  color: var(--color-muted);
+}
+
+.dateInner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}

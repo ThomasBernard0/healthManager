@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ExerciseHistoryEntryDto } from './dto/exercise-history.dto.js';
 import { ExerciseDto } from './dto/exercise.dto.js';
 import { SaveExerciseDto } from './dto/save-exercise.dto.js';
 import { ExercisesService } from './exercises.service.js';
@@ -22,6 +23,14 @@ export class ExercisesController {
   @ApiNotFoundResponse()
   get(@Param('id', ParseUUIDPipe) id: string): Promise<ExerciseDto> {
     return this.exercises.get(id);
+  }
+
+  /** Historique / Progression: every finished session with this exercise, most recent first. */
+  @Get(':id/history')
+  @ApiOkResponse({ type: [ExerciseHistoryEntryDto] })
+  @ApiNotFoundResponse()
+  history(@Param('id', ParseUUIDPipe) id: string): Promise<ExerciseHistoryEntryDto[]> {
+    return this.exercises.history(id);
   }
 
   /** Custom exercise (no image). */

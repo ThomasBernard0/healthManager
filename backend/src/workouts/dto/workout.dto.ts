@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExerciseDto } from '../../exercises/dto/exercise.dto.js';
-import { SetResultDto } from '../../sessions/dto/session.dto.js';
+import { SetResultDto } from '../../common/set-result.dto.js';
 
 export class WorkoutSummaryExerciseDto {
   @ApiProperty({ example: 'Rowing barre' })

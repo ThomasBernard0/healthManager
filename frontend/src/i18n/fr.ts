@@ -91,6 +91,20 @@ export const fr = {
       add: (name: string) => `Ajouter ${name} à la séance`,
       start: 'Démarrer cette séance',
     },
+    history: {
+      progression: 'Progression',
+      load: 'Charge',
+      volume: 'Volume',
+      title: 'Historique',
+      chart: 'Charge et volume par séance',
+      date: 'Date',
+      set: (n: number) => `Série ${n}`,
+      feeling: 'Ressenti',
+      /** "2 588 kg" */
+      kg: (value: string) => `${value} kg`,
+      /** Bar label: "lun 21 sept : 2 588 kg" */
+      bar: (date: string, volume: string) => `${date} : ${volume} kg`,
+    },
     session: {
       resume: 'Reprendre la séance',
       progress: (done: number, total: number) => `${done} / ${total} faits`,

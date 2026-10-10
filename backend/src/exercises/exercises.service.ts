@@ -1,7 +1,9 @@
-import { matchesSearch, searchKey } from '@healthmanager/shared';
+import { matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { num } from '../common/decimal.js';
 import type { Exercise, Workout, WorkoutItem } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ExerciseHistoryEntryDto } from './dto/exercise-history.dto.js';
 import { ExerciseDto } from './dto/exercise.dto.js';
 import { SaveExerciseDto } from './dto/save-exercise.dto.js';
 
@@ -66,6 +68,28 @@ export class ExercisesService {
     const exercise = await this.prisma.exercise.findUnique({ where: { id }, include: EXERCISE_INCLUDE });
     if (!exercise) throw new NotFoundException('Exercise not found');
     return toExerciseDto(exercise);
+  }
+
+  /** Every finished session with this exercise, most recent first. */
+  async history(id: string): Promise<ExerciseHistoryEntryDto[]> {
+    await this.get(id);
+    const entries = await this.prisma.sessionExercise.findMany({
+      where: { exerciseId: id, session: { finishedAt: { not: null } }, sets: { some: { done: true } } },
+      orderBy: { session: { finishedAt: 'desc' } },
+      include: { session: true, sets: { where: { done: true }, orderBy: { index: 'asc' } } },
+    });
+    return entries.map((e) => {
+      const sets = e.sets.map((s) => ({ weight: num(s.weight!), reps: s.reps! }));
+      return {
+        sessionId: e.sessionId,
+        date: parisToday(e.session.finishedAt!),
+        sets,
+        feeling: e.feeling,
+        preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
+        volume: volume(sets),
+        heaviest: Math.max(...sets.map((s) => s.weight)),
+      };
+    });
   }
 
   async create(dto: SaveExerciseDto): Promise<ExerciseDto> {
