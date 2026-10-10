@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
-import type { SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import type { ExerciseDto, SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
 import { ChevronRight, Play } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
@@ -9,14 +10,15 @@ import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
+import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { formatSessionDate, formatTargets } from '../format'
-import { EXERCISES_PATH, NEW_WORKOUT_PATH, sessionPath, workoutPath } from '../routes'
+import { NEW_WORKOUT_PATH, sessionPath, workoutPath } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './HomePage.module.css'
 
-/** Musculation Accueil: the next workout of the rotation, and the rotation (Mes séances). */
+/** Musculation Accueil: the next workout of the rotation, the rotation (Mes séances) and Mes exercices. */
 export default function HomePage() {
   const desktop = useIsDesktop()
   const version = useDataVersion()
@@ -26,6 +28,9 @@ export default function HomePage() {
   const inProgress = current.data?.session ?? null
   // Wait for both, so Démarrer never starts a second session.
   const ready = workouts.data && current.data
+  const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
+  // Mes exercices: the ones used in my séances (the bank itself is reached from Modifier la séance).
+  const mine = (exercises.data ?? []).filter((e) => e.workouts.length > 0)
 
   const error = workouts.status === 'error' && !workouts.data && (
     <div className={page.alert} role="alert">
@@ -43,15 +48,18 @@ export default function HomePage() {
         {workouts.data && (
           <div className={styles.columns}>
             <section className={styles.column}>{ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}</section>
-            <section className={`${styles.column} ${styles.listCard}`}>
-              <div className={styles.listHeader}>
-                <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
-                <Link to={NEW_WORKOUT_PATH} className={styles.newSmall}>
-                  {fr.muscu.home.newWorkout}
-                </Link>
-              </div>
-              <WorkoutRows workouts={workouts.data} />
-            </section>
+            <div className={`${styles.column} ${styles.stack}`}>
+              <section className={styles.listCard}>
+                <div className={styles.listHeader}>
+                  <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
+                  <Link to={NEW_WORKOUT_PATH} className={styles.newSmall}>
+                    {fr.muscu.home.newWorkout}
+                  </Link>
+                </div>
+                <WorkoutRows workouts={workouts.data} />
+              </section>
+              <MyExercises exercises={mine} />
+            </div>
           </div>
         )}
       </MuscuLayout>
@@ -68,9 +76,6 @@ export default function HomePage() {
           <section className={styles.section}>
             <div className={styles.listHeader}>
               <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
-              <Link to={EXERCISES_PATH} className={styles.link}>
-                {fr.muscu.exercises}
-              </Link>
             </div>
             {workouts.data.length > 0 && (
               <div className={styles.listCard}>
@@ -81,9 +86,25 @@ export default function HomePage() {
               {fr.muscu.home.newWorkout}
             </Link>
           </section>
+          <MyExercises exercises={mine} />
         </>
       )}
     </MuscuLayout>
+  )
+}
+
+/** Mes exercices: each exercise of my séances once, by name, opening its Fiche (progression, history). */
+function MyExercises({ exercises }: { exercises: ExerciseDto[] }) {
+  if (exercises.length === 0) return null
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>{fr.muscu.home.myExercises}</h2>
+      <ul className={page.list}>
+        {exercises.map((e) => (
+          <ExerciseRow key={e.id} exercise={e} link />
+        ))}
+      </ul>
+    </section>
   )
 }
 

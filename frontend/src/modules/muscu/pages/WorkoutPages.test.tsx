@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
+import { exercisesCreate, exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import {
   workoutsCreate,
   workoutsGet,
@@ -22,7 +22,7 @@ vi.mock('../../../api/generated/endpoints/workouts/workouts', () => ({
   workoutsUpdate: vi.fn(),
   workoutsRemove: vi.fn(),
 }))
-vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({ exercisesList: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({ exercisesList: vi.fn(), exercisesCreate: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/sessions/sessions', () => ({ sessionsCurrent: vi.fn(), sessionsStart: vi.fn() }))
 
 const ex = (id: string, name: string, primary: ExerciseDto['primaryMuscles'] = ['back']): ExerciseDto => ({
@@ -88,6 +88,7 @@ describe('Accueil', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
+    vi.mocked(exercisesList).mockResolvedValue([])
   })
 
   it('shows the next workout and the rotation, the next one tagged', async () => {
@@ -149,6 +150,23 @@ describe('Accueil', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s9'))
   })
 
+  it('lists Mes exercices (only those in my séances, once) and has no Exercices link', async () => {
+    const inPull = { id: 'pull', name: 'Pull', sets: 4, repMin: 8, repMax: 12 }
+    const inPushA = { id: 'a', name: 'Push A', sets: 4, repMin: 8, repMax: 12 }
+    vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
+    vi.mocked(exercisesList).mockResolvedValue([
+      { ...CURL, workouts: [inPull, inPushA] },
+      { ...ROWING, workouts: [inPull] },
+      TIRAGE,
+    ])
+    renderAt('/muscu')
+    const section = (await screen.findByRole('heading', { name: 'Mes exercices' })).closest('section')!
+    const links = within(section).getAllByRole('link')
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/c', '/muscu/exercices/r'])
+    expect(within(section).queryByText('Tirage vertical prise large')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Exercices' })).toBeNull()
+  })
+
   it('has no next workout card without workouts', async () => {
     vi.mocked(workoutsList).mockResolvedValue([])
     render(
@@ -166,6 +184,7 @@ describe('Modifier la séance', () => {
     vi.resetAllMocks()
     vi.mocked(workoutsList).mockResolvedValue([])
     vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
+    vi.mocked(exercisesList).mockResolvedValue([])
   })
 
   it('creates a workout from the bank in picking mode, 4 × 8–12 by default', async () => {
@@ -191,6 +210,35 @@ describe('Modifier la séance', () => {
     })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
   })
+
+  it('creates a custom exercise from the picker and adds it to the séance (4 × 8–12)', async () => {
+    const pullover = { ...ex('po', 'Pull-over', ['back']), equipment: 'dumbbell' as const }
+    vi.mocked(exercisesList).mockResolvedValue([CURL])
+    vi.mocked(exercisesCreate).mockResolvedValue(pullover)
+    const user = userEvent.setup()
+    renderAt('/muscu/seances/nouvelle')
+
+    await user.click(await screen.findByRole('button', { name: '+ Ajouter un exercice' }))
+    await user.click(await screen.findByRole('button', { name: '+ Créer un exercice' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Créer un exercice' })
+    await user.type(within(sheet).getByRole('textbox', { name: 'Nom' }), 'Pull-over')
+    await user.click(within(sheet).getByRole('button', { name: 'Haltères' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Dos : non travaillé' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Dos : secondaire' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Enregistrer' }))
+
+    expect(exercisesCreate).toHaveBeenCalledWith({
+      name: 'Pull-over',
+      equipment: 'dumbbell',
+      primaryMuscles: ['back'],
+      secondaryMuscles: [],
+    })
+    expect(await screen.findByRole('button', { name: 'Modifier Pull-over : séries et répétitions' })).toHaveTextContent(
+      '4 × 8–12',
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+    // Many typed/clicked steps: room for a loaded CI machine.
+  }, 15000)
 
   it('edits sets and rep range, reorders with the keyboard and saves', async () => {
     vi.mocked(workoutsGet).mockResolvedValue(PULL)

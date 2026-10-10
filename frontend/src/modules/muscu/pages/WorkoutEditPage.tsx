@@ -18,6 +18,7 @@ import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
+import { ExerciseForm } from '../components/ExerciseForm'
 import { ExerciseSearchList } from '../components/ExerciseSearchList'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
@@ -79,6 +80,7 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
+  const add = (exercise: ExerciseDto) => setItems((list) => [...list, { exercise, ...DEFAULT_SETTINGS }])
 
   function remove(exerciseId: string) {
     const index = items.findIndex((i) => i.exercise.id === exerciseId)
@@ -200,9 +202,27 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
         <ExercisePicker
           workoutName={name.trim() || fr.muscu.workout.title}
           inWorkout={new Set(items.map((i) => i.exercise.id))}
-          onAdd={(exercise) => setItems((list) => [...list, { exercise, ...DEFAULT_SETTINGS }])}
+          onAdd={add}
+          onCreate={() => picker.swap('nouvel-exercice')}
           onClose={picker.close}
         />
+      )}
+
+      {picker.value === 'nouvel-exercice' && (
+        <Sheet
+          title={fr.muscu.createExercise}
+          dismiss="back"
+          onBack={() => picker.swap('exercice')}
+          onClose={picker.close}
+        >
+          <ExerciseForm
+            exercise={null}
+            onSaved={(exercise) => {
+              add(exercise)
+              picker.close()
+            }}
+          />
+        </Sheet>
       )}
 
       {edited && (
@@ -344,14 +364,19 @@ interface ExercisePickerProps {
   workoutName: string
   inWorkout: Set<string>
   onAdd: (exercise: ExerciseDto) => void
+  /** + Créer un exercice: a custom exercise, added to the workout once saved. */
+  onCreate: () => void
   onClose: () => void
 }
 
 /** The bank in picking mode: "+" adds to the workout; exercises already in it show its name. */
-function ExercisePicker({ workoutName, inWorkout, onAdd, onClose }: ExercisePickerProps) {
+function ExercisePicker({ workoutName, inWorkout, onAdd, onCreate, onClose }: ExercisePickerProps) {
   const exercises = useAsync(() => exercisesList(), 'exercises')
   return (
     <Sheet title={fr.muscu.exercises} onClose={onClose} dismiss="back" focusFirst={false}>
+      <button type="button" className={styles.addExercise} onClick={onCreate}>
+        {fr.muscu.workout.createExercise}
+      </button>
       {exercises.status === 'error' && !exercises.data && (
         <div className={page.alert} role="alert">
           <span className={form.error}>{fr.common.loadError}</span>
