@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
+import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import {
   workoutsCreate,
   workoutsGet,
@@ -24,6 +25,7 @@ import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSh
 import { primarySubtitle } from '../format'
 import { moveItem } from '../reorder'
 import { MUSCU_PATH } from '../routes'
+import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './WorkoutEditPage.module.css'
 
@@ -70,6 +72,10 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
   const picker = useOverlayParam('ajout')
   const editing = useOverlayParam('exercice')
   const edited = items.find((i) => i.exercise.id === editing.value)
+  const session = useStartSession()
+  // Start any workout (not only the next one), when no session is in progress.
+  const current = useAsync(() => (workout ? sessionsCurrent() : Promise.resolve(null)), workout?.id ?? 'new')
+  const canStart = workout !== null && workout.items.length > 0 && current.data?.session === null
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
@@ -172,6 +178,17 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
           <div className={form.error} role="alert">
             {fr.common.saveError}
           </div>
+        )}
+
+        {canStart && (
+          <button
+            type="button"
+            className={`${form.secondary} ${styles.startButton}`}
+            disabled={session.status === 'busy'}
+            onClick={() => session.start(workout.id)}
+          >
+            {fr.muscu.workout.start}
+          </button>
         )}
 
         <button type="submit" className={`${form.primary} ${styles.submit}`} disabled={!valid || status === 'busy'}>

@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
-import type { WorkoutSummaryDto } from '../../../api/generated/model'
+import type { SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
 import { ChevronRight, Play } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
@@ -10,7 +11,8 @@ import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { formatSessionDate } from '../format'
-import { EXERCISES_PATH, NEW_WORKOUT_PATH, workoutPath } from '../routes'
+import { EXERCISES_PATH, NEW_WORKOUT_PATH, sessionPath, workoutPath } from '../routes'
+import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './HomePage.module.css'
 
@@ -19,7 +21,11 @@ export default function HomePage() {
   const desktop = useIsDesktop()
   const version = useDataVersion()
   const workouts = useAsync(() => workoutsList(), `workouts#${version}`)
+  const current = useAsync(() => sessionsCurrent(), `current#${version}`)
   const next = workouts.data?.find((w) => w.isNext)
+  const inProgress = current.data?.session ?? null
+  // Wait for both, so Démarrer never starts a second session.
+  const ready = workouts.data && current.data
 
   const error = workouts.status === 'error' && !workouts.data && (
     <div className={page.alert} role="alert">
@@ -36,7 +42,7 @@ export default function HomePage() {
         {error}
         {workouts.data && (
           <div className={styles.columns}>
-            <section className={styles.column}>{next && <NextCard workout={next} desktop />}</section>
+            <section className={styles.column}>{ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}</section>
             <section className={`${styles.column} ${styles.listCard}`}>
               <div className={styles.listHeader}>
                 <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
@@ -58,7 +64,7 @@ export default function HomePage() {
       {error}
       {workouts.data && (
         <>
-          {next && <NextCard workout={next} />}
+          {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} />}
           <section className={styles.section}>
             <div className={styles.listHeader}>
               <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
@@ -81,27 +87,49 @@ export default function HomePage() {
   )
 }
 
-function NextCard({ workout, desktop = false }: { workout: WorkoutSummaryDto; desktop?: boolean }) {
+interface NextCardProps {
+  workout: WorkoutSummaryDto | undefined
+  /** A session in progress replaces the next workout: Reprendre. */
+  inProgress: SessionDto | null
+  desktop?: boolean
+}
+
+function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
+  const navigate = useNavigate()
+  const { start, status } = useStartSession()
+  const name = inProgress ? inProgress.workoutName : workout!.name
+  const exercises = inProgress ? inProgress.exercises.map((e) => e.exercise.name) : workout!.exerciseNames
   return (
-    <section className={styles.nextCard} aria-label={fr.muscu.home.next}>
+    <section className={styles.nextCard} aria-label={inProgress ? fr.muscu.home.inProgress : fr.muscu.home.next}>
       <div className={styles.nextTop}>
-        <span>{fr.muscu.home.next}</span>
-        {workout.lastDoneOn && <span>{fr.muscu.home.lastDone(formatSessionDate(workout.lastDoneOn))}</span>}
+        <span>{inProgress ? fr.muscu.home.inProgress : fr.muscu.home.next}</span>
+        {!inProgress && workout?.lastDoneOn && (
+          <span>{fr.muscu.home.lastDone(formatSessionDate(workout.lastDoneOn))}</span>
+        )}
       </div>
-      <div className={styles.nextName}>{workout.name}</div>
+      <div className={styles.nextName}>{name}</div>
       {desktop ? (
         <ul className={styles.nextList}>
-          {workout.exerciseNames.map((name) => (
-            <li key={name}>{name}</li>
+          {exercises.map((n) => (
+            <li key={n}>{n}</li>
           ))}
         </ul>
       ) : (
-        <div className={styles.nextExercises}>{workout.exerciseNames.join(', ')}</div>
+        <div className={styles.nextExercises}>{exercises.join(', ')}</div>
       )}
-      {/* Starting a session comes with the Séance step. */}
-      <button type="button" className={styles.start} disabled>
+      {status === 'error' && (
+        <div className={form.error} role="alert">
+          {fr.common.saveError}
+        </div>
+      )}
+      <button
+        type="button"
+        className={styles.start}
+        disabled={status === 'busy' || (!inProgress && workout!.exerciseNames.length === 0)}
+        onClick={() => (inProgress ? navigate(sessionPath(inProgress.id)) : start(workout!.id))}
+      >
         <Play />
-        {fr.muscu.home.start}
+        {inProgress ? fr.muscu.session.resume : fr.muscu.home.start}
       </button>
     </section>
   )

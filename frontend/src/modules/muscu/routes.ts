@@ -17,3 +17,10 @@ export const NEW_WORKOUT_PATH = '/muscu/seances/nouvelle'
 
 /** Modifier la séance. */
 export const workoutPath = (id: string): string => `/muscu/seances/${id}`
+
+/** Séance — liste (the session in progress). */
+export const sessionPath = (sessionId: string): string => `/muscu/seance/${sessionId}`
+
+/** Exercice en cours. */
+export const sessionExercisePath = (sessionId: string, entryId: string): string =>
+  `/muscu/seance/${sessionId}/${entryId}`

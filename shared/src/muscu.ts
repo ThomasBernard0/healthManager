@@ -33,3 +33,31 @@ export function nextWorkout<W extends { id: string; position: number }>(
   const last = ordered.findIndex((w) => w.id === lastFinishedWorkoutId);
   return ordered[last === -1 ? 0 : (last + 1) % ordered.length];
 }
+
+export interface SetResult {
+  /** kg (0 for body weight without added load). */
+  weight: number;
+  reps: number;
+}
+
+export interface SetGroup {
+  weight: number;
+  reps: number[];
+}
+
+/**
+ * Compact set format: consecutive sets at the same weight are grouped, a weight change starts a new
+ * group. 60×10, 60×9, 60×9, 60×8 → [{ 60, [10, 9, 9, 8] }] ("60 kg × 10 · 9 · 9 · 8").
+ */
+export function groupSets(sets: SetResult[]): SetGroup[] {
+  const groups: SetGroup[] = [];
+  for (const set of sets) {
+    const last = groups[groups.length - 1];
+    if (last && last.weight === set.weight) last.reps.push(set.reps);
+    else groups.push({ weight: set.weight, reps: [set.reps] });
+  }
+  return groups;
+}
+
+/** Σ weight × reps (kg). */
+export const volume = (sets: SetResult[]): number => sets.reduce((sum, s) => sum + s.weight * s.reps, 0);

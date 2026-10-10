@@ -10,6 +10,7 @@ import {
   workoutsUpdate,
 } from '../../../api/generated/endpoints/workouts/workouts'
 import type { ExerciseDto, WorkoutDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import { sessionsCurrent, sessionsStart } from '../../../api/generated/endpoints/sessions/sessions'
 import { ToastProvider } from '../../../core/ui/Toast'
 import HomePage from './HomePage'
 import WorkoutEditPage from './WorkoutEditPage'
@@ -22,6 +23,7 @@ vi.mock('../../../api/generated/endpoints/workouts/workouts', () => ({
   workoutsRemove: vi.fn(),
 }))
 vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({ exercisesList: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/sessions/sessions', () => ({ sessionsCurrent: vi.fn(), sessionsStart: vi.fn() }))
 
 const ex = (id: string, name: string, primary: ExerciseDto['primaryMuscles'] = ['back']): ExerciseDto => ({
   id,
@@ -64,11 +66,12 @@ function Where() {
 function renderAt(path: string) {
   return render(
     <ToastProvider>
-      <MemoryRouter initialEntries={['/muscu', path]}>
+      <MemoryRouter initialEntries={path === '/muscu' ? [path] : ['/muscu', path]}>
         <Routes>
           <Route path="/muscu" element={<><HomePage /><Where /></>} />
           <Route path="/muscu/seances/nouvelle" element={<WorkoutEditPage />} />
           <Route path="/muscu/seances/:id" element={<WorkoutEditPage />} />
+          <Route path="/muscu/seance/:sessionId" element={<Where />} />
         </Routes>
       </MemoryRouter>
     </ToastProvider>,
@@ -76,7 +79,10 @@ function renderAt(path: string) {
 }
 
 describe('Accueil', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
+  })
 
   it('shows the next workout and the rotation, the next one tagged', async () => {
     vi.mocked(workoutsList).mockResolvedValue([
@@ -100,6 +106,43 @@ describe('Accueil', () => {
     expect(screen.getByRole('link', { name: '+ Nouvelle séance' })).toHaveAttribute('href', '/muscu/seances/nouvelle')
   })
 
+  it('Démarrer starts the next workout and opens the session; a session in progress shows Reprendre', async () => {
+    vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
+    vi.mocked(sessionsStart).mockResolvedValue({
+      id: 's1',
+      workoutId: 'pull',
+      workoutName: 'Pull',
+      startedAt: '2026-10-10T08:00:00.000Z',
+      finishedAt: null,
+      exercises: [],
+    })
+    const user = userEvent.setup()
+    renderAt('/muscu')
+    await user.click(await screen.findByRole('button', { name: 'Démarrer' }))
+    expect(sessionsStart).toHaveBeenCalledWith({ workoutId: 'pull' })
+    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu/seance/s1')
+  })
+
+  it('shows the session in progress instead of the next workout', async () => {
+    vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
+    vi.mocked(sessionsCurrent).mockResolvedValue({
+      session: {
+        id: 's9',
+        workoutId: 'a',
+        workoutName: 'Push A',
+        startedAt: '2026-10-10T08:00:00.000Z',
+        finishedAt: null,
+        exercises: [{ id: 'e1', exercise: TIRAGE, status: 'todo' }],
+      },
+    })
+    const user = userEvent.setup()
+    renderAt('/muscu')
+    const card = await screen.findByRole('region', { name: 'Séance en cours' })
+    expect(within(card).getByText('Push A')).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Reprendre la séance' }))
+    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu/seance/s9')
+  })
+
   it('has no next workout card without workouts', async () => {
     vi.mocked(workoutsList).mockResolvedValue([])
     render(
@@ -116,6 +159,7 @@ describe('Modifier la séance', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(workoutsList).mockResolvedValue([])
+    vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
   })
 
   it('creates a workout from the bank in picking mode, 4 × 8–12 by default', async () => {

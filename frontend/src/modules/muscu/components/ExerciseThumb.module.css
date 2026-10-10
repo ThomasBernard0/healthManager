@@ -10,3 +10,9 @@
   height: var(--size-thumb-small);
   border-radius: var(--radius-md);
 }
+
+.lg {
+  width: var(--size-exercise-thumb-large);
+  height: var(--size-exercise-thumb-large);
+  border-radius: var(--radius-xl);
+}

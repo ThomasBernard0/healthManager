@@ -1,5 +1,5 @@
 import type { ExerciseDto } from '../../api/generated/model'
-import { exerciseDetails, exerciseSubtitle, formatSessionDate, muscleSummary, primarySubtitle } from './format'
+import { exerciseDetails, exerciseSubtitle, formatSessionDate, formatSets, muscleSummary, primarySubtitle } from './format'
 
 const ex = (
   p: ExerciseDto['primaryMuscles'],
@@ -31,5 +31,19 @@ describe('muscu format', () => {
 
   it('formats a session date', () => {
     expect(formatSessionDate('2026-09-28')).toBe('lun 28 sept')
+  })
+})
+
+describe('formatSets', () => {
+  it('groups consecutive sets at the same weight, a weight change starts a new line', () => {
+    expect(formatSets([10, 9, 9, 8].map((reps) => ({ weight: 60, reps })))).toEqual(['60 kg × 10 · 9 · 9 · 8'])
+    expect(
+      formatSets([
+        { weight: 57.5, reps: 11 },
+        { weight: 57.5, reps: 10 },
+        { weight: 55, reps: 10 },
+        { weight: 55, reps: 9 },
+      ]),
+    ).toEqual(['57,5 kg × 11 · 10', '55 kg × 10 · 9'])
   })
 })

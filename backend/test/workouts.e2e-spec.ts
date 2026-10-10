@@ -101,6 +101,11 @@ function fakePrisma() {
       count: ({ where }: { where: { id: { in: string[] } } }) =>
         Promise.resolve(exercises.filter((e) => where.id.in.includes(e.id)).length),
     },
+    // No session done yet.
+    session: {
+      groupBy: () => Promise.resolve([]),
+      findFirst: () => Promise.resolve(null),
+    },
     // The fake runs each operation when it is built: just wait for them.
     $transaction: async (ops: Promise<unknown>[]) => Promise.all(ops),
   };
