@@ -1,0 +1,71 @@
+/* Transcribed from design/musculation/muscu-6-exercices.html */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  height: var(--size-input);
+  padding: 0 var(--space-14);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-muted);
+}
+
+.search:focus-within {
+  border-color: var(--color-accent);
+}
+
+.search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--font-size-14);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  /* 72 px rows: thumbnail + padding */
+  padding: var(--space-10) 0;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.row:hover {
+  color: var(--color-ink);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.meta {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credit {
+  align-self: center;
+  font-size: var(--font-size-11);
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.credit:hover {
+  color: var(--color-ink);
+}

@@ -1,0 +1,76 @@
+/* Shared by the Musculation pages: header (back · title · action), cards and lists. */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.iconButton {
+  width: var(--size-touch);
+  height: var(--size-touch);
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink);
+}
+
+.iconButton:hover {
+  color: var(--color-ink);
+  background: var(--color-divider);
+}
+
+.accentButton {
+  composes: iconButton;
+  color: var(--color-accent);
+}
+
+.accentButton:hover {
+  color: var(--color-accent-hover);
+}
+
+.spacer {
+  width: var(--size-touch);
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-12);
+  background: var(--color-card);
+  border-radius: var(--radius-list);
+}
+
+.list > li + li {
+  border-top: 1px solid var(--color-divider);
+}
+
+.empty {
+  padding: var(--space-16);
+  text-align: center;
+  color: var(--color-muted);
+  font-size: var(--font-size-14);
+}
+
+.alert {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}

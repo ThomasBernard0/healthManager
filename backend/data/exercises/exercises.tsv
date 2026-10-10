@@ -1,0 +1,50 @@
+key	name	equipment	primary	secondary	everkinetic
+developpe-couche-barre	Développé couché barre	barbell	chest	triceps,shoulders_front	0042
+developpe-couche-halteres	Développé couché haltères	dumbbell	chest	triceps,shoulders_front	0055
+developpe-incline-halteres	Développé incliné haltères	dumbbell	chest	shoulders_front,triceps	0080
+presse-pectorale	Presse pectorale	machine	chest	triceps,shoulders_front	0066
+presse-pectorale-inclinee	Presse pectorale inclinée	machine	chest	shoulders_front,triceps	0081
+pec-deck	Pec deck	machine	chest	shoulders_front	
+ecarte-poulie	Écarté poulie vis-à-vis	cable	chest	shoulders_front	0048
+dips-pectoraux	Dips (pectoraux)	bodyweight	chest	triceps,shoulders_front	0054
+pompes	Pompes	bodyweight	chest	triceps,shoulders_front	0077
+tirage-vertical-large	Tirage vertical prise large	cable	back	biceps,shoulders_rear	0093
+tirage-vertical-serree	Tirage vertical prise serrée	cable	back	biceps	0096
+tractions	Tractions	bodyweight	back	biceps,forearms	0087
+tractions-supination	Tractions supination	bodyweight	back	biceps,forearms	0090
+rowing-barre	Rowing barre	barbell	back	biceps,shoulders_rear	0026
+rowing-haltere	Rowing haltère un bras	dumbbell	back	biceps,shoulders_rear	0024
+tirage-horizontal	Tirage horizontal poulie	cable	back	biceps,shoulders_rear	0025
+rowing-machine	Rowing machine	machine	back	biceps,shoulders_rear	
+rowing-t-bar	Rowing T-bar	barbell	back	biceps,shoulders_rear	0029
+developpe-militaire	Développé militaire barre	barbell	shoulders_front	triceps,shoulders_side	0004
+developpe-halteres-assis	Développé haltères assis	dumbbell	shoulders_front	triceps,shoulders_side	0038
+developpe-epaules-machine	Développé épaules machine	machine	shoulders_front	triceps,shoulders_side	
+elevations-laterales	Élévations latérales	dumbbell	shoulders_side		0018
+face-pull	Face pull	cable	shoulders_rear	back	
+oiseau-halteres	Oiseau haltères	dumbbell	shoulders_rear	back	0032
+oiseau-machine	Oiseau machine	machine	shoulders_rear	back	
+curl-barre	Curl barre	barbell	biceps	forearms	0211
+curl-halteres	Curl haltères	dumbbell	biceps	forearms	0224
+curl-marteau	Curl marteau	dumbbell	biceps	forearms	0227
+curl-pupitre	Curl pupitre	barbell	biceps		0239
+extension-triceps-poulie	Extension triceps poulie	cable	triceps		0205
+extension-triceps-corde	Extension triceps corde	cable	triceps		0206
+extension-corde-nuque	Extension corde au-dessus de la tête	cable	triceps		
+barre-au-front	Barre au front	barbell	triceps		0183
+dips-triceps	Dips (triceps)	bodyweight	triceps	chest,shoulders_front	0172
+squat	Squat	barbell	quads	glutes,hamstrings	0122
+presse-a-cuisses	Presse à cuisses	machine	quads	glutes,hamstrings	0127
+hack-squat	Hack squat	machine	quads	glutes	0123
+fentes-halteres	Fentes haltères	dumbbell	quads	glutes,hamstrings	0115
+leg-extension	Leg extension	machine	quads		0142
+leg-curl-allonge	Leg curl allongé	machine	hamstrings	calves	0117
+leg-curl-assis	Leg curl assis	machine	hamstrings		0119
+souleve-de-terre	Soulevé de terre	barbell	back,glutes,hamstrings	quads,forearms	0099
+souleve-de-terre-roumain	Soulevé de terre roumain	barbell	hamstrings,glutes	back	0118
+hip-thrust	Hip thrust	barbell	glutes	hamstrings	
+mollets-debout	Mollets debout	machine	calves		0282
+mollets-assis	Mollets assis	machine	calves		0279
+crunch-poulie	Crunch poulie	cable	abs		0288
+releve-de-jambes	Relevé de jambes suspendu	bodyweight	abs	forearms	
+gainage	Gainage	bodyweight	abs

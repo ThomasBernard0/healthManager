@@ -1,0 +1,20 @@
+/* Margin around the drawing; pages can override it (e.g. room for pills laid over the bottom). */
+.frame {
+  --drawing-inset: 4%;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-divider);
+}
+
+.lines {
+  position: absolute;
+  inset: var(--drawing-inset);
+  background: var(--color-ink);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}

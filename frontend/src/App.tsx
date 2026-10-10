@@ -10,8 +10,11 @@ import MealEditorPage from './modules/food/pages/MealEditorPage'
 import MealsPage from './modules/food/pages/MealsPage'
 import WeekPage from './modules/food/pages/WeekPage'
 import { GOAL_PATH, MEALS_PATH } from './modules/food/routes'
+import ExerciseEditPage from './modules/muscu/pages/ExerciseEditPage'
+import ExercisePage from './modules/muscu/pages/ExercisePage'
+import ExercisesPage from './modules/muscu/pages/ExercisesPage'
 import HomePage from './modules/muscu/pages/HomePage'
-import { MUSCU_PATH } from './modules/muscu/routes'
+import { EXERCISES_PATH, MUSCU_PATH, NEW_EXERCISE_PATH } from './modules/muscu/routes'
 
 export default function App() {
   const location = useLocation()
@@ -31,6 +34,10 @@ export default function App() {
           <Route path={`${MEALS_PATH}/nouveau`} element={<MealEditorPage />} />
           <Route path={`${MEALS_PATH}/:id`} element={<MealEditorPage />} />
           <Route path={MUSCU_PATH} element={<HomePage />} />
+          <Route path={EXERCISES_PATH} element={<ExercisesPage />} />
+          <Route path={NEW_EXERCISE_PATH} element={<ExerciseEditPage />} />
+          <Route path={`${EXERCISES_PATH}/:id`} element={<ExercisePage />} />
+          <Route path={`${EXERCISES_PATH}/:id/modifier`} element={<ExerciseEditPage />} />
           <Route path="*" element={<Navigate to={launchPath()} replace />} />
         </Routes>
         {background && (

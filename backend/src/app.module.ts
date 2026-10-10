@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { API_PREFIX } from './app.setup.js';
 import { AccessModule } from './access/access.module.js';
+import { ExercisesModule } from './exercises/exercises.module.js';
 import { FoodsModule } from './foods/foods.module.js';
 import { GoalsModule } from './goals/goals.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -43,6 +44,7 @@ const HASHED_ASSET = /[\\/]assets[\\/]/;
     FoodsModule,
     MealsModule,
     SummaryModule,
+    ExercisesModule,
   ],
 })
 export class AppModule {}

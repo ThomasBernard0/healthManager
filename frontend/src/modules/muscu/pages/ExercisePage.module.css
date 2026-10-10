@@ -1,0 +1,84 @@
+/* Transcribed from design/musculation/muscu-4-fiche-exercice.html and bureau-muscu-exercice.html */
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.desktopHeader {
+  justify-content: flex-start;
+  gap: var(--space-12);
+}
+
+.desktopHeader > :last-child {
+  margin-left: auto;
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-28);
+  line-height: 1.1;
+}
+
+.meta {
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.image {
+  position: relative;
+  margin: 0;
+  height: var(--size-exercise-image);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+  overflow: hidden;
+}
+
+/* Room under the drawing for the muscle pills. */
+.image .drawing {
+  --drawing-inset: var(--space-12) var(--space-12) calc(var(--space-40) + var(--space-8));
+  width: 100%;
+  height: 100%;
+  background: var(--color-card);
+}
+
+@media (min-width: 1024px) {
+  .image {
+    height: var(--size-exercise-image-desktop);
+    max-width: var(--size-dialog);
+    border-radius: var(--radius-panel);
+  }
+}
+
+.pills {
+  position: absolute;
+  left: var(--space-10);
+  right: var(--space-10);
+  bottom: var(--space-10);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.primary,
+.secondary {
+  font-size: var(--font-size-13);
+  border-radius: var(--radius-pill);
+  padding: var(--space-4) var(--space-12);
+}
+
+.primary {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+.secondary {
+  color: var(--color-ink);
+  background: var(--color-overlay);
+  border: 1px solid var(--color-border-strong);
+}

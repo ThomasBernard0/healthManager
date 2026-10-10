@@ -31,6 +31,8 @@ const light = {
   camera: '#000000',
   cameraFrame: 'rgba(255, 255, 255, 0.9)',
   onCamera: '#FFFFFF',
+  /** Behind text laid over a photo (muscle pills on an exercise image). */
+  overlay: 'rgba(255, 255, 255, 0.85)',
 }
 
 /** Dark theme: same roles, values tuned for contrast on a dark ground. */
@@ -62,6 +64,7 @@ const dark: typeof light = {
   camera: '#000000',
   cameraFrame: 'rgba(255, 255, 255, 0.9)',
   onCamera: '#FFFFFF',
+  overlay: 'rgba(15, 20, 17, 0.75)',
 }
 
 export const tokens = {
@@ -168,6 +171,10 @@ export const tokens = {
     header: '1320px',
     dialog: '560px',
     mobile: '560px',
+    thumb: '52px',
+    thumbSmall: '40px',
+    exerciseImage: '230px',
+    exerciseImageDesktop: '300px',
   },
 } as const
 
