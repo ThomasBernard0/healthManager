@@ -69,6 +69,7 @@ export const fr = {
       myWorkouts: 'Mes séances',
       upNext: 'Suivante',
       newWorkout: '+ Nouvelle séance',
+      myExercises: 'Mes exercices',
       exerciseCount: (n: number) => `${n} exercice${n > 1 ? 's' : ''}`,
     },
     workout: {
@@ -90,6 +91,7 @@ export const fr = {
       done: 'OK',
       add: (name: string) => `Ajouter ${name} à la séance`,
       start: 'Démarrer cette séance',
+      createExercise: '+ Créer un exercice',
     },
     history: {
       progression: 'Progression',

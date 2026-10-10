@@ -86,7 +86,8 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Accueil (mobile `muscu-1-accueil`, desktop `bureau-muscu-accueil`)
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
-- **Mes séances**: workouts in rotation order with exercise count and last date; the next one tagged "Suivante". Tap → edit. "+ Nouvelle séance". Link **Exercices** → the bank.
+- **Mes séances**: workouts in rotation order with exercise count and last date; the next one tagged "Suivante". Tap → edit. "+ Nouvelle séance".
+- **Mes exercices** (bottom; desktop: under Mes séances): every exercise used in my séances, once, by name → its Fiche exercice. No link to the bank on Accueil (it is reached from Modifier la séance).
 - No session history on this page (progress lives in each exercise page).
 
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)
@@ -112,7 +113,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit), swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.
 
 ### Exercices (mobile `muscu-6-exercices`)
-- Search (accent/case-insensitive) and the list (thumbnail, name, muscles · equipment). No filters. Opened from a workout: "+" adds to it; exercises already in it show the workout name. "+" in the header creates a custom exercise.
+- Search (accent/case-insensitive) and the list (thumbnail, name, muscles · equipment). No filters. Opened from a workout (picker in Modifier la séance): "+" adds to it; exercises already in it show the workout name; "+ Créer un exercice" creates a custom exercise and adds it to the workout.
 
 ### Compact set format
 Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A weight change starts a new line (mobile) or group: "57,5 kg × 11 · 10" / "55 kg × 10 · 9". Keeps 4–5 sets readable on a phone.

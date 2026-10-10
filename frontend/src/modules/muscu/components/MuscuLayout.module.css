@@ -41,19 +41,3 @@
   gap: var(--space-16);
 }
 
-.barLink {
-  height: var(--size-desktop-control);
-  padding: 0 var(--space-14);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  color: var(--color-ink);
-  text-decoration: none;
-  font-size: var(--font-size-14);
-}
-
-.barLink:hover {
-  border-color: var(--color-border-strong);
-  color: var(--color-ink);
-}

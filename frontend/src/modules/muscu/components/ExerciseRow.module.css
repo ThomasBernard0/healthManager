@@ -1,0 +1,46 @@
+/* Transcribed from design/musculation/muscu-6-exercices.html */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  /* 72 px rows: thumbnail + padding */
+  padding: var(--space-10) 0;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.row:hover {
+  color: var(--color-ink);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.meta {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action {
+  flex-shrink: 0;
+}

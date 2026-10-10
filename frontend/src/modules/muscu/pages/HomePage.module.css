@@ -87,12 +87,6 @@
   font-size: var(--font-size-17);
 }
 
-.link {
-  font-size: var(--font-size-13);
-  font-weight: var(--font-weight-semibold);
-  text-decoration: none;
-}
-
 .listCard {
   background: var(--color-card);
   border-radius: var(--radius-card);
@@ -251,4 +245,11 @@
 .nextTargets {
   color: var(--color-muted);
   text-align: right;
+}
+
+/* Desktop right column: Mes séances, then Mes exercices. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
 }

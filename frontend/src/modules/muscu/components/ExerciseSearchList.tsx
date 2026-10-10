@@ -1,13 +1,10 @@
 import { matchesSearch, searchKey } from '@healthmanager/shared'
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import type { ExerciseDto } from '../../../api/generated/model'
 import { Search } from '../../../core/ui/icons'
 import { fr } from '../../../i18n/fr'
-import { exerciseSubtitle } from '../format'
-import { exercisePath } from '../routes'
 import page from '../pages/page.module.css'
-import { ExerciseThumb } from './ExerciseThumb'
+import { ExerciseRow } from './ExerciseRow'
 import styles from './ExerciseSearchList.module.css'
 
 /** Where the exercise drawings come from (their licence asks for credit). */
@@ -40,29 +37,9 @@ export function ExerciseSearchList({ exercises, linkRows, action }: ExerciseSear
       </label>
 
       <ul className={page.list}>
-        {visible.map((exercise) => {
-          const content = (
-            <>
-              <ExerciseThumb imageUrl={exercise.imageUrl} />
-              <span className={styles.text}>
-                <span className={styles.name}>{exercise.name}</span>
-                <span className={styles.meta}>{exerciseSubtitle(exercise)}</span>
-              </span>
-            </>
-          )
-          return (
-            <li key={exercise.id} className={styles.item}>
-              {linkRows ? (
-                <Link to={exercisePath(exercise.id)} className={styles.row}>
-                  {content}
-                </Link>
-              ) : (
-                <span className={styles.row}>{content}</span>
-              )}
-              {action && <span className={styles.action}>{action(exercise)}</span>}
-            </li>
-          )
-        })}
+        {visible.map((exercise) => (
+          <ExerciseRow key={exercise.id} exercise={exercise} link={linkRows} action={action?.(exercise)} />
+        ))}
         {visible.length === 0 && <li className={page.empty}>{fr.muscu.noExercise}</li>}
       </ul>
 

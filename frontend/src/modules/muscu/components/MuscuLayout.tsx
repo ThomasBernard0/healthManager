@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import { useIsDesktop } from '../../../core/useIsDesktop'
-import { fr } from '../../../i18n/fr'
-import { EXERCISES_PATH } from '../routes'
 import styles from './MuscuLayout.module.css'
 
 interface MuscuLayoutProps {
@@ -12,7 +9,7 @@ interface MuscuLayoutProps {
   children: ReactNode
 }
 
-/** Musculation page shell: on desktop, the top bar (module switcher + Exercices) above the page. */
+/** Musculation page shell: on desktop, the top bar (module switcher) above the page. */
 export function MuscuLayout({ width = 'narrow', children }: MuscuLayoutProps) {
   const desktop = useIsDesktop()
   const page = <div className={`${styles.page} ${desktop && width === 'wide' ? styles.wide : ''}`}>{children}</div>
@@ -22,9 +19,6 @@ export function MuscuLayout({ width = 'narrow', children }: MuscuLayoutProps) {
       <header className={styles.bar}>
         <div className={styles.barInner}>
           <ModuleSwitcher current="muscu" variant="desktop" />
-          <Link to={EXERCISES_PATH} className={styles.barLink}>
-            {fr.muscu.exercises}
-          </Link>
         </div>
       </header>
       {page}
