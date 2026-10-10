@@ -14,12 +14,6 @@
   gap: var(--space-14);
 }
 
-.module {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-17);
-}
-
 .switcher {
   display: flex;
   align-items: center;

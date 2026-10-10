@@ -15,12 +15,6 @@
   gap: var(--space-12) var(--space-24);
 }
 
-.title {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-20);
-}
-
 .switcher {
   display: flex;
   align-items: center;

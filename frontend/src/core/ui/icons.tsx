@@ -33,6 +33,18 @@ export const ChevronRight = (p: IconProps) => (
   </Icon>
 )
 
+export const ChevronDown = (p: IconProps) => (
+  <Icon strokeWidth={2.2} {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Icon>
+)
+
+export const Check = (p: IconProps) => (
+  <Icon strokeWidth={2.6} {...p}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+)
+
 export const Plus = (p: IconProps) => (
   <Icon strokeWidth={2.2} {...p}>
     <path d="M12 5v14M5 12h14" />

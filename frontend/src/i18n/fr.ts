@@ -15,6 +15,11 @@ export const fr = {
   app: {
     title: 'Alimentation',
   },
+  modules: {
+    food: 'Alimentation',
+    muscu: 'Musculation',
+    switch: 'Changer de module',
+  },
   access: {
     title: 'Clé d’accès',
     label: 'Clé d’accès',

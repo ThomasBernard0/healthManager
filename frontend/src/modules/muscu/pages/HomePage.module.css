@@ -1,0 +1,32 @@
+/* Transcribed from design/musculation/muscu-1-accueil.html and bureau-muscu-accueil.html */
+
+.page {
+  max-width: var(--size-mobile);
+  margin: 0 auto;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: var(--space-12) var(--space-20) var(--space-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.desktop {
+  min-height: 100dvh;
+}
+
+.bar {
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.barInner {
+  max-width: var(--size-header);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-24);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
