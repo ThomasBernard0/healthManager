@@ -247,7 +247,7 @@
   text-align: right;
 }
 
-/* Desktop right column: Mes séances, then Mes exercices. */
+/* Desktop left column: Prochaine séance, then Mes séances. */
 .stack {
   display: flex;
   flex-direction: column;

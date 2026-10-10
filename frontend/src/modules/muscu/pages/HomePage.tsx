@@ -47,8 +47,9 @@ export default function HomePage() {
         {error}
         {workouts.data && (
           <div className={styles.columns}>
-            <section className={styles.column}>{ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}</section>
+            {/* Left: what to do next, then the rotation. Right: my exercises. */}
             <div className={`${styles.column} ${styles.stack}`}>
+              {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}
               <section className={styles.listCard}>
                 <div className={styles.listHeader}>
                   <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
@@ -58,6 +59,8 @@ export default function HomePage() {
                 </div>
                 <WorkoutRows workouts={workouts.data} />
               </section>
+            </div>
+            <div className={styles.column}>
               <MyExercises exercises={mine} />
             </div>
           </div>
@@ -73,6 +76,7 @@ export default function HomePage() {
       {workouts.data && (
         <>
           {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} />}
+          <MyExercises exercises={mine} />
           <section className={styles.section}>
             <div className={styles.listHeader}>
               <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
@@ -86,7 +90,6 @@ export default function HomePage() {
               {fr.muscu.home.newWorkout}
             </Link>
           </section>
-          <MyExercises exercises={mine} />
         </>
       )}
     </MuscuLayout>

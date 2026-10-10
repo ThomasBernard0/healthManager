@@ -87,7 +87,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 ### Accueil (mobile `muscu-1-accueil`, desktop `bureau-muscu-accueil`)
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
 - **Mes séances**: workouts in rotation order with exercise count and last date; the next one tagged "Suivante". Tap → edit. "+ Nouvelle séance".
-- **Mes exercices** (bottom; desktop: under Mes séances): every exercise used in my séances, once, by name → its Fiche exercice. No link to the bank on Accueil (it is reached from Modifier la séance).
+- **Mes exercices** (mobile: between Prochaine séance and Mes séances; desktop: right column, Prochaine séance and Mes séances stacked on the left): every exercise used in my séances, once, by name → its Fiche exercice. No link to the bank on Accueil (it is reached from Modifier la séance).
 - No session history on this page (progress lives in each exercise page).
 
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)

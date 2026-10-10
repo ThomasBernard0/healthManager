@@ -165,6 +165,8 @@ describe('Accueil', () => {
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/c', '/muscu/exercices/r'])
     expect(within(section).queryByText('Tirage vertical prise large')).toBeNull()
     expect(screen.queryByRole('link', { name: 'Exercices' })).toBeNull()
+    // Mobile order: next workout, my exercises, my séances.
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Mes exercices', 'Mes séances'])
   })
 
   it('has no next workout card without workouts', async () => {
