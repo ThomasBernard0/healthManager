@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
@@ -38,11 +38,17 @@ const TIRAGE = ex('t', 'Tirage vertical prise large')
 const ROWING = ex('r', 'Rowing barre')
 const CURL = ex('c', 'Curl haltères', ['biceps'])
 
-const summary = (id: string, name: string, position: number, names: string[], extra: Partial<WorkoutSummaryDto> = {}) => ({
+const summary = (
+  id: string,
+  name: string,
+  position: number,
+  names: string[],
+  extra: Partial<WorkoutSummaryDto> = {},
+): WorkoutSummaryDto => ({
   id,
   name,
   position,
-  exerciseNames: names,
+  exercises: names.map((n) => ({ name: n, targets: null })),
   lastDoneOn: null,
   isNext: false,
   ...extra,
@@ -120,7 +126,7 @@ describe('Accueil', () => {
     renderAt('/muscu')
     await user.click(await screen.findByRole('button', { name: 'Démarrer' }))
     expect(sessionsStart).toHaveBeenCalledWith({ workoutId: 'pull' })
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu/seance/s1')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s1'))
   })
 
   it('shows the session in progress instead of the next workout', async () => {
@@ -132,7 +138,7 @@ describe('Accueil', () => {
         workoutName: 'Push A',
         startedAt: '2026-10-10T08:00:00.000Z',
         finishedAt: null,
-        exercises: [{ id: 'e1', exercise: TIRAGE, status: 'todo' }],
+        exercises: [{ id: 'e1', exercise: TIRAGE, status: 'todo', preFatigue: 0 }],
       },
     })
     const user = userEvent.setup()
@@ -140,7 +146,7 @@ describe('Accueil', () => {
     const card = await screen.findByRole('region', { name: 'Séance en cours' })
     expect(within(card).getByText('Push A')).toBeInTheDocument()
     await user.click(within(card).getByRole('button', { name: 'Reprendre la séance' }))
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu/seance/s9')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s9'))
   })
 
   it('has no next workout card without workouts', async () => {
@@ -183,7 +189,7 @@ describe('Modifier la séance', () => {
       name: 'Bras',
       items: [{ exerciseId: 'c', sets: 4, repMin: 8, repMax: 12 }],
     })
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
   })
 
   it('edits sets and rep range, reorders with the keyboard and saves', async () => {
@@ -237,6 +243,6 @@ describe('Modifier la séance', () => {
     const confirm = screen.getByRole('dialog', { name: 'Supprimer « Pull » ?' })
     await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }))
     expect(workoutsRemove).toHaveBeenCalledWith('pull')
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
   })
 })

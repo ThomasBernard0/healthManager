@@ -4,13 +4,15 @@
  * healthManager API
  * OpenAPI spec version: 1.0
  */
+import type { WorkoutSummaryExerciseDto } from './workoutSummaryExerciseDto';
 
 export interface WorkoutSummaryDto {
   id: string;
   name: string;
   /** Order in the rotation, from 1 */
   position: number;
-  exerciseNames: string[];
+  /** In list order */
+  exercises: WorkoutSummaryExerciseDto[];
   /**
    * Europe/Paris date of the last finished session of this workout
    * @nullable

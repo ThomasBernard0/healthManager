@@ -2413,6 +2413,45 @@
           "secondaryMuscles"
         ]
       },
+      "SetResultDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "example": 60,
+            "description": "kg"
+          },
+          "reps": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "weight",
+          "reps"
+        ]
+      },
+      "WorkoutSummaryExerciseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Rowing barre"
+          },
+          "targets": {
+            "nullable": true,
+            "description": "Next targets, for the next workout only (null otherwise, or the first time)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SetResultDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "targets"
+        ]
+      },
       "WorkoutSummaryDto": {
         "type": "object",
         "properties": {
@@ -2429,14 +2468,11 @@
             "example": 2,
             "description": "Order in the rotation, from 1"
           },
-          "exerciseNames": {
-            "example": [
-              "Tirage vertical prise large",
-              "Rowing barre"
-            ],
+          "exercises": {
+            "description": "In list order",
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/WorkoutSummaryExerciseDto"
             }
           },
           "lastDoneOn": {
@@ -2454,7 +2490,7 @@
           "id",
           "name",
           "position",
-          "exerciseNames",
+          "exercises",
           "lastDoneOn",
           "isNext"
         ]
@@ -2596,12 +2632,18 @@
                 "$ref": "#/components/schemas/SessionExerciseStatus"
               }
             ]
+          },
+          "preFatigue": {
+            "type": "number",
+            "example": 3,
+            "description": "Sets already done on its primary muscles (> 0: battery icon)"
           }
         },
         "required": [
           "id",
           "exercise",
-          "status"
+          "status",
+          "preFatigue"
         ]
       },
       "SessionDto": {
@@ -2727,24 +2769,6 @@
           "done"
         ]
       },
-      "SetResultDto": {
-        "type": "object",
-        "properties": {
-          "weight": {
-            "type": "number",
-            "example": 60,
-            "description": "kg"
-          },
-          "reps": {
-            "type": "number",
-            "example": 10
-          }
-        },
-        "required": [
-          "weight",
-          "reps"
-        ]
-      },
       "LastTimeDto": {
         "type": "object",
         "properties": {
@@ -2804,9 +2828,22 @@
             "description": "Terminé tapped"
           },
           "sets": {
+            "description": "Targets: live until the first set is validated, then frozen",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SessionSetDto"
+            }
+          },
+          "preFatigue": {
+            "type": "number",
+            "example": 3,
+            "description": "Sets already done on its primary muscles in this session"
+          },
+          "fatiguedMuscles": {
+            "type": "array",
+            "description": "\"{muscle} déjà travaillé\"",
+            "items": {
+              "$ref": "#/components/schemas/Muscle"
             }
           },
           "lastTime": {
@@ -2829,6 +2866,8 @@
           "feeling",
           "completed",
           "sets",
+          "preFatigue",
+          "fatiguedMuscles",
           "lastTime"
         ]
       },

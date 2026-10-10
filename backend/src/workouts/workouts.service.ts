@@ -2,6 +2,7 @@ import { nextWorkout, parisToday } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ProgressionService } from '../sessions/progression.service.js';
 import { SaveWorkoutDto } from './dto/save-workout.dto.js';
 import { WorkoutDto, WorkoutSummaryDto } from './dto/workout.dto.js';
 
@@ -9,9 +10,15 @@ const ITEMS = { items: { orderBy: { position: 'asc' }, include: { exercise: { in
 
 @Injectable()
 export class WorkoutsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progression: ProgressionService,
+  ) {}
 
-  /** The rotation, in order: last date of each workout, and the next one (after the last finished session). */
+  /**
+   * The rotation, in order: last date of each workout, and the next one (after the last finished session)
+   * with the targets of its exercises (no pre-fatigue assumed).
+   */
   async list(): Promise<WorkoutSummaryDto[]> {
     const [workouts, lastByWorkout, lastSession] = await Promise.all([
       this.prisma.workout.findMany({
@@ -27,13 +34,30 @@ export class WorkoutsService {
     ]);
     const next = nextWorkout(workouts, lastSession?.workoutId ?? null);
     const lastDone = new Map(lastByWorkout.map((g) => [g.workoutId, g._max.finishedAt]));
+    const nextTargets = next
+      ? await Promise.all(
+          next.items.map((i) =>
+            this.progression.targets({
+              exerciseId: i.exerciseId,
+              equipment: i.exercise.equipment,
+              setCount: i.sets,
+              repMin: i.repMin,
+              repMax: i.repMax,
+              todayPreFatigue: 0,
+            }),
+          ),
+        )
+      : [];
     return workouts.map((w) => {
       const finishedAt = lastDone.get(w.id);
       return {
         id: w.id,
         name: w.name,
         position: w.position,
-        exerciseNames: w.items.map((i) => i.exercise.name),
+        exercises: w.items.map((i, k) => ({
+          name: i.exercise.name,
+          targets: w.id === next?.id ? nextTargets[k] : null,
+        })),
         lastDoneOn: finishedAt ? parisToday(finishedAt) : null,
         isNext: w.id === next?.id,
       };

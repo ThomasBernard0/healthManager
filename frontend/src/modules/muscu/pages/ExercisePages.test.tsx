@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import {
@@ -112,7 +112,7 @@ describe('Créer / Modifier l’exercice', () => {
       primaryMuscles: ['back'],
       secondaryMuscles: ['chest'],
     })
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu/exercices/new1')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/exercices/new1'))
   })
 
   it('edits an existing exercise', async () => {

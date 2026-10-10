@@ -13,6 +13,7 @@ import { useToast } from '../../../core/ui/toastContext'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { ExerciseThumb } from '../components/ExerciseThumb'
+import { FatigueTag } from '../components/Fatigue'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { formatSessionDate, formatSets, formatWeight } from '../format'
 import { exercisePath, MUSCU_PATH, sessionPath } from '../routes'
@@ -90,6 +91,7 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
         <span className={styles.identityText}>
           <h1 className={styles.name}>{entry.exercise.name}</h1>
           <span className={styles.scheme}>{fr.muscu.setsReps(entry.sets.length, entry.repMin, entry.repMax)}</span>
+          {entry.fatiguedMuscles.length > 0 && <FatigueTag muscles={entry.fatiguedMuscles} />}
         </span>
       </Link>
 

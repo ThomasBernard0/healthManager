@@ -241,3 +241,14 @@
   font-size: var(--font-size-13);
   text-decoration: none;
 }
+
+.nextList li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.nextTargets {
+  color: var(--color-muted);
+  text-align: right;
+}

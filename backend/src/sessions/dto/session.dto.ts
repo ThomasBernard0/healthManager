@@ -1,3 +1,4 @@
+import { MUSCLES, type Muscle } from '@healthmanager/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { ExerciseDto } from '../../exercises/dto/exercise.dto.js';
 
@@ -41,6 +42,9 @@ export class SessionExerciseSummaryDto {
     description: 'done: Terminé tapped; inProgress: a set validated; todo: nothing yet',
   })
   status: ExerciseStatus;
+
+  @ApiProperty({ example: 3, description: 'Sets already done on its primary muscles (> 0: battery icon)' })
+  preFatigue: number;
 }
 
 export class SessionDto {
@@ -112,8 +116,14 @@ export class SessionExerciseDto {
   @ApiProperty({ description: 'Terminé tapped' })
   completed: boolean;
 
-  @ApiProperty({ type: [SessionSetDto] })
+  @ApiProperty({ type: [SessionSetDto], description: 'Targets: live until the first set is validated, then frozen' })
   sets: SessionSetDto[];
+
+  @ApiProperty({ example: 3, description: 'Sets already done on its primary muscles in this session' })
+  preFatigue: number;
+
+  @ApiProperty({ enum: MUSCLES, enumName: 'Muscle', isArray: true, description: '"{muscle} déjà travaillé"' })
+  fatiguedMuscles: Muscle[];
 
   @ApiProperty({ type: LastTimeDto, nullable: true })
   lastTime: LastTimeDto | null;

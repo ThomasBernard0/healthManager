@@ -12,4 +12,6 @@ export interface SessionExerciseSummaryDto {
   exercise: ExerciseDto;
   /** done: Terminé tapped; inProgress: a set validated; todo: nothing yet */
   status: SessionExerciseStatus;
+  /** Sets already done on its primary muscles (> 0: battery icon) */
+  preFatigue: number;
 }

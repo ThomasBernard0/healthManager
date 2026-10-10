@@ -1,9 +1,10 @@
-import { parisToday } from '@healthmanager/shared';
+import { parisToday, type Equipment } from '@healthmanager/shared';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
 import type { SessionSet } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { entryPreFatigue, ProgressionService } from './progression.service.js';
 import { SaveSetDto, UpdateSessionExerciseDto } from './dto/save-session.dto.js';
 import {
   CurrentSessionDto,
@@ -35,14 +36,17 @@ function status(e: { completed: boolean; sets: { done: boolean }[] }): ExerciseS
 
 @Injectable()
 export class SessionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progression: ProgressionService,
+  ) {}
 
   async current(): Promise<CurrentSessionDto> {
     const open = await this.prisma.session.findFirst({ where: { finishedAt: null }, orderBy: { startedAt: 'desc' } });
     return { session: open ? await this.get(open.id) : null };
   }
 
-  /** Démarrer: one session at a time; every exercise of the workout with its sets (no targets yet). */
+  /** Démarrer: one session at a time; every exercise of the workout with its sets (targets set on the first one). */
   async start(workoutId: string): Promise<SessionDto> {
     const open = await this.prisma.session.findFirst({ where: { finishedAt: null } });
     if (open) throw new ConflictException('A session is already in progress');
@@ -83,35 +87,47 @@ export class SessionsService {
         id: e.id,
         exercise: toExerciseDto(e.exercise),
         status: status(e),
+        preFatigue: e.preFatigue === null ? entryPreFatigue(e, session.exercises).value : num(e.preFatigue),
       })),
     };
   }
 
+  /**
+   * Exercice en cours. Until its first set is validated, targets and pre-fatigue are computed live (the
+   * order of the exercises can still change); then they are frozen with the sets.
+   */
   async getExercise(sessionId: string, id: string): Promise<SessionExerciseDto> {
-    const entry = await this.prisma.sessionExercise.findFirst({
-      where: { id, sessionId },
-      include: { session: true, exercise: { include: EXERCISE_INCLUDE }, ...SETS },
-    });
-    if (!entry) throw new NotFoundException('Session exercise not found');
+    const session = await this.prisma.session.findUnique({ where: { id: sessionId }, include: SESSION_INCLUDE });
+    const entry = session?.exercises.find((e) => e.id === id);
+    if (!session || !entry) throw new NotFoundException('Session exercise not found');
+    const fatigue = entryPreFatigue(entry, session.exercises);
+    const frozen = entry.preFatigue !== null;
+    const live = frozen ? null : await this.targetsFor(sessionId, entry, fatigue.value);
     return {
       id: entry.id,
       sessionId: entry.sessionId,
-      workoutName: entry.session.workoutName,
+      workoutName: session.workoutName,
       exercise: toExerciseDto(entry.exercise),
       repMin: entry.repMin,
       repMax: entry.repMax,
       feeling: entry.feeling,
       completed: entry.completed,
-      sets: entry.sets.map(toSetDto),
+      sets: entry.sets.map((s, i) => ({
+        ...toSetDto(s),
+        ...(live ? { targetWeight: live[i]?.weight ?? null, targetReps: live[i]?.reps ?? null } : {}),
+      })),
+      preFatigue: frozen ? num(entry.preFatigue!) : fatigue.value,
+      fatiguedMuscles: fatigue.muscles,
       lastTime: await this.lastTime(entry.exerciseId, entry.sessionId),
     };
   }
 
   /** ✓ on a set row: empty values record the target; done = false reopens the row. */
   async saveSet(sessionId: string, id: string, index: number, dto: SaveSetDto): Promise<SessionExerciseDto> {
-    const entry = await this.openEntry(sessionId, id);
-    const set = entry.sets.find((s) => s.index === index);
-    if (!set) throw new NotFoundException('Set not found');
+    let entry = await this.openEntry(sessionId, id);
+    if (!entry.sets.some((s) => s.index === index)) throw new NotFoundException('Set not found');
+    if (entry.preFatigue === null) entry = await this.freeze(sessionId, id);
+    const set = entry.sets.find((s) => s.index === index)!;
 
     const now = new Date();
     if (dto.done) {
@@ -173,6 +189,40 @@ export class SessionsService {
     const session = await this.prisma.session.findUnique({ where: { id } });
     if (!session) throw new NotFoundException('Session not found');
     await this.prisma.session.delete({ where: { id } });
+  }
+
+  /** First set of an exercise: its pre-fatigue and the targets of every set are fixed now. */
+  private async freeze(sessionId: string, id: string) {
+    const session = await this.prisma.session.findUniqueOrThrow({ where: { id: sessionId }, include: SESSION_INCLUDE });
+    const entry = session.exercises.find((e) => e.id === id)!;
+    const fatigue = entryPreFatigue(entry, session.exercises);
+    const targets = await this.targetsFor(sessionId, entry, fatigue.value);
+    await this.prisma.$transaction([
+      this.prisma.sessionExercise.update({ where: { id }, data: { preFatigue: fatigue.value } }),
+      ...entry.sets.map((s, i) =>
+        this.prisma.sessionSet.update({
+          where: { id: s.id },
+          data: { targetWeight: targets?.[i]?.weight ?? null, targetReps: targets?.[i]?.reps ?? null },
+        }),
+      ),
+    ]);
+    return this.openEntry(sessionId, id);
+  }
+
+  private targetsFor(
+    sessionId: string,
+    entry: { exerciseId: string; repMin: number; repMax: number; sets: unknown[]; exercise: { equipment: Equipment } },
+    todayPreFatigue: number,
+  ) {
+    return this.progression.targets({
+      exerciseId: entry.exerciseId,
+      equipment: entry.exercise.equipment,
+      setCount: entry.sets.length,
+      repMin: entry.repMin,
+      repMax: entry.repMax,
+      todayPreFatigue,
+      sessionId,
+    });
   }
 
   private async openEntry(sessionId: string, id: string) {

@@ -77,3 +77,4 @@ export * from './weekSummaryDtoTarget';
 export * from './workoutDto';
 export * from './workoutItemDto';
 export * from './workoutSummaryDto';
+export * from './workoutSummaryExerciseDto';
