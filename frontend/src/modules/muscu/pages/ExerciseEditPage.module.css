@@ -1,0 +1,86 @@
+/* Transcribed from design/musculation/muscu-7-modifier-exercice.html */
+
+.form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-8);
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.pill {
+  height: var(--size-toggle);
+  padding: 0 var(--space-14);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--font-size-13);
+}
+
+.secondary {
+  border-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.legendRow {
+  display: flex;
+  gap: var(--space-16);
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.dotPrimary,
+.dotSecondary {
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: var(--radius-pill);
+  box-sizing: border-box;
+}
+
+.dotPrimary {
+  background: var(--color-accent);
+}
+
+.dotSecondary {
+  border: 1.5px solid var(--color-accent);
+}
+
+.submit {
+  margin-top: auto;
+}

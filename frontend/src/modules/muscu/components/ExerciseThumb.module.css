@@ -1,0 +1,12 @@
+.thumb {
+  width: var(--size-thumb);
+  height: var(--size-thumb);
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+}
+
+.sm {
+  width: var(--size-thumb-small);
+  height: var(--size-thumb-small);
+  border-radius: var(--radius-md);
+}

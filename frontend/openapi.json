@@ -610,6 +610,143 @@
           "summary"
         ]
       }
+    },
+    "/api/exercises": {
+      "get": {
+        "operationId": "Exercises_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Accent/case-insensitive, every word anywhere in the name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      },
+      "post": {
+        "operationId": "Exercises_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveExerciseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      }
+    },
+    "/api/exercises/{id}": {
+      "get": {
+        "operationId": "Exercises_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      },
+      "put": {
+        "operationId": "Exercises_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveExerciseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      }
     }
   },
   "info": {
@@ -1670,6 +1807,117 @@
           "left",
           "elapsedDays",
           "average"
+        ]
+      },
+      "Equipment": {
+        "type": "string",
+        "enum": [
+          "barbell",
+          "dumbbell",
+          "machine",
+          "cable",
+          "bodyweight"
+        ]
+      },
+      "Muscle": {
+        "type": "string",
+        "enum": [
+          "chest",
+          "back",
+          "shoulders_front",
+          "shoulders_side",
+          "shoulders_rear",
+          "biceps",
+          "triceps",
+          "forearms",
+          "abs",
+          "quads",
+          "hamstrings",
+          "glutes",
+          "calves"
+        ]
+      },
+      "ExerciseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Rowing barre"
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Equipment"
+              }
+            ]
+          },
+          "primaryMuscles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Muscle"
+            }
+          },
+          "secondaryMuscles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Muscle"
+            }
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/exercises/rowing-barre.svg",
+            "description": "Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "equipment",
+          "primaryMuscles",
+          "secondaryMuscles",
+          "imageUrl"
+        ]
+      },
+      "SaveExerciseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Rowing barre",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "equipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Equipment"
+              }
+            ]
+          },
+          "primaryMuscles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Muscle"
+            }
+          },
+          "secondaryMuscles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Muscle"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "equipment",
+          "primaryMuscles",
+          "secondaryMuscles"
         ]
       }
     }
