@@ -747,6 +747,157 @@
           "exercises"
         ]
       }
+    },
+    "/api/workouts": {
+      "get": {
+        "operationId": "Workouts_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkoutSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "workouts"
+        ]
+      },
+      "post": {
+        "operationId": "Workouts_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWorkoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "workouts"
+        ]
+      }
+    },
+    "/api/workouts/{id}": {
+      "get": {
+        "operationId": "Workouts_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workouts"
+        ]
+      },
+      "put": {
+        "operationId": "Workouts_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWorkoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workouts"
+        ]
+      },
+      "delete": {
+        "operationId": "Workouts_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workouts"
+        ]
+      }
     }
   },
   "info": {
@@ -1837,6 +1988,38 @@
           "calves"
         ]
       },
+      "ExerciseWorkoutDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pull"
+          },
+          "sets": {
+            "type": "number",
+            "example": 4
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sets",
+          "repMin",
+          "repMax"
+        ]
+      },
       "ExerciseDto": {
         "type": "object",
         "properties": {
@@ -1872,6 +2055,13 @@
             "nullable": true,
             "example": "/exercises/rowing-barre.svg",
             "description": "Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)"
+          },
+          "workouts": {
+            "description": "In rotation order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExerciseWorkoutDto"
+            }
           }
         },
         "required": [
@@ -1880,7 +2070,8 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles",
-          "imageUrl"
+          "imageUrl",
+          "workouts"
         ]
       },
       "SaveExerciseDto": {
@@ -1918,6 +2109,163 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles"
+        ]
+      },
+      "WorkoutSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pull"
+          },
+          "position": {
+            "type": "number",
+            "example": 2,
+            "description": "Order in the rotation, from 1"
+          },
+          "exerciseNames": {
+            "example": [
+              "Tirage vertical prise large",
+              "Rowing barre"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lastDoneOn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Europe/Paris date of the last finished session of this workout"
+          },
+          "isNext": {
+            "type": "boolean",
+            "description": "Next in the rotation (after the workout of the last finished session)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "exerciseNames",
+          "lastDoneOn",
+          "isNext"
+        ]
+      },
+      "WorkoutItemDto": {
+        "type": "object",
+        "properties": {
+          "exercise": {
+            "$ref": "#/components/schemas/ExerciseDto"
+          },
+          "sets": {
+            "type": "number",
+            "example": 4
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": [
+          "exercise",
+          "sets",
+          "repMin",
+          "repMax"
+        ]
+      },
+      "WorkoutDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pull"
+          },
+          "position": {
+            "type": "number",
+            "example": 2
+          },
+          "items": {
+            "description": "In list order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkoutItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "items"
+        ]
+      },
+      "SaveWorkoutItemDto": {
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sets": {
+            "type": "number",
+            "example": 4,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "≥ repMin"
+          }
+        },
+        "required": [
+          "exerciseId",
+          "sets",
+          "repMin",
+          "repMax"
+        ]
+      },
+      "SaveWorkoutDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pull",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveWorkoutItemDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "items"
         ]
       }
     }

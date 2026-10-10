@@ -20,7 +20,7 @@ function fakePrisma() {
         Promise.resolve(rows.filter((r) => r.archived === where.archived)),
       findUnique: ({ where }: { where: { id: string } }) => Promise.resolve(find(where.id)),
       create: ({ data }: { data: Record<string, unknown> }) => {
-        const row = { id: `00000000-0000-4000-8000-0000000000${10 + rows.length}`, archived: false, image: null, ...data };
+        const row = { id: `00000000-0000-4000-8000-0000000000${10 + rows.length}`, archived: false, image: null, workoutItems: [], ...data };
         rows.push(row);
         return Promise.resolve(row);
       },
@@ -46,6 +46,7 @@ describe('Exercises (e2e)', () => {
         secondaryMuscles: ['biceps', 'shoulders_rear'],
         image: 'rowing-barre.svg',
         archived: false,
+        workoutItems: [],
       },
       {
         id: '00000000-0000-4000-8000-000000000002',
@@ -56,6 +57,7 @@ describe('Exercises (e2e)', () => {
         secondaryMuscles: [],
         image: 'ecarte-poulie.svg',
         archived: false,
+        workoutItems: [],
       },
       {
         id: '00000000-0000-4000-8000-000000000003',
@@ -66,6 +68,7 @@ describe('Exercises (e2e)', () => {
         secondaryMuscles: [],
         image: null,
         archived: true,
+        workoutItems: [],
       },
     );
     const moduleRef = await Test.createTestingModule({
@@ -88,6 +91,7 @@ describe('Exercises (e2e)', () => {
       primaryMuscles: ['back'],
       secondaryMuscles: ['biceps', 'shoulders_rear'],
       imageUrl: '/exercises/rowing-barre.svg',
+      workouts: [],
     });
   });
 

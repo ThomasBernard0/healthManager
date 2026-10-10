@@ -1,14 +1,243 @@
-/* Transcribed from design/musculation/muscu-1-accueil.html */
+/* Transcribed from design/musculation/muscu-1-accueil.html and bureau-muscu-accueil.html */
 
-.top {
+/* Prochaine séance */
+.nextCard {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.nextTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-12);
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.nextName {
+  margin-bottom: calc(-1 * var(--space-12));
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-30);
+  line-height: 1.1;
+}
+
+.nextExercises {
+  font-size: var(--font-size-14);
+  color: var(--color-muted);
+}
+
+.nextList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-14);
+}
+
+.nextList li {
+  padding: var(--space-8) 0;
+}
+
+.nextList li + li {
+  border-top: 1px solid var(--color-divider);
+}
+
+.start {
+  height: var(--size-button);
+  border-radius: var(--radius-xl);
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-16);
+}
+
+.start:disabled {
+  background: var(--color-border-strong);
+  color: var(--color-muted);
+}
+
+/* Mes séances */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.listHeader {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-12);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
 }
 
 .link {
   font-size: var(--font-size-13);
   font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
+.listCard {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: 0 var(--space-16);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rows li + li {
+  border-top: 1px solid var(--color-divider);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--size-row-tall);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.row:hover {
+  color: var(--color-ink);
+}
+
+.position {
+  width: var(--size-badge);
+  height: var(--size-badge);
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-divider);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}
+
+.positionNext {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-soft-ink);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rowName {
+  font-weight: var(--font-weight-semibold);
+}
+
+.rowMeta {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.upNext {
+  font-size: var(--font-size-11);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-soft-ink);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-6);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+.newWorkout {
+  height: var(--size-touch);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+  text-decoration: none;
+}
+
+/* Desktop: two columns */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-20);
+  align-items: flex-start;
+}
+
+.column {
+  flex: 1 1 var(--size-week-column);
+  min-width: 0;
+}
+
+.columns .nextCard {
+  padding: var(--space-24);
+}
+
+.columns .nextName {
+  font-size: var(--font-size-36);
+  line-height: 1;
+}
+
+.columns .start {
+  height: var(--size-input);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-15);
+}
+
+.columns .listCard {
+  border-radius: var(--radius-panel);
+  padding: var(--space-18) var(--space-20);
+}
+
+.columns .listHeader {
+  padding-bottom: var(--space-8);
+}
+
+.columns .rows {
+  border-top: 1px solid var(--color-divider);
+}
+
+.columns .row {
+  min-height: var(--size-row);
+}
+
+.newSmall {
+  height: var(--size-toggle);
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-13);
   text-decoration: none;
 }

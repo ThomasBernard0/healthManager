@@ -173,6 +173,10 @@ export const tokens = {
     mobile: '560px',
     thumb: '52px',
     thumbSmall: '40px',
+    /** Rotation number in Mes séances. */
+    badge: '28px',
+    rowTall: '64px',
+    stepper: '180px',
     exerciseImage: '230px',
     exerciseImageDesktop: '300px',
   },

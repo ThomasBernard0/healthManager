@@ -6,6 +6,7 @@
  */
 import type { Equipment } from './equipment';
 import type { Muscle } from './muscle';
+import type { ExerciseWorkoutDto } from './exerciseWorkoutDto';
 
 export interface ExerciseDto {
   id: string;
@@ -18,4 +19,6 @@ export interface ExerciseDto {
    * @nullable
    */
   imageUrl: string | null;
+  /** In rotation order */
+  workouts: ExerciseWorkoutDto[];
 }

@@ -57,7 +57,7 @@ enum Muscle {
 
 /// Musculation exercise bank: seeded from data/exercises (bankKey), or custom (bankKey null).
 model Exercise {
-  id               String    @id @default(uuid())
+  id               String        @id @default(uuid())
   name             String
   /// Lowercase, accents stripped — for accent/case-insensitive search.
   searchName       String
@@ -65,14 +65,41 @@ model Exercise {
   primaryMuscles   Muscle[]
   secondaryMuscles Muscle[]
   /// Key of the row in data/exercises/exercises.tsv; makes the seed idempotent.
-  bankKey          String?   @unique
+  bankKey          String?       @unique
   /// Drawing in frontend/public/exercises/ (bank exercises only).
   image            String?
-  archived         Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  archived         Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  workoutItems     WorkoutItem[]
 
   @@index([searchName])
+}
+
+/// A session template ("Push A"). position = order in the rotation (1..n, compacted on delete).
+model Workout {
+  id        String        @id @default(uuid())
+  name      String
+  position  Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     WorkoutItem[]
+}
+
+/// An exercise of a workout, in list order, with its sets and rep range.
+model WorkoutItem {
+  id         String   @id @default(uuid())
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sets       Int      @default(4)
+  repMin     Int      @default(8)
+  repMax     Int      @default(12)
+  position   Int
+
+  @@unique([workoutId, exerciseId])
+  @@index([exerciseId])
 }
 
 /// One ingredient. Values are per 100 g.

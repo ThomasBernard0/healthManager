@@ -13,6 +13,7 @@ import { LogEntriesModule } from './log-entries/log-entries.module.js';
 import { MealsModule } from './meals/meals.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { SummaryModule } from './summary/summary.module.js';
+import { WorkoutsModule } from './workouts/workouts.module.js';
 
 // Built SPA (frontend/dist), served so production is a single service.
 // Unknown non-API paths fall back to index.html for client-side routing.
@@ -45,6 +46,7 @@ const HASHED_ASSET = /[\\/]assets[\\/]/;
     MealsModule,
     SummaryModule,
     ExercisesModule,
+    WorkoutsModule,
   ],
 })
 export class AppModule {}
