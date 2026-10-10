@@ -46,11 +46,30 @@
   background: var(--color-card);
 }
 
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+/* Desktop: drawing beside the chart, the table below. */
 @media (min-width: 1024px) {
-  .image {
-    height: var(--size-exercise-image-desktop);
-    max-width: var(--size-dialog);
+  .top {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: var(--space-20);
+  }
+
+  .top > :first-child {
+    flex: 1 1 var(--size-chart-column);
+    height: auto;
+    min-height: var(--size-exercise-image-desktop);
     border-radius: var(--radius-panel);
+  }
+
+  .top > :nth-child(2) {
+    flex: 2 1 var(--size-table-column);
   }
 }
 

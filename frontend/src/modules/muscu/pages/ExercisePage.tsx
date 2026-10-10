@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { exercisesGet } from '../../../api/generated/endpoints/exercises/exercises'
+import { addDays, parisToday } from '@healthmanager/shared'
+import { exercisesGet, exercisesHistory } from '../../../api/generated/endpoints/exercises/exercises'
 import { useDataVersion } from '../../../core/dataVersion'
 import { ChevronLeft, Pencil } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
@@ -7,13 +8,18 @@ import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { ExerciseDrawing } from '../components/ExerciseDrawing'
+import { HistoryList } from '../components/HistoryList'
 import { MuscuLayout } from '../components/MuscuLayout'
+import { ProgressionChart } from '../components/ProgressionChart'
 import { exerciseDetails } from '../format'
 import { editExercisePath, EXERCISES_PATH } from '../routes'
 import page from './page.module.css'
 import styles from './ExercisePage.module.css'
 
-/** Fiche exercice: name, equipment, image with its muscles (progression and history come later). */
+/** The Progression chart covers the last 12 weeks. */
+const CHART_DAYS = 12 * 7
+
+/** Fiche exercice: name, equipment · workouts, drawing with its muscles, Progression, Historique. */
 export default function ExercisePage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
@@ -22,6 +28,10 @@ export default function ExercisePage() {
   const version = useDataVersion()
   const exercise = useAsync(() => exercisesGet(id), `${id}#${version}`)
   const data = exercise.data?.id === id ? exercise.data : undefined
+  const history = useAsync(() => exercisesHistory(id), `history#${id}#${version}`)
+  const entries = history.data && data ? history.data : []
+  const since = addDays(parisToday(), -CHART_DAYS)
+  const chart = entries.filter((e) => e.date >= since).reverse()
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(EXERCISES_PATH))
 
@@ -49,21 +59,25 @@ export default function ExercisePage() {
       {data && (
         <>
           {!desktop && <Heading name={data.name} details={exerciseDetails(data)} />}
-          <figure className={styles.image}>
-            <ExerciseDrawing imageUrl={data.imageUrl} className={styles.drawing} />
-            <figcaption className={styles.pills}>
-              {data.primaryMuscles.map((m) => (
-                <span key={m} className={styles.primary}>
-                  {fr.muscu.muscles[m]}
-                </span>
-              ))}
-              {data.secondaryMuscles.map((m) => (
-                <span key={m} className={styles.secondary}>
-                  {fr.muscu.muscles[m]}
-                </span>
-              ))}
-            </figcaption>
-          </figure>
+          <div className={styles.top}>
+            <figure className={styles.image}>
+              <ExerciseDrawing imageUrl={data.imageUrl} className={styles.drawing} />
+              <figcaption className={styles.pills}>
+                {data.primaryMuscles.map((m) => (
+                  <span key={m} className={styles.primary}>
+                    {fr.muscu.muscles[m]}
+                  </span>
+                ))}
+                {data.secondaryMuscles.map((m) => (
+                  <span key={m} className={styles.secondary}>
+                    {fr.muscu.muscles[m]}
+                  </span>
+                ))}
+              </figcaption>
+            </figure>
+            {chart.length > 0 && <ProgressionChart entries={chart} variant={desktop ? 'desktop' : 'mobile'} />}
+          </div>
+          {entries.length > 0 && <HistoryList entries={entries} variant={desktop ? 'desktop' : 'mobile'} />}
         </>
       )}
     </MuscuLayout>

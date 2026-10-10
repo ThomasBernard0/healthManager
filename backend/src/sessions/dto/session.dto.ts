@@ -1,5 +1,6 @@
 import { MUSCLES, type Muscle } from '@healthmanager/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { SetResultDto } from '../../common/set-result.dto.js';
 import { ExerciseDto } from '../../exercises/dto/exercise.dto.js';
 
 export const FEELINGS = ['easy', 'ok', 'hard'] as const;
@@ -71,14 +72,6 @@ export class SessionDto {
 export class CurrentSessionDto {
   @ApiProperty({ type: SessionDto, nullable: true })
   session: SessionDto | null;
-}
-
-export class SetResultDto {
-  @ApiProperty({ example: 60, description: 'kg' })
-  weight: number;
-
-  @ApiProperty({ example: 10 })
-  reps: number;
 }
 
 /** "Dernière fois": the sets of the last finished session with this exercise. */

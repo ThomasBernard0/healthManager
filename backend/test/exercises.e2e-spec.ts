@@ -15,6 +15,35 @@ function fakePrisma() {
   const find = (id: string) => rows.find((r) => r.id === id) ?? null;
   return {
     rows,
+    // Finished sessions of Rowing barre, most recent first (as the query orders them).
+    sessionExercise: {
+      findMany: ({ where }: { where: { exerciseId: string } }) =>
+        Promise.resolve(
+          where.exerciseId !== '00000000-0000-4000-8000-000000000001'
+            ? []
+            : [
+                {
+                  sessionId: 's2',
+                  session: { finishedAt: new Date('2026-09-28T18:30:00Z') },
+                  feeling: 'ok',
+                  preFatigue: 3,
+                  sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
+                },
+                {
+                  sessionId: 's1',
+                  session: { finishedAt: new Date('2026-09-14T22:30:00Z') },
+                  feeling: null,
+                  preFatigue: null,
+                  sets: [
+                    { weight: 57.5, reps: 11 },
+                    { weight: 57.5, reps: 10 },
+                    { weight: 55, reps: 10 },
+                    { weight: 55, reps: 9 },
+                  ],
+                },
+              ],
+        ),
+    },
     exercise: {
       findMany: ({ where }: { where: { archived: boolean } }) =>
         Promise.resolve(rows.filter((r) => r.archived === where.archived)),
@@ -112,6 +141,37 @@ describe('Exercises (e2e)', () => {
       .send({ name: 'Pull-over haltère', equipment: 'dumbbell', primaryMuscles: ['chest'], secondaryMuscles: [] })
       .expect(200);
     expect(updated.body).toMatchObject({ name: 'Pull-over haltère', primaryMuscles: ['chest'], secondaryMuscles: [] });
+  });
+
+  it('returns the history: Paris date, sets, feeling, pre-fatigue, volume, heaviest weight', async () => {
+    const res = await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000001/history').expect(200);
+    expect(res.body).toEqual([
+      {
+        sessionId: 's2',
+        date: '2026-09-28',
+        sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
+        feeling: 'ok',
+        preFatigue: 3,
+        volume: 2160,
+        heaviest: 60,
+      },
+      {
+        sessionId: 's1',
+        // 22:30 UTC is already the next day in Paris.
+        date: '2026-09-15',
+        sets: [
+          { weight: 57.5, reps: 11 },
+          { weight: 57.5, reps: 10 },
+          { weight: 55, reps: 10 },
+          { weight: 55, reps: 9 },
+        ],
+        feeling: null,
+        preFatigue: 0,
+        volume: 2252.5,
+        heaviest: 57.5,
+      },
+    ]);
+    await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000099/history').expect(404);
   });
 
   it('rejects a muscle twice, no primary muscle, or unknown values', async () => {

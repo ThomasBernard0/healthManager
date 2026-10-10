@@ -18,6 +18,8 @@ export * from './daySummaryDtoGoal';
 export * from './daySummaryDtoLeft';
 export * from './equipment';
 export * from './exerciseDto';
+export * from './exerciseHistoryEntryDto';
+export * from './exerciseHistoryEntryDtoFeeling';
 export * from './exerciseWorkoutDto';
 export * from './exercisesListParams';
 export * from './feeling';

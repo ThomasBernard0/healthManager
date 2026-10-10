@@ -1,6 +1,8 @@
 import type { ExerciseDto } from '../../api/generated/model'
 import {
   exerciseDetails,
+  formatChartDate,
+  formatHistoryDay,
   exerciseSubtitle,
   formatSessionDate,
   formatSets,
@@ -60,5 +62,13 @@ describe('formatTargets', () => {
   it('weight then each target, as on the desktop Accueil', () => {
     expect(formatTargets([12, 11, 11, 10].map((reps) => ({ weight: 55, reps })))).toBe('55 kg · 12 · 11 · 11 · 10')
     expect(formatTargets([{ weight: 62.5, reps: 8 }, { weight: 60, reps: 8 }])).toBe('62,5 kg · 8 / 60 kg · 8')
+  })
+})
+
+describe('history dates', () => {
+  it('formats chart and history dates', () => {
+    expect(formatChartDate('2026-08-10')).toBe('10 août')
+    expect(formatChartDate('2026-09-07')).toBe('7 sept')
+    expect(formatHistoryDay('2026-09-28')).toBe('lun 28')
   })
 })
