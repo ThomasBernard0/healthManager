@@ -1,4 +1,4 @@
-import { nextWorkout } from '@healthmanager/shared';
+import { nextWorkout, parisToday } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -11,21 +11,33 @@ const ITEMS = { items: { orderBy: { position: 'asc' }, include: { exercise: { in
 export class WorkoutsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** The rotation, in order. Sessions come with the Séance step: until then nothing was done yet. */
+  /** The rotation, in order: last date of each workout, and the next one (after the last finished session). */
   async list(): Promise<WorkoutSummaryDto[]> {
-    const workouts = await this.prisma.workout.findMany({
-      orderBy: { position: 'asc' },
-      include: { items: { orderBy: { position: 'asc' }, include: { exercise: true } } },
+    const [workouts, lastByWorkout, lastSession] = await Promise.all([
+      this.prisma.workout.findMany({
+        orderBy: { position: 'asc' },
+        include: { items: { orderBy: { position: 'asc' }, include: { exercise: true } } },
+      }),
+      this.prisma.session.groupBy({
+        by: ['workoutId'],
+        where: { finishedAt: { not: null }, workoutId: { not: null } },
+        _max: { finishedAt: true },
+      }),
+      this.prisma.session.findFirst({ where: { finishedAt: { not: null } }, orderBy: { finishedAt: 'desc' } }),
+    ]);
+    const next = nextWorkout(workouts, lastSession?.workoutId ?? null);
+    const lastDone = new Map(lastByWorkout.map((g) => [g.workoutId, g._max.finishedAt]));
+    return workouts.map((w) => {
+      const finishedAt = lastDone.get(w.id);
+      return {
+        id: w.id,
+        name: w.name,
+        position: w.position,
+        exerciseNames: w.items.map((i) => i.exercise.name),
+        lastDoneOn: finishedAt ? parisToday(finishedAt) : null,
+        isNext: w.id === next?.id,
+      };
     });
-    const next = nextWorkout(workouts, null);
-    return workouts.map((w) => ({
-      id: w.id,
-      name: w.name,
-      position: w.position,
-      exerciseNames: w.items.map((i) => i.exercise.name),
-      lastDoneOn: null,
-      isNext: w.id === next?.id,
-    }));
   }
 
   async get(id: string): Promise<WorkoutDto> {

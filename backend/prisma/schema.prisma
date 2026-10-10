@@ -26,6 +26,12 @@ enum MealMode {
   manual
 }
 
+enum Feeling {
+  easy
+  ok
+  hard
+}
+
 enum LogKind {
   meal
   quick
@@ -57,7 +63,7 @@ enum Muscle {
 
 /// Musculation exercise bank: seeded from data/exercises (bankKey), or custom (bankKey null).
 model Exercise {
-  id               String        @id @default(uuid())
+  id               String            @id @default(uuid())
   name             String
   /// Lowercase, accents stripped — for accent/case-insensitive search.
   searchName       String
@@ -65,13 +71,14 @@ model Exercise {
   primaryMuscles   Muscle[]
   secondaryMuscles Muscle[]
   /// Key of the row in data/exercises/exercises.tsv; makes the seed idempotent.
-  bankKey          String?       @unique
+  bankKey          String?           @unique
   /// Drawing in frontend/public/exercises/ (bank exercises only).
   image            String?
-  archived         Boolean       @default(false)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  archived         Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   workoutItems     WorkoutItem[]
+  sessionExercises SessionExercise[]
 
   @@index([searchName])
 }
@@ -84,6 +91,7 @@ model Workout {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   items     WorkoutItem[]
+  sessions  Session[]
 }
 
 /// An exercise of a workout, in list order, with its sets and rep range.
@@ -192,4 +200,59 @@ model Goal {
   carbs     Decimal  @db.Decimal(6, 1)
   fat       Decimal  @db.Decimal(6, 1)
   createdAt DateTime @default(now())
+}
+
+/// One performed workout. At most one has finishedAt = null: the session in progress.
+model Session {
+  id          String            @id @default(uuid())
+  workoutId   String?
+  workout     Workout?          @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+  /// Snapshot, so the history survives deleting the workout.
+  workoutName String
+  startedAt   DateTime          @default(now()) @db.Timestamptz
+  finishedAt  DateTime?         @db.Timestamptz
+  exercises   SessionExercise[]
+
+  @@index([finishedAt])
+}
+
+/// An exercise of a session. Exercises with no done set are dropped when the session is finished.
+model SessionExercise {
+  id         String       @id @default(uuid())
+  sessionId  String
+  session    Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  /// Order in the workout (list order); the real order is firstSetAt.
+  position   Int
+  /// Snapshot of the workout item, so editing the template doesn't rewrite history.
+  repMin     Int
+  repMax     Int
+  /// Time of the first validated set (the real order of the exercises).
+  firstSetAt DateTime?    @db.Timestamptz
+  /// Frozen with the first validated set (progression step).
+  preFatigue Decimal?     @db.Decimal(4, 1)
+  feeling    Feeling?
+  /// Terminé tapped (with at least one set done).
+  completed  Boolean      @default(false)
+  sets       SessionSet[]
+
+  @@unique([sessionId, exerciseId])
+  @@index([exerciseId])
+}
+
+/// A set: its target (none the first time) and what was done (kg in 0.5 steps, reps).
+model SessionSet {
+  id                String          @id @default(uuid())
+  sessionExerciseId String
+  sessionExercise   SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+  index             Int
+  targetWeight      Decimal?        @db.Decimal(6, 1)
+  targetReps        Int?
+  weight            Decimal?        @db.Decimal(6, 1)
+  reps              Int?
+  done              Boolean         @default(false)
+  doneAt            DateTime?       @db.Timestamptz
+
+  @@unique([sessionExerciseId, index])
 }

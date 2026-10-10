@@ -898,6 +898,308 @@
           "workouts"
         ]
       }
+    },
+    "/api/sessions/current": {
+      "get": {
+        "operationId": "Sessions_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions": {
+      "post": {
+        "operationId": "Sessions_start",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "A session is already in progress"
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}": {
+      "get": {
+        "operationId": "Sessions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      },
+      "delete": {
+        "operationId": "Sessions_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/exercises/{exerciseId}": {
+      "get": {
+        "operationId": "Sessions_getExercise",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exerciseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionExerciseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      },
+      "patch": {
+        "operationId": "Sessions_updateExercise",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exerciseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSessionExerciseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionExerciseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Session already finished"
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/exercises/{exerciseId}/sets/{index}": {
+      "put": {
+        "operationId": "Sessions_saveSet",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exerciseId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "index",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionExerciseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No value and no target"
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Session already finished"
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/finish": {
+      "post": {
+        "operationId": "Sessions_finish",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Session already finished"
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
     }
   },
   "info": {
@@ -2267,6 +2569,309 @@
           "name",
           "items"
         ]
+      },
+      "SessionExerciseStatus": {
+        "type": "string",
+        "enum": [
+          "todo",
+          "inProgress",
+          "done"
+        ],
+        "description": "done: Terminé tapped; inProgress: a set validated; todo: nothing yet"
+      },
+      "SessionExerciseSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "exercise": {
+            "$ref": "#/components/schemas/ExerciseDto"
+          },
+          "status": {
+            "description": "done: Terminé tapped; inProgress: a set validated; todo: nothing yet",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionExerciseStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "exercise",
+          "status"
+        ]
+      },
+      "SessionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workoutId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "null once the workout is deleted"
+          },
+          "workoutName": {
+            "type": "string",
+            "example": "Pull"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "exercises": {
+            "description": "In workout order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionExerciseSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "workoutId",
+          "workoutName",
+          "startedAt",
+          "finishedAt",
+          "exercises"
+        ]
+      },
+      "CurrentSessionDto": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "session"
+        ]
+      },
+      "StartSessionDto": {
+        "type": "object",
+        "properties": {
+          "workoutId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "workoutId"
+        ]
+      },
+      "Feeling": {
+        "type": "string",
+        "enum": [
+          "easy",
+          "ok",
+          "hard"
+        ]
+      },
+      "SessionSetDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "example": 0,
+            "description": "From 0, in workout order"
+          },
+          "targetWeight": {
+            "type": "number",
+            "nullable": true,
+            "example": 60,
+            "description": "kg; null: no target (first time)"
+          },
+          "targetReps": {
+            "type": "number",
+            "nullable": true,
+            "example": 10
+          },
+          "weight": {
+            "type": "number",
+            "nullable": true,
+            "example": 60,
+            "description": "kg, as done (or typed, not validated yet)"
+          },
+          "reps": {
+            "type": "number",
+            "nullable": true,
+            "example": 10
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "index",
+          "targetWeight",
+          "targetReps",
+          "weight",
+          "reps",
+          "done"
+        ]
+      },
+      "SetResultDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "example": 60,
+            "description": "kg"
+          },
+          "reps": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "weight",
+          "reps"
+        ]
+      },
+      "LastTimeDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Europe/Paris date"
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SetResultDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "sets"
+        ]
+      },
+      "SessionExerciseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workoutName": {
+            "type": "string",
+            "example": "Pull"
+          },
+          "exercise": {
+            "$ref": "#/components/schemas/ExerciseDto"
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12
+          },
+          "feeling": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Feeling"
+              }
+            ]
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Terminé tapped"
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionSetDto"
+            }
+          },
+          "lastTime": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LastTimeDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sessionId",
+          "workoutName",
+          "exercise",
+          "repMin",
+          "repMax",
+          "feeling",
+          "completed",
+          "sets",
+          "lastTime"
+        ]
+      },
+      "SaveSetDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "nullable": true,
+            "example": 60,
+            "description": "kg, 0.5 kg steps"
+          },
+          "reps": {
+            "type": "number",
+            "nullable": true,
+            "example": 10,
+            "minimum": 0,
+            "maximum": 200
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "UpdateSessionExerciseDto": {
+        "type": "object",
+        "properties": {
+          "feeling": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Feeling"
+              }
+            ]
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Terminé (needs at least one validated set)"
+          }
+        }
       }
     }
   },

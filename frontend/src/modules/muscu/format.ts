@@ -1,5 +1,6 @@
 import type { ExerciseDto, Muscle } from '../../api/generated/model'
-import { formatShortDay } from '../../core/format'
+import { groupSets, type SetResult } from '@healthmanager/shared'
+import { formatDecimal, formatShortDay } from '../../core/format'
 import { fr } from '../../i18n/fr'
 
 const shortLabel = (m: Muscle): string => (m.startsWith('shoulders_') ? fr.muscu.shoulders : fr.muscu.muscles[m])
@@ -32,3 +33,10 @@ export const formatSessionDate = (date: string): string => {
   const s = formatShortDay(date)
   return s.charAt(0).toLocaleLowerCase('fr-FR') + s.slice(1)
 }
+
+/** "57,5" */
+export const formatWeight = (kg: number): string => formatDecimal(kg)
+
+/** Compact set format, one entry per weight: ["57,5 kg × 11 · 10", "55 kg × 10 · 9"]. */
+export const formatSets = (sets: SetResult[]): string[] =>
+  groupSets(sets).map((g) => fr.muscu.session.setGroup(formatWeight(g.weight), g.reps.join(' · ')))
