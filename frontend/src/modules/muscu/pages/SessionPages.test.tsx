@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import {
@@ -40,9 +40,9 @@ const SESSION: SessionDto = {
   startedAt: '2026-10-10T08:00:00.000Z',
   finishedAt: null,
   exercises: [
-    { id: 'e1', exercise: ex('x1', 'Tirage vertical prise large'), status: 'done' },
-    { id: 'e2', exercise: ex('x2', 'Rowing barre'), status: 'inProgress' },
-    { id: 'e3', exercise: ex('x3', 'Curl haltères'), status: 'todo' },
+    { id: 'e1', exercise: ex('x1', 'Tirage vertical prise large'), status: 'done', preFatigue: 0 },
+    { id: 'e2', exercise: ex('x2', 'Rowing barre'), status: 'inProgress', preFatigue: 4 },
+    { id: 'e3', exercise: ex('x3', 'Curl haltères'), status: 'todo', preFatigue: 0 },
   ],
 }
 
@@ -66,6 +66,8 @@ const ENTRY: SessionExerciseDto = {
   feeling: null,
   completed: false,
   sets: [set(0, { weight: 60, reps: 12, done: true }), set(1, { weight: 60, reps: 9, done: true }), set(2), set(3)],
+  preFatigue: 0,
+  fatiguedMuscles: [],
   lastTime: { date: '2026-09-28', sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })) },
 }
 
@@ -99,6 +101,9 @@ describe('Séance — liste', () => {
     expect(within(links[0]).getByRole('img', { name: 'Fait' })).toBeInTheDocument()
     expect(within(links[1]).getByText('En cours')).toBeInTheDocument()
     expect(links[2]).toHaveAttribute('href', '/muscu/seance/s1/e3')
+    // Pre-fatigue: battery icon on that exercise only.
+    expect(within(links[1]).getByRole('img', { name: 'Muscles déjà travaillés' })).toBeInTheDocument()
+    expect(screen.getAllByRole('img', { name: 'Muscles déjà travaillés' })).toHaveLength(1)
   })
 
   it('Terminer la séance saves it and goes back to Accueil', async () => {
@@ -108,7 +113,7 @@ describe('Séance — liste', () => {
     renderAt('/muscu/seance/s1')
     await user.click(await screen.findByRole('button', { name: 'Terminer la séance' }))
     expect(sessionsFinish).toHaveBeenCalledWith('s1')
-    expect(await screen.findByTestId('where')).toHaveTextContent(/^\/muscu$/)
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/muscu$/))
   })
 
   it('asks before quitting once sets were logged', async () => {
@@ -155,6 +160,13 @@ describe('Exercice en cours', () => {
     expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 3, { weight: 57.5, reps: 11, done: true })
   })
 
+  it('shows "{muscle} déjà travaillé" when pre-fatigued, linking to the exercise page', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue({ ...ENTRY, preFatigue: 4, fatiguedMuscles: ['back'] })
+    renderAt('/muscu/seance/s1/e2')
+    const tag = await screen.findByText('Dos déjà travaillé')
+    expect(tag.closest('a')).toHaveAttribute('href', '/muscu/exercices/x2')
+  })
+
   it('first time: no Objectif, no placeholder, ✓ needs both values', async () => {
     const first = { ...ENTRY, sets: [set(0, { targetWeight: null, targetReps: null })], lastTime: null }
     vi.mocked(sessionsGetExercise).mockResolvedValue(first)
@@ -189,6 +201,6 @@ describe('Exercice en cours', () => {
 
     await user.click(screen.getByRole('button', { name: 'Terminé' }))
     expect(sessionsUpdateExercise).toHaveBeenLastCalledWith('s1', 'e2', { completed: true })
-    expect(await screen.findByTestId('where')).toHaveTextContent('/muscu')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
   })
 })

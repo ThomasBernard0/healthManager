@@ -10,7 +10,7 @@ import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { MuscuLayout } from '../components/MuscuLayout'
-import { formatSessionDate } from '../format'
+import { formatSessionDate, formatTargets } from '../format'
 import { EXERCISES_PATH, NEW_WORKOUT_PATH, sessionPath, workoutPath } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
@@ -98,7 +98,10 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
   const navigate = useNavigate()
   const { start, status } = useStartSession()
   const name = inProgress ? inProgress.workoutName : workout!.name
-  const exercises = inProgress ? inProgress.exercises.map((e) => e.exercise.name) : workout!.exerciseNames
+  // Targets: the next workout only (desktop list).
+  const exercises = inProgress
+    ? inProgress.exercises.map((e) => ({ name: e.exercise.name, targets: null }))
+    : workout!.exercises
   return (
     <section className={styles.nextCard} aria-label={inProgress ? fr.muscu.home.inProgress : fr.muscu.home.next}>
       <div className={styles.nextTop}>
@@ -110,12 +113,15 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
       <div className={styles.nextName}>{name}</div>
       {desktop ? (
         <ul className={styles.nextList}>
-          {exercises.map((n) => (
-            <li key={n}>{n}</li>
+          {exercises.map((e) => (
+            <li key={e.name}>
+              <span>{e.name}</span>
+              {e.targets && <span className={styles.nextTargets}>{formatTargets(e.targets)}</span>}
+            </li>
           ))}
         </ul>
       ) : (
-        <div className={styles.nextExercises}>{exercises.join(', ')}</div>
+        <div className={styles.nextExercises}>{exercises.map((e) => e.name).join(', ')}</div>
       )}
       {status === 'error' && (
         <div className={form.error} role="alert">
@@ -125,7 +131,7 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
       <button
         type="button"
         className={styles.start}
-        disabled={status === 'busy' || (!inProgress && workout!.exerciseNames.length === 0)}
+        disabled={status === 'busy' || (!inProgress && workout!.exercises.length === 0)}
         onClick={() => (inProgress ? navigate(sessionPath(inProgress.id)) : start(workout!.id))}
       >
         <Play />
@@ -145,7 +151,7 @@ function WorkoutRows({ workouts }: { workouts: WorkoutSummaryDto[] }) {
             <span className={styles.rowText}>
               <span className={styles.rowName}>{w.name}</span>
               <span className={styles.rowMeta}>
-                {[fr.muscu.home.exerciseCount(w.exerciseNames.length), w.lastDoneOn && formatSessionDate(w.lastDoneOn)]
+                {[fr.muscu.home.exerciseCount(w.exercises.length), w.lastDoneOn && formatSessionDate(w.lastDoneOn)]
                   .filter(Boolean)
                   .join(' · ')}
               </span>

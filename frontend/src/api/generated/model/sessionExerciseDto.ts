@@ -7,6 +7,7 @@
 import type { ExerciseDto } from './exerciseDto';
 import type { SessionExerciseDtoFeeling } from './sessionExerciseDtoFeeling';
 import type { SessionSetDto } from './sessionSetDto';
+import type { Muscle } from './muscle';
 import type { SessionExerciseDtoLastTime } from './sessionExerciseDtoLastTime';
 
 export interface SessionExerciseDto {
@@ -20,7 +21,12 @@ export interface SessionExerciseDto {
   feeling: SessionExerciseDtoFeeling;
   /** Terminé tapped */
   completed: boolean;
+  /** Targets: live until the first set is validated, then frozen */
   sets: SessionSetDto[];
+  /** Sets already done on its primary muscles in this session */
+  preFatigue: number;
+  /** "{muscle} déjà travaillé" */
+  fatiguedMuscles: Muscle[];
   /** @nullable */
   lastTime: SessionExerciseDtoLastTime;
 }

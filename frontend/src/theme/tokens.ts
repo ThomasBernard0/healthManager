@@ -33,6 +33,9 @@ const light = {
   onCamera: '#FFFFFF',
   /** Behind text laid over a photo (muscle pills on an exercise image). */
   overlay: 'rgba(255, 255, 255, 0.85)',
+  /** Pre-fatigue (battery icon, déjà travaillé tag): warm yellow. */
+  fatigue: '#A86F0C',
+  fatigueBorder: '#E8D3A6',
 }
 
 /** Dark theme: same roles, values tuned for contrast on a dark ground. */
@@ -65,6 +68,8 @@ const dark: typeof light = {
   cameraFrame: 'rgba(255, 255, 255, 0.9)',
   onCamera: '#FFFFFF',
   overlay: 'rgba(15, 20, 17, 0.75)',
+  fatigue: '#E2B35C',
+  fatigueBorder: '#4A4026',
 }
 
 export const tokens = {

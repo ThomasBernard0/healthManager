@@ -3,5 +3,6 @@ export * from './calendar.js';
 export * from './goals.js';
 export * from './muscu.js';
 export * from './nutrients.js';
+export * from './progression.js';
 export * from './search.js';
 export * from './week.js';

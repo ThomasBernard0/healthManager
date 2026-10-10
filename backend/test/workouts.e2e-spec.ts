@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { configureApp } from './../src/app.setup.js';
 import { PrismaService } from './../src/prisma/prisma.service.js';
+import { ProgressionService } from './../src/sessions/progression.service.js';
 import { WorkoutsController } from './../src/workouts/workouts.controller.js';
 import { WorkoutsService } from './../src/workouts/workouts.service.js';
 
@@ -120,7 +121,12 @@ describe('Workouts (e2e)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [WorkoutsController],
-      providers: [WorkoutsService, { provide: PrismaService, useValue: fakePrisma() }],
+      providers: [
+        WorkoutsService,
+        { provide: PrismaService, useValue: fakePrisma() },
+        // First time for every exercise: no target.
+        { provide: ProgressionService, useValue: { targets: () => Promise.resolve(null) } },
+      ],
     }).compile();
     app = moduleRef.createNestApplication<INestApplication<App>>({ logger: false });
     configureApp(app);
@@ -136,9 +142,24 @@ describe('Workouts (e2e)', () => {
 
     const list = await http().get('/api/workouts').expect(200);
     expect(list.body).toEqual([
-      { id: pushA.body.id, name: 'Push A', position: 1, exerciseNames: ['Développé couché barre'], lastDoneOn: null, isNext: true },
-      expect.objectContaining({ name: 'Pull', position: 2, exerciseNames: ['Rowing barre', 'Curl haltères'], isNext: false }),
-      expect.objectContaining({ name: 'Push B', position: 3, exerciseNames: [], isNext: false }),
+      {
+        id: pushA.body.id,
+        name: 'Push A',
+        position: 1,
+        exercises: [{ name: 'Développé couché barre', targets: null }],
+        lastDoneOn: null,
+        isNext: true,
+      },
+      expect.objectContaining({
+        name: 'Pull',
+        position: 2,
+        exercises: [
+          { name: 'Rowing barre', targets: null },
+          { name: 'Curl haltères', targets: null },
+        ],
+        isNext: false,
+      }),
+      expect.objectContaining({ name: 'Push B', position: 3, exercises: [], isNext: false }),
     ]);
   });
 

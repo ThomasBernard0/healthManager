@@ -40,3 +40,9 @@ export const formatWeight = (kg: number): string => formatDecimal(kg)
 /** Compact set format, one entry per weight: ["57,5 kg × 11 · 10", "55 kg × 10 · 9"]. */
 export const formatSets = (sets: SetResult[]): string[] =>
   groupSets(sets).map((g) => fr.muscu.session.setGroup(formatWeight(g.weight), g.reps.join(' · ')))
+
+/** Targets on one line, as on the desktop Accueil: "55 kg · 12 · 11 · 11 · 10" (" / " between weights). */
+export const formatTargets = (targets: SetResult[]): string =>
+  groupSets(targets)
+    .map((g) => [`${formatWeight(g.weight)} ${fr.muscu.session.kg}`, ...g.reps].join(' · '))
+    .join(' / ')

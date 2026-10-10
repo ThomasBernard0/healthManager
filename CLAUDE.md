@@ -26,7 +26,8 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ## Folder structure
 
 ```
-shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals)
+shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals,
+                         musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
   data/ciqual/           CIQUAL 2020 foods (TSV, Licence Ouverte) + convert.mjs (from the ANSES XML)

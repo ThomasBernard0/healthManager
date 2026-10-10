@@ -1,5 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExerciseDto } from '../../exercises/dto/exercise.dto.js';
+import { SetResultDto } from '../../sessions/dto/session.dto.js';
+
+export class WorkoutSummaryExerciseDto {
+  @ApiProperty({ example: 'Rowing barre' })
+  name: string;
+
+  @ApiProperty({
+    type: [SetResultDto],
+    nullable: true,
+    description: 'Next targets, for the next workout only (null otherwise, or the first time)',
+  })
+  targets: SetResultDto[] | null;
+}
 
 /** Mes séances / Prochaine séance. */
 export class WorkoutSummaryDto {
@@ -12,8 +25,8 @@ export class WorkoutSummaryDto {
   @ApiProperty({ example: 2, description: 'Order in the rotation, from 1' })
   position: number;
 
-  @ApiProperty({ type: [String], example: ['Tirage vertical prise large', 'Rowing barre'] })
-  exerciseNames: string[];
+  @ApiProperty({ type: [WorkoutSummaryExerciseDto], description: 'In list order' })
+  exercises: WorkoutSummaryExerciseDto[];
 
   @ApiProperty({
     type: String,

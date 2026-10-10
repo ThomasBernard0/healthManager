@@ -114,6 +114,9 @@ export const fr = {
       completed: 'Terminé',
       /** "60 kg × 10 · 9 · 9 · 8" */
       setGroup: (weight: string, reps: string) => `${weight} kg × ${reps}`,
+      fatigued: 'Muscles déjà travaillés',
+      /** "Dos déjà travaillé" / "Pectoraux, triceps déjà travaillés" */
+      alreadyWorked: (muscles: string, count: number) => `${muscles} déjà travaillé${count > 1 ? 's' : ''}`,
     },
   },
   access: {
