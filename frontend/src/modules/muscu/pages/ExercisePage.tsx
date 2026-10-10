@@ -8,6 +8,7 @@ import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
 import { ExerciseDrawing } from '../components/ExerciseDrawing'
 import { MuscuLayout } from '../components/MuscuLayout'
+import { exerciseDetails } from '../format'
 import { editExercisePath, EXERCISES_PATH } from '../routes'
 import page from './page.module.css'
 import styles from './ExercisePage.module.css'
@@ -30,7 +31,7 @@ export default function ExercisePage() {
         <button type="button" className={page.iconButton} aria-label={fr.common.back} onClick={back}>
           <ChevronLeft />
         </button>
-        {desktop && data && <Heading name={data.name} equipment={fr.muscu.equipment[data.equipment]} />}
+        {desktop && data && <Heading name={data.name} details={exerciseDetails(data)} />}
         <Link to={editExercisePath(id)} className={page.iconButton} aria-label={fr.muscu.editExercise}>
           <Pencil size={20} strokeWidth={2} />
         </Link>
@@ -47,7 +48,7 @@ export default function ExercisePage() {
 
       {data && (
         <>
-          {!desktop && <Heading name={data.name} equipment={fr.muscu.equipment[data.equipment]} />}
+          {!desktop && <Heading name={data.name} details={exerciseDetails(data)} />}
           <figure className={styles.image}>
             <ExerciseDrawing imageUrl={data.imageUrl} className={styles.drawing} />
             <figcaption className={styles.pills}>
@@ -69,11 +70,11 @@ export default function ExercisePage() {
   )
 }
 
-function Heading({ name, equipment }: { name: string; equipment: string }) {
+function Heading({ name, details }: { name: string; details: string }) {
   return (
     <div className={styles.heading}>
       <h1 className={styles.name}>{name}</h1>
-      <div className={styles.meta}>{equipment}</div>
+      <div className={styles.meta}>{details}</div>
     </div>
   )
 }

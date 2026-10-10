@@ -26,6 +26,7 @@ const ROWING: ExerciseDto = {
   primaryMuscles: ['back'],
   secondaryMuscles: ['biceps', 'shoulders_rear'],
   imageUrl: '/exercises/rowing-barre.svg',
+  workouts: [],
 }
 const ECARTE: ExerciseDto = {
   id: 'e1',
@@ -34,6 +35,7 @@ const ECARTE: ExerciseDto = {
   primaryMuscles: ['chest'],
   secondaryMuscles: ['shoulders_front'],
   imageUrl: null,
+  workouts: [],
 }
 
 function Where() {

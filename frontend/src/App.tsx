@@ -14,7 +14,8 @@ import ExerciseEditPage from './modules/muscu/pages/ExerciseEditPage'
 import ExercisePage from './modules/muscu/pages/ExercisePage'
 import ExercisesPage from './modules/muscu/pages/ExercisesPage'
 import HomePage from './modules/muscu/pages/HomePage'
-import { EXERCISES_PATH, MUSCU_PATH, NEW_EXERCISE_PATH } from './modules/muscu/routes'
+import WorkoutEditPage from './modules/muscu/pages/WorkoutEditPage'
+import { EXERCISES_PATH, MUSCU_PATH, NEW_EXERCISE_PATH, NEW_WORKOUT_PATH } from './modules/muscu/routes'
 
 export default function App() {
   const location = useLocation()
@@ -38,6 +39,8 @@ export default function App() {
           <Route path={NEW_EXERCISE_PATH} element={<ExerciseEditPage />} />
           <Route path={`${EXERCISES_PATH}/:id`} element={<ExercisePage />} />
           <Route path={`${EXERCISES_PATH}/:id/modifier`} element={<ExerciseEditPage />} />
+          <Route path={NEW_WORKOUT_PATH} element={<WorkoutEditPage />} />
+          <Route path="/muscu/seances/:id" element={<WorkoutEditPage />} />
           <Route path="*" element={<Navigate to={launchPath()} replace />} />
         </Routes>
         {background && (

@@ -1,0 +1,120 @@
+/* Transcribed from design/musculation/muscu-5-modifier-seance.html */
+
+.form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-12) 0 var(--space-6);
+  background: var(--color-card);
+  border-radius: var(--radius-list);
+  overflow: hidden;
+}
+
+.item + .item {
+  border-top: 1px solid var(--color-divider);
+}
+
+.itemInner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-row-tall);
+  background: var(--color-card);
+  touch-action: pan-y;
+  transition: transform 0.15s ease-out;
+}
+
+.dragging .itemInner {
+  background: var(--color-divider);
+}
+
+.handle {
+  width: var(--size-badge);
+  height: var(--size-touch);
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-reference);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.itemName {
+  font-weight: var(--font-weight-semibold);
+}
+
+.itemMeta {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.chip {
+  flex-shrink: 0;
+  font-size: var(--font-size-13);
+  color: var(--color-ink);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+}
+
+.chip:hover {
+  border-color: var(--color-border-strong);
+}
+
+.addExercise {
+  height: var(--size-input);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border-strong);
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+}
+
+.submit {
+  margin-top: auto;
+}
+
+/* Picker */
+.inWorkout {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.add {
+  width: var(--size-thumb-small);
+  height: var(--size-thumb-small);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

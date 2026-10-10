@@ -19,3 +19,17 @@ export const MUSCLES = [
   'calves',
 ] as const;
 export type Muscle = (typeof MUSCLES)[number];
+
+/**
+ * The next workout of the rotation: the one after the workout of the last finished session, in
+ * `position` order, wrapping around. No session yet (or its workout was deleted) → the first one.
+ */
+export function nextWorkout<W extends { id: string; position: number }>(
+  workouts: W[],
+  lastFinishedWorkoutId: string | null,
+): W | null {
+  const ordered = [...workouts].sort((a, b) => a.position - b.position);
+  if (ordered.length === 0) return null;
+  const last = ordered.findIndex((w) => w.id === lastFinishedWorkoutId);
+  return ordered[last === -1 ? 0 : (last + 1) % ordered.length];
+}

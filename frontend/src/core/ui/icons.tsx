@@ -118,3 +118,22 @@ export const Dots = (p: IconProps) => (
     <circle cx="19" cy="12" r="1.8" />
   </Icon>
 )
+
+/** Filled triangle (Démarrer). */
+export const Play = (p: IconProps) => (
+  <Icon size={18} fill="currentColor" stroke="none" {...p}>
+    <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" />
+  </Icon>
+)
+
+/** Six dots (drag handle). */
+export const Grip = (p: IconProps) => (
+  <Icon size={16} fill="currentColor" stroke="none" {...p}>
+    <circle cx="9" cy="6" r="1.6" />
+    <circle cx="15" cy="6" r="1.6" />
+    <circle cx="9" cy="12" r="1.6" />
+    <circle cx="15" cy="12" r="1.6" />
+    <circle cx="9" cy="18" r="1.6" />
+    <circle cx="15" cy="18" r="1.6" />
+  </Icon>
+)
