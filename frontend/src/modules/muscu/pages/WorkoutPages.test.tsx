@@ -249,6 +249,8 @@ describe('Modifier la séance', () => {
     renderAt('/muscu/seances/pull')
 
     await user.click(await screen.findByRole('button', { name: 'Modifier Rowing barre : séries et répétitions' }))
+    // Séances are started from Accueil only.
+    expect(screen.queryByRole('button', { name: /^Démarrer/ })).toBeNull()
     const sheet = await screen.findByRole('dialog', { name: 'Rowing barre' })
     await user.click(within(sheet).getByRole('button', { name: 'Séries : moins' }))
     for (let i = 0; i < 5; i++) await user.click(within(sheet).getByRole('button', { name: 'Répétitions min : plus' }))
