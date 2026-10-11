@@ -249,8 +249,6 @@ describe('Modifier la séance', () => {
     renderAt('/muscu/seances/pull')
 
     await user.click(await screen.findByRole('button', { name: 'Modifier Rowing barre : séries et répétitions' }))
-    // Séances are started from Accueil only.
-    expect(screen.queryByRole('button', { name: /^Démarrer/ })).toBeNull()
     const sheet = await screen.findByRole('dialog', { name: 'Rowing barre' })
     await user.click(within(sheet).getByRole('button', { name: 'Séries : moins' }))
     for (let i = 0; i < 5; i++) await user.click(within(sheet).getByRole('button', { name: 'Répétitions min : plus' }))
@@ -284,6 +282,33 @@ describe('Modifier la séance', () => {
     await user.click(screen.getByRole('button', { name: 'Annuler' }))
     const names = screen.getAllByRole('button', { name: /^Déplacer / }).map((b) => b.getAttribute('aria-label'))
     expect(names).toEqual(['Déplacer Tirage vertical prise large', 'Déplacer Rowing barre'])
+  })
+
+  it('starts this workout from the link under Enregistrer (no séance in progress)', async () => {
+    vi.mocked(workoutsGet).mockResolvedValue(PULL)
+    vi.mocked(sessionsStart).mockResolvedValue({
+      id: 's7',
+      workoutId: 'pull',
+      workoutName: 'Pull',
+      startedAt: '2026-10-11T08:00:00.000Z',
+      finishedAt: null,
+      exercises: [],
+    })
+    const user = userEvent.setup()
+    renderAt('/muscu/seances/pull')
+    await user.click(await screen.findByRole('button', { name: 'Démarrer cette séance' }))
+    expect(sessionsStart).toHaveBeenCalledWith({ workoutId: 'pull' })
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s7'))
+  })
+
+  it('hides the start link while a séance is in progress', async () => {
+    vi.mocked(workoutsGet).mockResolvedValue(PULL)
+    vi.mocked(sessionsCurrent).mockResolvedValue({
+      session: { id: 's1', workoutId: 'a', workoutName: 'Push A', startedAt: '2026-10-11T08:00:00.000Z', finishedAt: null, exercises: [] },
+    })
+    renderAt('/muscu/seances/pull')
+    await screen.findByRole('button', { name: 'Enregistrer' })
+    expect(screen.queryByRole('button', { name: 'Démarrer cette séance' })).toBeNull()
   })
 
   it('deletes the workout after confirmation', async () => {
