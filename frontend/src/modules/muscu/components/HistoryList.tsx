@@ -2,7 +2,6 @@ import type { ExerciseHistoryEntryDto, Feeling } from '../../../api/generated/mo
 import { formatInt } from '../../../core/format'
 import { fr } from '../../../i18n/fr'
 import { formatHistoryDay, formatSessionDate, formatSets, formatWeight } from '../format'
-import { FatigueIcon } from './Fatigue'
 import styles from './HistoryList.module.css'
 
 const feelingClass = (f: Feeling | null) => (f === 'easy' ? styles.easy : f === 'hard' ? styles.hard : '')
@@ -13,7 +12,7 @@ interface HistoryListProps {
   variant?: 'mobile' | 'desktop'
 }
 
-/** Historique: date, sets in the compact format, battery if pre-fatigued, feeling (desktop: a table). */
+/** Historique: date, sets in the compact format, feeling (desktop: a table). */
 export function HistoryList({ entries, variant = 'mobile' }: HistoryListProps) {
   if (variant === 'desktop') return <HistoryTable entries={entries} />
   return (
@@ -28,7 +27,6 @@ export function HistoryList({ entries, variant = 'mobile' }: HistoryListProps) {
                 <span key={line}>{line}</span>
               ))}
             </span>
-            {e.preFatigue > 0 && <FatigueIcon size={15} />}
             <span className={`${styles.feeling} ${feelingClass(e.feeling)}`}>
               {e.feeling ? fr.muscu.session.feelings[e.feeling] : ''}
             </span>
@@ -63,10 +61,7 @@ function HistoryTable({ entries }: { entries: ExerciseHistoryEntryDto[] }) {
           {entries.map((e) => (
             <tr key={e.sessionId}>
               <td className={styles.dateCell}>
-                <span className={styles.dateInner}>
-                  {formatSessionDate(e.date)}
-                  {e.preFatigue > 0 && <FatigueIcon size={15} />}
-                </span>
+                {formatSessionDate(e.date)}
               </td>
               {Array.from({ length: columns }, (_, i) => (
                 <td key={i}>{e.sets[i] ? `${formatWeight(e.sets[i].weight)} × ${e.sets[i].reps}` : ''}</td>

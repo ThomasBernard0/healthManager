@@ -103,7 +103,7 @@ describe('Fiche exercice', () => {
     const history = screen.getByRole('heading', { name: 'Historique' }).closest('section')!
     expect(within(history).getAllByRole('listitem')).toHaveLength(3)
     expect(within(history).getByText('60 kg × 10 · 9 · 9 · 8')).toBeInTheDocument()
-    expect(within(history).getAllByRole('img', { name: 'Muscles déjà travaillés' })).toHaveLength(1)
+    expect(within(history).queryByRole('img', { name: 'Muscles déjà travaillés' })).toBeNull()
     expect(within(history).getByText('Facile')).toBeInTheDocument()
   })
 

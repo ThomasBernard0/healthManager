@@ -138,11 +138,3 @@ export const Grip = (p: IconProps) => (
   </Icon>
 )
 
-/** Half-full battery (pre-fatigue). */
-export const Battery = (p: IconProps) => (
-  <Icon size={16} {...p}>
-    <rect x="2" y="7" width="17" height="10" rx="2" />
-    <path d="M22 11v2" />
-    <rect x="5" y="10" width="6" height="4" rx="0.5" fill="currentColor" stroke="none" />
-  </Icon>
-)
