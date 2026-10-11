@@ -227,3 +227,39 @@
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-16);
 }
+
+/* Locked set: its target, read-only, until the sets before it are done. */
+.locked {
+  height: var(--size-input);
+  box-sizing: border-box;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 0 var(--space-10);
+  display: flex;
+  align-items: center;
+  color: var(--color-reference);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-18);
+}
+
+/* Terminer l'exercice plus tôt: small, not the usual flow. */
+.stopEarly {
+  align-self: center;
+  min-height: var(--size-touch);
+  padding: 0 var(--space-12);
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--font-size-13);
+  text-decoration: underline;
+}
+
+.stopEarly:hover {
+  color: var(--color-ink);
+}
+
+.complete:disabled {
+  background: var(--color-border-strong);
+  color: var(--color-muted);
+}

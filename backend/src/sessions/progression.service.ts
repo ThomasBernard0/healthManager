@@ -83,17 +83,21 @@ export class ProgressionService {
       where,
       orderBy: { session: { finishedAt: 'desc' } },
       take: 2,
-      include: { sets: { where: { done: true }, orderBy: { index: 'asc' } } },
+      // Every set: the ones not done tell an exercise stopped early.
+      include: { sets: { orderBy: { index: 'asc' } } },
     });
     return entries.map((e) => ({
       feeling: e.feeling,
       preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
-      sets: e.sets.map((s) => ({
-        weight: num(s.weight!),
-        reps: s.reps!,
-        targetWeight: s.targetWeight === null ? null : num(s.targetWeight),
-        targetReps: s.targetReps,
-      })),
+      complete: e.sets.every((s) => s.done),
+      sets: e.sets
+        .filter((s) => s.done)
+        .map((s) => ({
+          weight: num(s.weight!),
+          reps: s.reps!,
+          targetWeight: s.targetWeight === null ? null : num(s.targetWeight),
+          targetReps: s.targetReps,
+        })),
     }));
   }
 

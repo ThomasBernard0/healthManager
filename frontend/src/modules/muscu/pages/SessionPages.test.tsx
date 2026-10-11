@@ -186,21 +186,68 @@ describe('Exercice en cours', () => {
     expect(validate).toBeDisabled()
   })
 
-  it('tapping ✓ again reopens a set; Ressenti toggles; Terminé completes and goes back', async () => {
+  it('only the next set has inputs; later ones are locked with their target', async () => {
     vi.mocked(sessionsGetExercise).mockResolvedValue(ENTRY)
-    vi.mocked(sessionsSaveSet).mockResolvedValue(ENTRY)
-    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...ENTRY, feeling: 'easy' })
+    renderAt('/muscu/seance/s1/e2')
+    expect(await screen.findByRole('textbox', { name: 'Charge série 3' })).toBeInTheDocument()
+    expect(screen.getAllByRole('textbox')).toHaveLength(2)
+    expect(screen.queryByRole('textbox', { name: 'Charge série 4' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Valider la série 4' })).toBeDisabled()
+  })
+
+  it('reopening an earlier set makes it the one to edit; later sets to do stay locked', async () => {
+    const reopened = {
+      ...ENTRY,
+      sets: ENTRY.sets.map((s) => (s.index === 0 ? { ...s, done: false } : s)),
+    }
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ENTRY)
+    vi.mocked(sessionsSaveSet).mockResolvedValue(reopened)
     const user = userEvent.setup()
     renderAt('/muscu/seance/s1/e2')
-    await user.click(await screen.findByRole('button', { name: 'Série 2 faite, modifier' }))
-    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'e2', 1, { weight: 60, reps: 9, done: false })
+    await user.click(await screen.findByRole('button', { name: 'Série 1 faite, modifier' }))
+    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'e2', 0, { weight: 60, reps: 12, done: false })
+    // Set 1 is editable again (with its values), set 2 stays done, sets 3 and 4 are locked.
+    expect(await screen.findByRole('textbox', { name: 'Charge série 1' })).toHaveValue('60')
+    expect(screen.getByRole('button', { name: 'Série 2 faite, modifier' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Charge série 3' })).toBeNull()
+  })
 
-    await user.click(screen.getByRole('button', { name: 'Facile' }))
+  it('Terminé needs every set done; Ressenti toggles', async () => {
+    const all = { ...ENTRY, sets: ENTRY.sets.map((s) => ({ ...s, weight: 60, reps: 10, done: true })) }
+    vi.mocked(sessionsGetExercise).mockResolvedValue(all)
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...all, feeling: 'easy' })
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+
+    await user.click(await screen.findByRole('button', { name: 'Facile' }))
     expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'e2', { feeling: 'easy' })
     expect(await screen.findByRole('button', { name: 'Facile', pressed: true })).toBeInTheDocument()
 
+    // Everything done: no early stop, Terminé completes.
+    expect(screen.queryByRole('button', { name: 'Terminer l’exercice plus tôt' })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Terminé' }))
     expect(sessionsUpdateExercise).toHaveBeenLastCalledWith('s1', 'e2', { completed: true })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+
+  it('stops early after a confirmation; Terminé stays disabled until all sets are done', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ENTRY)
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...ENTRY, completed: true })
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+    expect(await screen.findByRole('button', { name: 'Terminé' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Terminer l’exercice plus tôt' }))
+    const confirm = screen.getByRole('dialog', { name: 'Terminer avec 2 / 4 séries ?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Terminer' }))
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'e2', { completed: true })
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+
+  it('no early stop before the first set', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue({ ...ENTRY, sets: [0, 1, 2, 3].map((i) => set(i)) })
+    renderAt('/muscu/seance/s1/e2')
+    expect(await screen.findByRole('button', { name: 'Terminé' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Terminer l’exercice plus tôt' })).toBeNull()
   })
 })
