@@ -101,9 +101,8 @@ describe('Séance — liste', () => {
     expect(within(links[0]).getByRole('img', { name: 'Fait' })).toBeInTheDocument()
     expect(within(links[1]).getByText('En cours')).toBeInTheDocument()
     expect(links[2]).toHaveAttribute('href', '/muscu/seance/s1/e3')
-    // Pre-fatigue: battery icon on that exercise only.
-    expect(within(links[1]).getByRole('img', { name: 'Muscles déjà travaillés' })).toBeInTheDocument()
-    expect(screen.getAllByRole('img', { name: 'Muscles déjà travaillés' })).toHaveLength(1)
+    // Pre-fatigue feeds the rules only: nothing shown.
+    expect(screen.queryByRole('img', { name: 'Muscles déjà travaillés' })).toBeNull()
   })
 
   it('Terminer la séance saves it and goes back to Accueil', async () => {
@@ -160,11 +159,11 @@ describe('Exercice en cours', () => {
     expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 3, { weight: 57.5, reps: 11, done: true })
   })
 
-  it('shows "{muscle} déjà travaillé" when pre-fatigued, linking to the exercise page', async () => {
+  it('shows no "déjà travaillé" tag, even when pre-fatigued', async () => {
     vi.mocked(sessionsGetExercise).mockResolvedValue({ ...ENTRY, preFatigue: 4, fatiguedMuscles: ['back'] })
     renderAt('/muscu/seance/s1/e2')
-    const tag = await screen.findByText('Dos déjà travaillé')
-    expect(tag.closest('a')).toHaveAttribute('href', '/muscu/exercices/x2')
+    await screen.findByRole('heading', { name: 'Rowing barre' })
+    expect(screen.queryByText(/déjà travaillé/)).toBeNull()
   })
 
   it('first time: no Objectif, no placeholder, ✓ needs both values', async () => {

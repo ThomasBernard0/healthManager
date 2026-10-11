@@ -76,7 +76,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
   - less pre-fatigue and a success → counts normally (a later harder session simply keeps the weight).
 - When an exercise is opened with more pre-fatigue than last time, today's target reps = last reps (no +1).
 - No fatigue percentage or coefficient.
-- Display: when pre-fatigue > 0, a small battery icon (half full, warm yellow) next to the exercise in the session list and in the history rows, and a tag "{muscle} déjà travaillé" under the exercise name on the exercise screen. Icon-only places get `aria-label="Muscles déjà travaillés"`.
+- Not displayed: pre-fatigue only feeds the rules above (no battery icon, no "{muscle} déjà travaillé" tag).
 
 ### Showing target vs done
 - Each set row shows **Objectif** (e.g. "60 × 10", muted) then the two inputs. Inputs are empty with the target as placeholder; ✓ with empty inputs records the target as done, so a set done as planned is one tap.
@@ -93,12 +93,12 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)
 - Opens on **Démarrer**. Header: close (confirm if sets were logged), workout name, "2 / 5 faits".
-- One card per exercise, any order: thumbnail, name, battery icon if pre-fatigued, and status only (✓ when done — name muted —, "En cours" outlined, chevron when to do). **No targets and no results in the list**; they appear when the exercise is opened.
+- One card per exercise, any order: thumbnail, name, and status only (✓ when done — name muted —, "En cours" outlined, chevron when to do). **No targets and no results in the list**; they appear when the exercise is opened.
 - **Terminer la séance** saves the session; exercises not done are ignored.
 - A started session survives reloads (saved after every set).
 
 ### Exercice en cours (mobile `muscu-3-exercice-en-cours`)
-- Back arrow → list (progress kept). Image, name, "4 × 8–12", "{muscle} déjà travaillé" tag if pre-fatigued (tap → exercise page).
+- Back arrow → list (progress kept). Image, name, "4 × 8–12".
 - Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
 - **Ressenti**: Facile / OK / Dur (single choice, optional).
@@ -108,7 +108,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - Name, equipment · workout · sets × rep range, pencil → Modifier l'exercice.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
-- **Historique**: date, sets in the compact format, battery icon if pre-fatigued, feeling (desktop: table, one column per set + volume).
+- **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume).
 
 ### Modifier la séance (mobile `muscu-5-modifier-seance`)
 - Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit), swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.

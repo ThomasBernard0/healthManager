@@ -9,7 +9,6 @@ import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { ExerciseThumb } from '../components/ExerciseThumb'
-import { FatigueIcon } from '../components/Fatigue'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { MUSCU_PATH, sessionExercisePath } from '../routes'
 import page from './page.module.css'
@@ -98,7 +97,6 @@ function SessionList({ session }: { session: SessionDto }) {
               <ExerciseThumb imageUrl={entry.exercise.imageUrl} />
               <span className={`${styles.name} ${entry.status === 'done' ? styles.doneName : ''}`}>
                 {entry.exercise.name}
-                {entry.preFatigue > 0 && <FatigueIcon />}
               </span>
               {entry.status === 'done' && (
                 <span className={styles.doneIcon} role="img" aria-label={fr.muscu.session.done}>
