@@ -34,7 +34,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 ```
 
 - Exercise bank seeded from **free-exercise-db** (public domain, images + muscles), names translated to French, only the ~40 most common exercises imported. Images stored with the app, not hot-linked. Never Basic-Fit images.
-- **Next workout** = the workout after the last finished session in `position` order (wraps around). The user can start any other one.
+- **Next workout** = the workout after the last finished session in `position` order (wraps around). Only the next workout is started (Démarrer on Accueil).
 
 ## 3. Progression rules (double progression)
 

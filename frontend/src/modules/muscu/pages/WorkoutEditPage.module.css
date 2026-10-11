@@ -119,11 +119,3 @@
   color: var(--color-accent);
 }
 
-.startButton {
-  margin-top: auto;
-  height: var(--size-input);
-}
-
-.startButton + .submit {
-  margin-top: 0;
-}
