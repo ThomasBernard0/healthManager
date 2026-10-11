@@ -15,7 +15,7 @@ function log(
   weight: number | number[],
   reps: number[],
   feeling: Feeling | null = 'ok',
-  options: { targets?: number[]; preFatigue?: number } = {},
+  options: { targets?: number[]; preFatigue?: number; complete?: boolean } = {},
 ): ExerciseLog {
   return {
     sets: reps.map((r, i) => {
@@ -24,6 +24,7 @@ function log(
     }),
     feeling,
     preFatigue: options.preFatigue ?? 0,
+    complete: options.complete ?? true,
   };
 }
 
@@ -188,6 +189,21 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     const t = next(log([60, 57.5, 55], [12, 12, 12]), { setCount: 3, repMin: 8, repMax: 12 });
     expect(weights(t)).toEqual([62.5, 60, 57.5]);
     expect(reps(t)).toEqual([8, 8, 8]);
+  });
+
+  it('stopped early: retried, never a step up (2 sets of 12 out of 4)', () => {
+    const last = log(50, [12, 12], 'easy', { targets: [10, 10], complete: false });
+    expect(judge(last, null, 8, 12)).toBe('retry');
+    const t = next(last);
+    expect(weights(t)).toEqual([50, 50, 50, 50]);
+    expect(reps(t)).toEqual([10, 10, 10, 10]);
+  });
+
+  it('stopped early under the range: no step down, and it never counts as one of the two in a row', () => {
+    const early = log(50, [6, 5], 'ok', { targets: [8, 8], complete: false });
+    const bad = log(50, [7, 7, 6, 6], 'ok', { targets: [8, 8, 8, 8] });
+    expect(judge(early, bad, 8, 12)).toBe('retry');
+    expect(judge(bad, early, 8, 12)).toBe('retry');
   });
 
   it('the set count changed: new sets copy the last set’s target, removed sets are dropped', () => {

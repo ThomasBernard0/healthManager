@@ -9,6 +9,7 @@ import type { Feeling, SessionExerciseDto, SessionSetDto } from '../../../api/ge
 import { invalidateData } from '../../../core/dataVersion'
 import { parseNumber } from '../../../core/format'
 import { Check, ChevronLeft } from '../../../core/ui/icons'
+import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { useToast } from '../../../core/ui/toastContext'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
@@ -43,6 +44,7 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
   const location = useLocation()
   const toast = useToast()
   const [busy, setBusy] = useState(false)
+  const [stopping, setStopping] = useState(false)
   // The first set not done yet is the one to do now.
   const current = entry.sets.find((s) => !s.done)?.index
 
@@ -70,8 +72,12 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
       sessionsUpdateExercise(entry.sessionId, entry.id, { feeling: entry.feeling === feeling ? null : feeling }),
     )
 
+  const doneCount = entry.sets.filter((s) => s.done).length
+  const allDone = doneCount === entry.sets.length
+
+  /** Terminé (every set done) or, after confirmation, Terminer l'exercice plus tôt. */
   async function complete() {
-    if (entry.sets.some((s) => s.done) && !entry.completed) {
+    if (!entry.completed) {
       if (!(await run(() => sessionsUpdateExercise(entry.sessionId, entry.id, { completed: true })))) return
     }
     toList()
@@ -146,16 +152,32 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
         </div>
       </div>
 
-      <button type="button" className={styles.complete} disabled={busy} onClick={complete}>
+      <button type="button" className={styles.complete} disabled={busy || !allDone} onClick={complete}>
         {fr.muscu.session.completed}
       </button>
+      {/* Not the usual flow: a small link, and a confirmation. */}
+      {doneCount > 0 && !allDone && (
+        <button type="button" className={styles.stopEarly} disabled={busy} onClick={() => setStopping(true)}>
+          {fr.muscu.session.stopEarly}
+        </button>
+      )}
+
+      {stopping && (
+        <ConfirmSheet
+          title={fr.muscu.session.confirmStopEarly(doneCount, entry.sets.length)}
+          confirmLabel={fr.muscu.session.stopEarlyAction}
+          busy={busy}
+          onConfirm={complete}
+          onCancel={() => setStopping(false)}
+        />
+      )}
     </>
   )
 }
 
 interface SetRowProps {
   set: SessionSetDto
-  /** The set to do now (highlighted). */
+  /** The set to do now: the only one with inputs (later ones are locked). */
   current: boolean
   busy: boolean
   onSave: (weight: number | null, reps: number | null, done: boolean) => Promise<boolean>
@@ -202,8 +224,23 @@ function SetRow({ set, current, busy, onSave }: SetRowProps) {
     )
   }
 
+  if (!current) {
+    // Locked until the sets before it are done: its target, read-only.
+    return (
+      <div className={`${styles.grid} ${styles.row} ${styles.laterRow}`}>
+        <span className={styles.index}>{n}</span>
+        <span className={styles.target}>{target}</span>
+        <span className={styles.locked}>{set.targetWeight === null ? '' : formatWeight(set.targetWeight)}</span>
+        <span className={styles.locked}>{set.targetReps ?? ''}</span>
+        <button type="button" className={styles.check} aria-label={fr.muscu.session.validate(n)} disabled>
+          <Check />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className={`${styles.grid} ${styles.row} ${current ? styles.currentRow : styles.laterRow}`}>
+    <div className={`${styles.grid} ${styles.row} ${styles.currentRow}`}>
       <span className={styles.index}>{n}</span>
       <span className={styles.target}>{target}</span>
       <input

@@ -73,6 +73,8 @@ export interface ExerciseLog {
   sets: LoggedSet[];
   feeling: Feeling | null;
   preFatigue: number;
+  /** Every planned set was done (false: the exercise was stopped early). */
+  complete: boolean;
 }
 
 export interface Target {
@@ -90,11 +92,19 @@ const belowMin = (log: ExerciseLog, repMin: number) => total(log) < log.sets.len
  * set neither blocks progress nor triggers a drop. `previous` is the session before it.
  */
 export function judge(last: ExerciseLog, previous: ExerciseLog | null, repMin: number, repMax: number): Verdict {
+  // Stopped early: not a real attempt at the targets, so they are simply retried.
+  if (!last.complete) return 'retry';
   const n = last.sets.length;
   const sum = total(last);
   if (sum >= n * (repMax - 1) || (last.feeling === 'easy' && sum >= n * repMin)) return 'up';
   // Two sessions in a row under the range, the second not explained by more pre-fatigue.
-  if (belowMin(last, repMin) && previous && belowMin(previous, repMin) && !(last.preFatigue > previous.preFatigue)) {
+  // A previous session stopped early never counts as one of the two.
+  if (
+    belowMin(last, repMin) &&
+    previous?.complete &&
+    belowMin(previous, repMin) &&
+    !(last.preFatigue > previous.preFatigue)
+  ) {
     return 'down';
   }
   if (last.feeling === 'hard' || belowMin(last, repMin)) return 'retry';

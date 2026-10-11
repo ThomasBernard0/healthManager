@@ -53,6 +53,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 - **Drop sets / different weights per set**: each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
 - The number of sets is fixed by the workout (Modifier la séance); the exercise screen has no "+ Série". If the set count of a workout item changes, new sets copy the last set's target.
 - Exercises skipped in a session don't change their next target.
+- An exercise **stopped early** (not every set done) doesn't move it either: next time its targets are retried (never up, never down), and it never counts as one of the two sessions in a row for a drop.
 - No 1RM formula: increments must match real plates and machine stacks.
 - Pure functions in `shared/` with unit tests for every row, drop sets and first time.
 
@@ -98,10 +99,10 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Exercice en cours (mobile `muscu-3-exercice-en-cours`)
 - Back arrow → list (progress kept). Image, name, "4 × 8–12", "{muscle} déjà travaillé" tag if pre-fatigued (tap → exercise page).
-- Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons).
+- Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
 - **Ressenti**: Facile / OK / Dur (single choice, optional).
-- **Terminé** → back to the list.
+- **Terminé** (once every set is done) → back to the list. Not the usual flow: a small "Terminer l'exercice plus tôt" link (after at least one set) asks "Terminer avec 2 / 4 séries ?" first.
 
 ### Fiche exercice (mobile `muscu-4-fiche-exercice`, desktop `bureau-muscu-exercice`)
 - Name, equipment · workout · sets × rep range, pencil → Modifier l'exercice.

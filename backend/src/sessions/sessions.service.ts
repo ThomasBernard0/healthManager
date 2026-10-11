@@ -122,10 +122,14 @@ export class SessionsService {
     };
   }
 
-  /** ✓ on a set row: empty values record the target; done = false reopens the row. */
+  /** ✓ on a set row (in order): empty values record the target; done = false reopens any row. */
   async saveSet(sessionId: string, id: string, index: number, dto: SaveSetDto): Promise<SessionExerciseDto> {
     let entry = await this.openEntry(sessionId, id);
     if (!entry.sets.some((s) => s.index === index)) throw new NotFoundException('Set not found');
+    // New sets are validated in order; any done set can still be reopened.
+    if (dto.done && entry.sets.some((s) => s.index < index && !s.done)) {
+      throw new BadRequestException('Validate the sets in order');
+    }
     if (entry.preFatigue === null) entry = await this.freeze(sessionId, id);
     const set = entry.sets.find((s) => s.index === index)!;
 

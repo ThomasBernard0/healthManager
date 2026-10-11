@@ -128,6 +128,9 @@ export const fr = {
       feeling: 'Ressenti',
       feelings: { easy: 'Facile', ok: 'OK', hard: 'Dur' },
       completed: 'Terminé',
+      stopEarly: 'Terminer l’exercice plus tôt',
+      confirmStopEarly: (done: number, total: number) => `Terminer avec ${done} / ${total} séries ?`,
+      stopEarlyAction: 'Terminer',
       /** "60 kg × 10 · 9 · 9 · 8" */
       setGroup: (weight: string, reps: string) => `${weight} kg × ${reps}`,
       fatigued: 'Muscles déjà travaillés',
