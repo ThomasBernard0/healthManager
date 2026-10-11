@@ -90,6 +90,7 @@ export const fr = {
       more: (what: string) => `${what} : plus`,
       done: 'OK',
       add: (name: string) => `Ajouter ${name} à la séance`,
+      start: 'Démarrer cette séance',
       createExercise: '+ Créer un exercice',
     },
     history: {

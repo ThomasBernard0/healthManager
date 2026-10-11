@@ -119,3 +119,26 @@
   color: var(--color-accent);
 }
 
+
+/* Start this workout now: a quiet link under Enregistrer. */
+.startLink {
+  align-self: center;
+  min-height: var(--size-touch);
+  padding: 0 var(--space-12);
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+}
+
+.startLink:hover {
+  color: var(--color-accent-hover);
+}
+
+.startLink:disabled {
+  color: var(--color-muted);
+}

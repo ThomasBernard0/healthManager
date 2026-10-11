@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
+import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import {
   workoutsCreate,
   workoutsGet,
@@ -10,7 +11,7 @@ import {
 import type { ExerciseDto, WorkoutDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
-import { ChevronLeft, Grip, Plus, Trash } from '../../../core/ui/icons'
+import { ChevronLeft, Grip, Play, Plus, Trash } from '../../../core/ui/icons'
 import { Sheet } from '../../../core/ui/Sheet'
 import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
@@ -25,6 +26,7 @@ import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSh
 import { primarySubtitle } from '../format'
 import { moveItem } from '../reorder'
 import { MUSCU_PATH } from '../routes'
+import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './WorkoutEditPage.module.css'
 
@@ -71,6 +73,10 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
   const picker = useOverlayParam('ajout')
   const editing = useOverlayParam('exercice')
   const edited = items.find((i) => i.exercise.id === editing.value)
+  const session = useStartSession()
+  // Start this workout (not only the next one) as last saved, when no session is in progress.
+  const current = useAsync(() => (workout ? sessionsCurrent() : Promise.resolve(null)), workout?.id ?? 'new')
+  const canStart = workout !== null && workout.items.length > 0 && current.data?.session === null
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
@@ -180,6 +186,18 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
         <button type="submit" className={`${form.primary} ${styles.submit}`} disabled={!valid || status === 'busy'}>
           {fr.common.save}
         </button>
+
+        {canStart && (
+          <button
+            type="button"
+            className={styles.startLink}
+            disabled={session.status === 'busy'}
+            onClick={() => session.start(workout.id)}
+          >
+            <Play size={14} />
+            {fr.muscu.workout.start}
+          </button>
+        )}
       </form>
 
       {picker.value === 'exercice' && (
