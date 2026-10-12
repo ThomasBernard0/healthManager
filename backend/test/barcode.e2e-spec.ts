@@ -98,7 +98,6 @@ describe('Barcode lookup (e2e)', () => {
       food: {
         name: 'Nutella',
         brand: 'Ferrero',
-        source: 'off',
         per100g: { kcal: 539, protein: 6.3, carbs: 57.5, fat: 30.9 },
         units: [{ label: 'portion', grams: 15 }],
       },

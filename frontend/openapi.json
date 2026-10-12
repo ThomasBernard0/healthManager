@@ -1990,13 +1990,6 @@
           "lastEatenOn"
         ]
       },
-      "FoodSource": {
-        "type": "string",
-        "enum": [
-          "custom",
-          "off"
-        ]
-      },
       "FoodUnitDto": {
         "type": "object",
         "properties": {
@@ -2033,13 +2026,6 @@
             "type": "string",
             "nullable": true
           },
-          "source": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FoodSource"
-              }
-            ]
-          },
           "per100g": {
             "description": "Per 100 g",
             "allOf": [
@@ -2059,7 +2045,6 @@
           "id",
           "name",
           "brand",
-          "source",
           "per100g",
           "units"
         ]

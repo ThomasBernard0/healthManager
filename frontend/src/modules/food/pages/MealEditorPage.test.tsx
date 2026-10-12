@@ -30,7 +30,6 @@ const food = (id: string, name: string, kcal: number, protein: number, carbs: nu
   id,
   name,
   brand: null,
-  source: 'custom',
   per100g: { kcal, protein, carbs, fat },
   units,
 })
@@ -149,7 +148,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
     }
 
     it('adds a scanned product with the grams asked', async () => {
-      const nutella = { ...food('f7', 'Nutella', 539, 6.3, 57.5, 30.9), source: 'off' as const }
+      const nutella = food('f7', 'Nutella', 539, 6.3, 57.5, 30.9)
       vi.mocked(foodsLookupBarcode).mockResolvedValue({ food: nutella, suggestedName: null })
       const user = userEvent.setup()
       renderEditor()
