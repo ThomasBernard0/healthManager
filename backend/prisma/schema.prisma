@@ -83,15 +83,33 @@ model Exercise {
   @@index([searchName])
 }
 
-/// A session template ("Push A"). position = order in the rotation (1..n, compacted on delete).
+/// A group of workouts. Exactly one is active: its workouts are the rotation, restarted when it is activated.
+model Program {
+  id          String    @id @default(uuid())
+  name        String
+  /// Order in Mes programmes (1..n).
+  position    Int
+  active      Boolean   @default(false)
+  /// Last activation: the rotation only counts sessions finished since.
+  activatedAt DateTime  @default(now()) @db.Timestamptz
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workouts    Workout[]
+}
+
+/// A session template ("Push A"). position = order in its program's rotation (1..n, compacted on delete).
 model Workout {
   id        String        @id @default(uuid())
   name      String
+  programId String
+  program   Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
   position  Int
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   items     WorkoutItem[]
   sessions  Session[]
+
+  @@index([programId])
 }
 
 /// An exercise of a workout, in list order, with its sets and rep range.

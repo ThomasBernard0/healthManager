@@ -1,6 +1,7 @@
 import { nextWorkout, parisToday } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
+import type { Program } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProgressionService } from '../sessions/progression.service.js';
 import { SaveWorkoutDto } from './dto/save-workout.dto.js';
@@ -15,24 +16,38 @@ export class WorkoutsService {
     private readonly progression: ProgressionService,
   ) {}
 
+  /** The active program's rotation (Accueil). */
+  async list(): Promise<WorkoutSummaryDto[]> {
+    const program = await this.prisma.program.findFirst({ where: { active: true } });
+    return program ? this.summaries(program) : [];
+  }
+
   /**
-   * The rotation, in order: last date of each workout, and the next one (after the last finished session)
+   * A program's workouts in rotation order, with the last date of each. In the active program, the next one
+   * (after the workout of the last session finished since its activation, else the first) is flagged and comes
    * with the targets of its exercises (no pre-fatigue assumed).
    */
-  async list(): Promise<WorkoutSummaryDto[]> {
-    const [workouts, lastByWorkout, lastSession] = await Promise.all([
-      this.prisma.workout.findMany({
-        orderBy: { position: 'asc' },
-        include: { items: { orderBy: { position: 'asc' }, include: { exercise: true } } },
-      }),
+  async summaries(program: Program): Promise<WorkoutSummaryDto[]> {
+    const workouts = await this.prisma.workout.findMany({
+      where: { programId: program.id },
+      orderBy: { position: 'asc' },
+      include: { items: { orderBy: { position: 'asc' }, include: { exercise: true } } },
+    });
+    const ids = workouts.map((w) => w.id);
+    const [lastByWorkout, lastSession] = await Promise.all([
       this.prisma.session.groupBy({
         by: ['workoutId'],
-        where: { finishedAt: { not: null }, workoutId: { not: null } },
+        where: { finishedAt: { not: null }, workoutId: { in: ids } },
         _max: { finishedAt: true },
       }),
-      this.prisma.session.findFirst({ where: { finishedAt: { not: null } }, orderBy: { finishedAt: 'desc' } }),
+      program.active
+        ? this.prisma.session.findFirst({
+            where: { finishedAt: { gte: program.activatedAt }, workoutId: { in: ids } },
+            orderBy: { finishedAt: 'desc' },
+          })
+        : null,
     ]);
-    const next = nextWorkout(workouts, lastSession?.workoutId ?? null);
+    const next = program.active ? nextWorkout(workouts, lastSession?.workoutId ?? null) : null;
     const lastDone = new Map(lastByWorkout.map((g) => [g.workoutId, g._max.finishedAt]));
     const nextTargets = next
       ? await Promise.all(
@@ -65,12 +80,14 @@ export class WorkoutsService {
   }
 
   async get(id: string): Promise<WorkoutDto> {
-    const workout = await this.prisma.workout.findUnique({ where: { id }, include: ITEMS });
+    const workout = await this.prisma.workout.findUnique({ where: { id }, include: { ...ITEMS, program: true } });
     if (!workout) throw new NotFoundException('Workout not found');
     return {
       id: workout.id,
       name: workout.name,
       position: workout.position,
+      programId: workout.programId,
+      programActive: workout.program.active,
       items: workout.items.map((i) => ({
         exercise: toExerciseDto(i.exercise),
         sets: i.sets,
@@ -80,12 +97,24 @@ export class WorkoutsService {
     };
   }
 
-  /** Added at the end of the rotation. */
+  /** Added at the end of its program's rotation (the active program by default). */
   async create(dto: SaveWorkoutDto): Promise<WorkoutDto> {
     const data = await this.validate(dto);
-    const { _max } = await this.prisma.workout.aggregate({ _max: { position: true } });
+    const program = await this.prisma.program.findFirst({
+      where: dto.programId ? { id: dto.programId } : { active: true },
+    });
+    if (!program) throw new BadRequestException('Unknown program');
+    const { _max } = await this.prisma.workout.aggregate({
+      where: { programId: program.id },
+      _max: { position: true },
+    });
     const workout = await this.prisma.workout.create({
-      data: { name: data.name, position: (_max.position ?? 0) + 1, items: { create: data.items } },
+      data: {
+        name: data.name,
+        programId: program.id,
+        position: (_max.position ?? 0) + 1,
+        items: { create: data.items },
+      },
     });
     return this.get(workout.id);
   }
@@ -100,14 +129,14 @@ export class WorkoutsService {
     return this.get(id);
   }
 
-  /** The workouts after it move up one place. */
+  /** The workouts after it in its program move up one place. */
   async remove(id: string): Promise<void> {
     const workout = await this.prisma.workout.findUnique({ where: { id } });
     if (!workout) throw new NotFoundException('Workout not found');
     await this.prisma.$transaction([
       this.prisma.workout.delete({ where: { id } }),
       this.prisma.workout.updateMany({
-        where: { position: { gt: workout.position } },
+        where: { programId: workout.programId, position: { gt: workout.position } },
         data: { position: { decrement: 1 } },
       }),
     ]);

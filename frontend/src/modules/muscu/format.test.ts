@@ -33,7 +33,7 @@ describe('muscu format', () => {
   })
 
   it('shows the workouts of an exercise with their sets and rep range', () => {
-    expect(exerciseDetails(ex(['back'], [], [{ id: 'p', name: 'Pull', sets: 4, repMin: 8, repMax: 12 }]))).toBe(
+    expect(exerciseDetails(ex(['back'], [], [{ id: 'p', name: 'Pull', sets: 4, repMin: 8, repMax: 12, programId: 'pp', programActive: true }]))).toBe(
       'Barre · Pull · 4 × 8–12',
     )
     expect(exerciseDetails(ex(['back'], []))).toBe('Barre')

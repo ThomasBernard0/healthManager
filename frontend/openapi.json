@@ -784,6 +784,193 @@
         ]
       }
     },
+    "/api/programs": {
+      "get": {
+        "operationId": "Programs_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProgramSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      },
+      "post": {
+        "operationId": "Programs_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      }
+    },
+    "/api/programs/{id}": {
+      "get": {
+        "operationId": "Programs_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      },
+      "put": {
+        "operationId": "Programs_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      },
+      "delete": {
+        "operationId": "Programs_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "The active program cannot be deleted"
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      }
+    },
+    "/api/programs/{id}/activate": {
+      "post": {
+        "operationId": "Programs_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "programs"
+        ]
+      }
+    },
     "/api/workouts": {
       "get": {
         "operationId": "Workouts_list",
@@ -980,6 +1167,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "No exercise, or not in the active program"
           },
           "404": {
             "description": ""
@@ -2348,6 +2538,14 @@
           "repMax": {
             "type": "number",
             "example": 12
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programActive": {
+            "type": "boolean",
+            "description": "The workout is in the active program"
           }
         },
         "required": [
@@ -2355,7 +2553,9 @@
           "name",
           "sets",
           "repMin",
-          "repMax"
+          "repMax",
+          "programId",
+          "programActive"
         ]
       },
       "ExerciseDto": {
@@ -2395,7 +2595,7 @@
             "description": "Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)"
           },
           "workouts": {
-            "description": "In rotation order",
+            "description": "Active program first, then in program and rotation order",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ExerciseWorkoutDto"
@@ -2528,6 +2728,39 @@
           "secondaryMuscles"
         ]
       },
+      "ProgramSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Push Pull"
+          },
+          "position": {
+            "type": "number",
+            "example": 1,
+            "description": "Order in Mes programmes, from 1"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "The one active program: its séances are the rotation"
+          },
+          "workoutCount": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "active",
+          "workoutCount"
+        ]
+      },
       "WorkoutSummaryExerciseDto": {
         "type": "object",
         "properties": {
@@ -2563,7 +2796,7 @@
           "position": {
             "type": "number",
             "example": 2,
-            "description": "Order in the rotation, from 1"
+            "description": "Order in its program rotation, from 1"
           },
           "exercises": {
             "description": "In list order",
@@ -2580,7 +2813,7 @@
           },
           "isNext": {
             "type": "boolean",
-            "description": "Next in the rotation (after the workout of the last finished session)"
+            "description": "Next in the active program rotation (after the workout of the last session finished since its activation)"
           }
         },
         "required": [
@@ -2590,6 +2823,54 @@
           "exercises",
           "lastDoneOn",
           "isNext"
+        ]
+      },
+      "ProgramDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Push Pull"
+          },
+          "position": {
+            "type": "number",
+            "example": 1
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "workouts": {
+            "description": "In rotation order; the next one flagged if active",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkoutSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "active",
+          "workouts"
+        ]
+      },
+      "SaveProgramDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Push Pull",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "WorkoutItemDto": {
@@ -2633,6 +2914,14 @@
             "type": "number",
             "example": 2
           },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programActive": {
+            "type": "boolean",
+            "description": "In the active program (only those can be started)"
+          },
           "items": {
             "description": "In list order",
             "type": "array",
@@ -2645,6 +2934,8 @@
           "id",
           "name",
           "position",
+          "programId",
+          "programActive",
           "items"
         ]
       },
@@ -2690,6 +2981,11 @@
             "example": "Pull",
             "minLength": 1,
             "maxLength": 40
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Program of a new workout (default: the active one). Ignored on edit"
           },
           "items": {
             "type": "array",

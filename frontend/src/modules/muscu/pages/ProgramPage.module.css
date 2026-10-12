@@ -1,0 +1,15 @@
+.muted {
+  color: var(--color-muted);
+}
+
+.rename {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}

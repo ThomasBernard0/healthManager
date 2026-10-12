@@ -12,8 +12,14 @@ export const exercisePath = (id: string): string => `/muscu/exercices/${id}`
 /** Modifier l'exercice. */
 export const editExercisePath = (id: string): string => `/muscu/exercices/${id}/modifier`
 
-/** Nouvelle séance. */
+/** Nouvelle séance (in the active program). */
 export const NEW_WORKOUT_PATH = '/muscu/seances/nouvelle'
+
+/** Nouvelle séance in this program. */
+export const newWorkoutPath = (programId: string): string => `${NEW_WORKOUT_PATH}?programme=${programId}`
+
+/** Programme: its séances and exercises. */
+export const programPath = (id: string): string => `/muscu/programmes/${id}`
 
 /** Modifier la séance. */
 export const workoutPath = (id: string): string => `/muscu/seances/${id}`

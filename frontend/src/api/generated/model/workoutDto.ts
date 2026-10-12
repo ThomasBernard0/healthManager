@@ -10,6 +10,9 @@ export interface WorkoutDto {
   id: string;
   name: string;
   position: number;
+  programId: string;
+  /** In the active program (only those can be started) */
+  programActive: boolean;
   /** In list order */
   items: WorkoutItemDto[];
 }

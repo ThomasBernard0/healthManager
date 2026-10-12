@@ -1,7 +1,7 @@
 import { matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
-import type { Exercise, Workout, WorkoutItem } from '../generated/prisma/client.js';
+import type { Exercise, Program, Workout, WorkoutItem } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ExerciseHistoryEntryDto } from './dto/exercise-history.dto.js';
 import { ExerciseDto } from './dto/exercise.dto.js';
@@ -10,11 +10,20 @@ import { SaveExerciseDto } from './dto/save-exercise.dto.js';
 /** Bank images are static files of the SPA (frontend/public/exercises). */
 export const EXERCISE_IMAGE_DIR = '/exercises';
 
-/** An exercise with the workouts it is part of. */
-export type ExerciseRow = Exercise & { workoutItems: (WorkoutItem & { workout: Workout })[] };
+/** An exercise with the workouts it is part of (and their programs). */
+export type ExerciseRow = Exercise & { workoutItems: (WorkoutItem & { workout: Workout & { program: Program } })[] };
 
 /** Load an exercise with what toExerciseDto needs. */
-export const EXERCISE_INCLUDE = { workoutItems: { include: { workout: true } } } as const;
+export const EXERCISE_INCLUDE = { workoutItems: { include: { workout: { include: { program: true } } } } } as const;
+
+/** Active program first, then programs in order, then workouts in rotation order. */
+function workoutOrder(a: Workout & { program: Program }, b: Workout & { program: Program }): number {
+  return (
+    Number(b.program.active) - Number(a.program.active) ||
+    a.program.position - b.program.position ||
+    a.position - b.position
+  );
+}
 
 export function toExerciseDto(exercise: ExerciseRow): ExerciseDto {
   return {
@@ -25,13 +34,15 @@ export function toExerciseDto(exercise: ExerciseRow): ExerciseDto {
     secondaryMuscles: exercise.secondaryMuscles,
     imageUrl: exercise.image ? `${EXERCISE_IMAGE_DIR}/${exercise.image}` : null,
     workouts: [...exercise.workoutItems]
-      .sort((a, b) => a.workout.position - b.workout.position)
+      .sort((a, b) => workoutOrder(a.workout, b.workout))
       .map((item) => ({
         id: item.workout.id,
         name: item.workout.name,
         sets: item.sets,
         repMin: item.repMin,
         repMax: item.repMax,
+        programId: item.workout.programId,
+        programActive: item.workout.program.active,
       })),
   };
 }

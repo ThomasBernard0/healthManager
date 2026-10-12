@@ -22,7 +22,7 @@ export class WorkoutSummaryDto {
   @ApiProperty({ example: 'Pull' })
   name: string;
 
-  @ApiProperty({ example: 2, description: 'Order in the rotation, from 1' })
+  @ApiProperty({ example: 2, description: 'Order in its program rotation, from 1' })
   position: number;
 
   @ApiProperty({ type: [WorkoutSummaryExerciseDto], description: 'In list order' })
@@ -36,7 +36,9 @@ export class WorkoutSummaryDto {
   })
   lastDoneOn: string | null;
 
-  @ApiProperty({ description: 'Next in the rotation (after the workout of the last finished session)' })
+  @ApiProperty({
+    description: 'Next in the active program rotation (after the workout of the last session finished since its activation)',
+  })
   isNext: boolean;
 }
 
@@ -63,6 +65,12 @@ export class WorkoutDto {
 
   @ApiProperty({ example: 2 })
   position: number;
+
+  @ApiProperty({ format: 'uuid' })
+  programId: string;
+
+  @ApiProperty({ description: 'In the active program (only those can be started)' })
+  programActive: boolean;
 
   @ApiProperty({ type: [WorkoutItemDto], description: 'In list order' })
   items: WorkoutItemDto[];

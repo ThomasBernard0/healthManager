@@ -17,6 +17,12 @@ export class ExerciseWorkoutDto {
 
   @ApiProperty({ example: 12 })
   repMax: number;
+
+  @ApiProperty({ format: 'uuid' })
+  programId: string;
+
+  @ApiProperty({ description: 'The workout is in the active program' })
+  programActive: boolean;
 }
 
 export class ExerciseDto {
@@ -43,6 +49,6 @@ export class ExerciseDto {
   })
   imageUrl: string | null;
 
-  @ApiProperty({ type: [ExerciseWorkoutDto], description: 'In rotation order' })
+  @ApiProperty({ type: [ExerciseWorkoutDto], description: 'Active program first, then in program and rotation order' })
   workouts: ExerciseWorkoutDto[];
 }

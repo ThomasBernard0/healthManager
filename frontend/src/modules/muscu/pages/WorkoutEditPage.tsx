@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import {
@@ -73,10 +73,14 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
   const picker = useOverlayParam('ajout')
   const editing = useOverlayParam('exercice')
   const edited = items.find((i) => i.exercise.id === editing.value)
+  // Nouvelle séance from a program's page: into that program (else the active one).
+  const [params] = useSearchParams()
+  const programId = params.get('programme')
   const session = useStartSession()
-  // Start this workout (not only the next one) as last saved, when no session is in progress.
+  // Start this workout (not only the next one) as last saved, when no session is in progress: active program only.
   const current = useAsync(() => (workout ? sessionsCurrent() : Promise.resolve(null)), workout?.id ?? 'new')
-  const canStart = workout !== null && workout.items.length > 0 && current.data?.session === null
+  const canStart =
+    workout !== null && workout.programActive && workout.items.length > 0 && current.data?.session === null
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
@@ -109,7 +113,7 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
     }
     try {
       if (workout) await workoutsUpdate(workout.id, body)
-      else await workoutsCreate(body)
+      else await workoutsCreate(programId ? { ...body, programId } : body)
     } catch {
       setStatus('error')
       return

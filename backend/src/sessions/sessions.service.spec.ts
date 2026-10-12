@@ -3,8 +3,8 @@ import type { PrismaService } from '../prisma/prisma.service.js';
 import type { ProgressionService } from './progression.service.js';
 import { SessionsService } from './sessions.service.js';
 
-/** Past the order check, the fake stops with this error (the rest is covered against Postgres). */
-const PASSED = new Error('passed the order check');
+/** Past the checks, the fake stops with this error (the rest is covered against Postgres). */
+const PASSED = new Error('passed the checks');
 
 function service(done: boolean[]) {
   const entry = {
@@ -38,5 +38,24 @@ describe('SessionsService.saveSet: sets in order', () => {
     await expect(service([true, true, false]).saveSet('s1', 'e1', 0, { weight: 50, reps: 10, done: false })).rejects.toBe(
       PASSED,
     );
+  });
+});
+
+describe('SessionsService.start: active program only', () => {
+  function starting(active: boolean) {
+    const workout = { id: 'w1', name: 'Push A', items: [{ exerciseId: 'x1' }], program: { active } };
+    const prisma = {
+      session: { findFirst: () => Promise.resolve(null), create: () => Promise.reject(PASSED) },
+      workout: { findUnique: () => Promise.resolve(workout) },
+    };
+    return new SessionsService(prisma as unknown as PrismaService, {} as ProgressionService);
+  }
+
+  it('rejects a workout of an inactive program', async () => {
+    await expect(starting(false).start('w1')).rejects.toThrow(BadRequestException);
+  });
+
+  it('starts a workout of the active program', async () => {
+    await expect(starting(true).start('w1')).rejects.toBe(PASSED);
   });
 });
