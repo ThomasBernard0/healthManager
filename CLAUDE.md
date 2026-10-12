@@ -27,7 +27,8 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 
 ```
 shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals,
-                         musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format)
+                         musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
+                         supersets: interleaveSets, blocks, superset context)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
   data/ciqual/           CIQUAL 2020 foods (TSV, Licence Ouverte) + convert.mjs (from the ANSES XML)
@@ -61,7 +62,7 @@ frontend/                React SPA
     core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
     core/modules.ts      module list + last module per device (launch opens it); core/ui/ModuleSwitcher in each top bar
     modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
-    modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, spec docs/specs/musculation.md
+    modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, supersets; specs docs/specs/musculation.md + musculation-superset.md
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)

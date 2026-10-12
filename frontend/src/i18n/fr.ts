@@ -128,6 +128,7 @@ export const fr = {
       validate: (set: string) => `Valider ${set}`,
       reopen: (set: string) => `${set} faite, modifier`,
       stopEarly: 'Terminer le superset plus tôt',
+      inHistory: 'En superset',
     },
     history: {
       progression: 'Progression',

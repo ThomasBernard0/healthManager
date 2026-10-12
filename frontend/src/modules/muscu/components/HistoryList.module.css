@@ -36,10 +36,25 @@
 }
 
 .date {
-  width: var(--size-col-time);
+  min-width: var(--size-col-time);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   font-size: var(--font-size-13);
   color: var(--color-muted);
+}
+
+/* En superset: link icon next to the date. */
+.mark {
+  display: flex;
+  color: var(--color-muted);
+}
+
+.dateWithMark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
 }
 
 .sets {

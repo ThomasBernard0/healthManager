@@ -75,6 +75,8 @@ export interface ExerciseLog {
   preFatigue: number;
   /** Every planned set was done (false: the exercise was stopped early). */
   complete: boolean;
+  /** Done in a superset (shorter rest than solo). */
+  inSuperset: boolean;
 }
 
 export interface Target {
@@ -88,22 +90,40 @@ const total = (log: ExerciseLog) => log.sets.reduce((sum, s) => sum + s.reps, 0)
 const belowMin = (log: ExerciseLog, repMin: number) => total(log) < log.sets.length * repMin;
 
 /**
- * How the last session went (first matching row wins), judged on the total reps so a weaker last
- * set neither blocks progress nor triggers a drop. `previous` is the session before it.
+ * Superset context (asymmetric, like pre-fatigue): a session in a superset right after a solo one has
+ * less rest, so a worse result there is not a failure. Superset → solo needs no special case.
  */
-export function judge(last: ExerciseLog, previous: ExerciseLog | null, repMin: number, repMax: number): Verdict {
+export function harderInSuperset(log: { inSuperset: boolean }, before: { inSuperset: boolean } | null): boolean {
+  return log.inSuperset && before !== null && !before.inSuperset;
+}
+
+/**
+ * How the last session went (first matching row wins), judged on the total reps so a weaker last
+ * set neither blocks progress nor triggers a drop. `previous` is the session before it, and
+ * `beforePrevious` the one before that (it tells whether `previous` was a first time in a superset).
+ */
+export function judge(
+  last: ExerciseLog,
+  previous: ExerciseLog | null,
+  repMin: number,
+  repMax: number,
+  beforePrevious: ExerciseLog | null = null,
+): Verdict {
   // Stopped early: not a real attempt at the targets, so they are simply retried.
   if (!last.complete) return 'retry';
   const n = last.sets.length;
   const sum = total(last);
   if (sum >= n * (repMax - 1) || (last.feeling === 'easy' && sum >= n * repMin)) return 'up';
   // Two sessions in a row under the range, the second not explained by more pre-fatigue.
-  // A previous session stopped early never counts as one of the two.
+  // A previous session stopped early never counts as one of the two, nor does a session done in a
+  // superset right after a solo one.
   if (
     belowMin(last, repMin) &&
     previous?.complete &&
     belowMin(previous, repMin) &&
-    !(last.preFatigue > previous.preFatigue)
+    !(last.preFatigue > previous.preFatigue) &&
+    !harderInSuperset(last, previous) &&
+    !harderInSuperset(previous, beforePrevious)
   ) {
     return 'down';
   }
@@ -116,6 +136,8 @@ export interface NextTargetsInput {
   last: ExerciseLog | null;
   /** The time before. */
   previous: ExerciseLog | null;
+  /** The time before `previous` (default: none). */
+  beforePrevious?: ExerciseLog | null;
   /** Sets of the workout item now. */
   setCount: number;
   repMin: number;
@@ -125,6 +147,8 @@ export interface NextTargetsInput {
   step: number;
   /** Pre-fatigue of the exercise now. */
   todayPreFatigue: number;
+  /** The exercise is in a superset now (default: solo). */
+  todayInSuperset?: boolean;
 }
 
 /**
@@ -135,7 +159,10 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
   const { last, previous, setCount, repMin, repMax, known, step, todayPreFatigue } = input;
   if (!last || last.sets.length === 0) return null;
 
-  const verdict = judge(last, previous, repMin, repMax);
+  const verdict = judge(last, previous, repMin, repMax, input.beforePrevious ?? null);
+  // Harder today than last time (more pre-fatigue, or a superset after a solo session): no +1.
+  const harderToday =
+    todayPreFatigue > last.preFatigue || harderInSuperset({ inSuperset: input.todayInSuperset ?? false }, last);
   const targets = last.sets.map((s): Target => {
     switch (verdict) {
       case 'up':
@@ -146,11 +173,7 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
         // Retried, never lowered to what was done.
         return { weight: s.weight, reps: s.targetReps ?? s.reps };
       case 'progress':
-        // More pre-fatigue than last time: no +1 today.
-        return {
-          weight: s.weight,
-          reps: todayPreFatigue > last.preFatigue ? s.reps : Math.min(s.reps + 1, repMax),
-        };
+        return { weight: s.weight, reps: harderToday ? s.reps : Math.min(s.reps + 1, repMax) };
     }
   });
 

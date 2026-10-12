@@ -15,7 +15,7 @@ function log(
   weight: number | number[],
   reps: number[],
   feeling: Feeling | null = 'ok',
-  options: { targets?: number[]; preFatigue?: number; complete?: boolean } = {},
+  options: { targets?: number[]; preFatigue?: number; complete?: boolean; inSuperset?: boolean } = {},
 ): ExerciseLog {
   return {
     sets: reps.map((r, i) => {
@@ -25,6 +25,7 @@ function log(
     feeling,
     preFatigue: options.preFatigue ?? 0,
     complete: options.complete ?? true,
+    inSuperset: options.inSuperset ?? false,
   };
 }
 
@@ -92,6 +93,16 @@ describe('pre-fatigue', () => {
     expect(preFatigue(b, [e(dips, 3)])).toEqual({ value: 3, muscles: ['chest'] });
     expect(preFatigue(b, [e(curls, 4)])).toEqual({ value: 0, muscles: [] });
     expect(preFatigue(b, [e(dips, 0)])).toEqual({ value: 0, muscles: [] });
+  });
+
+  it('superset partner on independent muscles → 0, whatever its sets done earlier', () => {
+    const laterals = { primaryMuscles: ['shoulders_side' as const], secondaryMuscles: [] };
+    const pushdownOnly = { primaryMuscles: ['triceps' as const], secondaryMuscles: [] };
+    expect(preFatigue(laterals, [{ ...pushdownOnly, sets: 2 }])).toEqual({ value: 0, muscles: [] });
+  });
+
+  it('superset partner sharing only a secondary muscle, 2 earlier sets → 1', () => {
+    expect(preFatigue(b, [e(pushdown, 2)])).toEqual({ value: 1, muscles: ['chest'] });
   });
 
   it('½ per set when the shared muscle is only secondary in the earlier exercise', () => {
@@ -204,6 +215,59 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     const bad = log(50, [7, 7, 6, 6], 'ok', { targets: [8, 8, 8, 8] });
     expect(judge(early, bad, 8, 12)).toBe('retry');
     expect(judge(bad, early, 8, 12)).toBe('retry');
+  });
+
+  describe('superset context (4 × 10–12 at 25 kg)', () => {
+    const range = { repMin: 10, repMax: 12 };
+    const solo = log(25, [11, 10, 10, 9]);
+    const targets = [11, 10, 10, 9];
+    const inSuperset = (done: number[]) => log(25, done, 'ok', { targets, inSuperset: true });
+
+    it('done solo last time 25 × 11·10·10·9, in a superset today: targets 25 × 11·10·10·9 (no +1)', () => {
+      const t = next(solo, { ...range, todayInSuperset: true });
+      expect(weights(t)).toEqual([25, 25, 25, 25]);
+      expect(reps(t)).toEqual(targets);
+      // Solo again: the usual +1.
+      expect(reps(next(solo, range))).toEqual([12, 11, 11, 10]);
+    });
+
+    it('…done 10·9·9·8 in the superset: the weight stays 25 kg, the targets are retried', () => {
+      const worse = inSuperset([10, 9, 9, 8]);
+      expect(judge(worse, solo, 10, 12)).toBe('retry');
+      const t = next(worse, { ...range, previous: solo, todayInSuperset: true });
+      expect(weights(t)).toEqual([25, 25, 25, 25]);
+      expect(reps(t)).toEqual(targets);
+    });
+
+    it('…and that session does not count toward the two-in-a-row drop', () => {
+      const first = inSuperset([10, 9, 9, 8]);
+      const second = inSuperset([10, 9, 9, 8]);
+      // Under the range twice in a row, but the first one was the first time in a superset.
+      expect(judge(second, first, 10, 12, solo)).toBe('retry');
+      // A third one in a row: now two sessions count.
+      expect(judge(inSuperset([10, 9, 9, 8]), second, 10, 12, first)).toBe('down');
+    });
+
+    it('under the range solo, then in a superset: not a failure either', () => {
+      const badSolo = log(25, [9, 9, 9, 8], 'ok', { targets });
+      expect(judge(inSuperset([9, 9, 8, 8]), badSolo, 10, 12)).toBe('retry');
+      // Both solo: the usual drop.
+      expect(judge(log(25, [9, 9, 8, 8], 'ok', { targets }), badSolo, 10, 12)).toBe('down');
+    });
+
+    it('a success in a superset counts normally', () => {
+      expect(judge(inSuperset([12, 11, 11, 11]), solo, 10, 12)).toBe('up');
+      expect(reps(next(inSuperset([11, 10, 10, 10]), { ...range, previous: solo, todayInSuperset: true }))).toEqual([
+        12, 11, 11, 11,
+      ]);
+    });
+
+    it('from a superset back to solo: no special case', () => {
+      const last = inSuperset([11, 10, 10, 9]);
+      expect(reps(next(last, range))).toEqual([12, 11, 11, 10]);
+      const bad = inSuperset([9, 9, 8, 8]);
+      expect(judge(log(25, [9, 9, 8, 8], 'ok', { targets }), bad, 10, 12, bad)).toBe('down');
+    });
   });
 
   it('the set count changed: new sets copy the last set’s target, removed sets are dropped', () => {

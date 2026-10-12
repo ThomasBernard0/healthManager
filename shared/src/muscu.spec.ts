@@ -1,4 +1,13 @@
-import { groupSets, interleaveSets, nextWorkout, validSupersetGroups, volume } from './muscu.js';
+import {
+  blockStatus,
+  groupSets,
+  interleaveSets,
+  nextWorkout,
+  toBlocks,
+  unlinkSuperset,
+  validSupersetGroups,
+  volume,
+} from './muscu.js';
 
 describe('nextWorkout', () => {
   const pushA = { id: 'a', position: 1 };
@@ -88,5 +97,29 @@ describe('validSupersetGroups', () => {
   it('rejects two items that are not adjacent', () => {
     expect(validSupersetGroups(['g', null, 'g'])).toBe(false);
     expect(validSupersetGroups(['g', 'h', 'g', 'h'])).toBe(false);
+  });
+});
+
+describe('superset blocks', () => {
+  const item = (id: string, group: string | null = null, sets = 4) => ({ id, group, sets, repMin: 8, repMax: 12 });
+  const ids = (items: { id: string }[]) => items.map((i) => i.id).join('');
+
+  it('shows one block (one card) for the pair', () => {
+    const list = [item('a'), item('b', 'g'), item('c', 'g'), item('d')];
+    expect(toBlocks(list).map(ids)).toEqual(['a', 'bc', 'd']);
+    expect(toBlocks([item('a', 'g'), item('b', 'h'), item('c', 'h')]).map(ids)).toEqual(['a', 'bc']);
+  });
+
+  it('unlinking keeps both exercises, their targets and their order', () => {
+    const list = [item('a'), item('b', 'g', 3), item('c', 'g'), item('d', 'h'), item('e', 'h')];
+    expect(unlinkSuperset(list, 'g')).toEqual([item('a'), item('b', null, 3), item('c'), item('d', 'h'), item('e', 'h')]);
+  });
+
+  it('the pair gets ✓ only when both exercises are done', () => {
+    expect(blockStatus(['done', 'done'])).toBe('done');
+    expect(blockStatus(['done', 'inProgress'])).toBe('inProgress');
+    expect(blockStatus(['done', 'todo'])).toBe('inProgress');
+    expect(blockStatus(['todo', 'todo'])).toBe('todo');
+    expect(blockStatus(['done'])).toBe('done');
   });
 });

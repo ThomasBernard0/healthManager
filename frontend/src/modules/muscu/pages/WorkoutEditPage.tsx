@@ -1,3 +1,4 @@
+import { toBlocks, unlinkSuperset } from '@healthmanager/shared'
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
@@ -25,7 +26,7 @@ import { MuscuLayout } from '../components/MuscuLayout'
 import { SupersetBadge } from '../components/SupersetBadge'
 import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSheet'
 import { primarySubtitle } from '../format'
-import { moveBlock, moveItem, normalizeGroups, toBlocks } from '../reorder'
+import { moveBlock, moveItem, normalizeGroups } from '../reorder'
 import { exercisePath, MUSCU_PATH } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
@@ -119,7 +120,7 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
       const index = list.findIndex((i) => i.exercise.id === exerciseId)
       return list.map((i, k) => (k === index || k === index + 1 ? { ...i, group: exerciseId } : i))
     })
-  const unlink = (group: string) => setItems((list) => list.map((i) => (i.group === group ? { ...i, group: null } : i)))
+  const unlink = (group: string) => setItems((list) => unlinkSuperset(list, group))
 
   async function save(e: FormEvent) {
     e.preventDefault()

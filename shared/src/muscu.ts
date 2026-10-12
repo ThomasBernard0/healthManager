@@ -98,3 +98,32 @@ export function validSupersetGroups(groups: (string | null)[]): boolean {
   }
   return true;
 }
+
+interface InGroup {
+  /** Superset group (null: solo). */
+  group: string | null;
+}
+
+/** The exercises of a workout or a session cut in blocks: the two consecutive ones of a superset, or one alone. */
+export function toBlocks<T extends InGroup>(items: T[]): T[][] {
+  const blocks: T[][] = [];
+  for (let i = 0; i < items.length; i++) {
+    const paired = items[i].group !== null && items[i + 1]?.group === items[i].group;
+    blocks.push(paired ? [items[i], items[i + 1]] : [items[i]]);
+    if (paired) i++;
+  }
+  return blocks;
+}
+
+/** Délier: both exercises stay where they are, with their sets and rep range. */
+export function unlinkSuperset<T extends InGroup>(items: T[], group: string): T[] {
+  return items.map((item) => (item.group === group ? { ...item, group: null } : item));
+}
+
+export type ExerciseStatus = 'todo' | 'inProgress' | 'done';
+
+/** One status for a block of a session: done only when every exercise is, in progress once one is started. */
+export function blockStatus(statuses: ExerciseStatus[]): ExerciseStatus {
+  if (statuses.every((s) => s === 'done')) return 'done';
+  return statuses.every((s) => s === 'todo') ? 'todo' : 'inProgress';
+}

@@ -247,7 +247,14 @@ export class SessionsService {
 
   private targetsFor(
     sessionId: string,
-    entry: { exerciseId: string; repMin: number; repMax: number; sets: unknown[]; exercise: { equipment: Equipment } },
+    entry: {
+      exerciseId: string;
+      repMin: number;
+      repMax: number;
+      supersetGroup: string | null;
+      sets: unknown[];
+      exercise: { equipment: Equipment };
+    },
     todayPreFatigue: number,
   ) {
     return this.progression.targets({
@@ -257,6 +264,7 @@ export class SessionsService {
       repMin: entry.repMin,
       repMax: entry.repMax,
       todayPreFatigue,
+      todayInSuperset: entry.supersetGroup !== null,
       sessionId,
     });
   }

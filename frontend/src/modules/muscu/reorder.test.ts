@@ -1,4 +1,5 @@
-import { moveBlock, moveItem, normalizeGroups, toBlocks } from './reorder'
+import { toBlocks } from '@healthmanager/shared'
+import { moveBlock, moveItem, normalizeGroups } from './reorder'
 
 describe('moveItem', () => {
   it('moves an item up or down, clamped to the list', () => {

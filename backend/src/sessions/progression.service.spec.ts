@@ -28,6 +28,16 @@ describe('entryPreFatigue (order of the session)', () => {
     expect(entryPreFatigue(bench, [dips, curls, bench]).value).toBe(2);
   });
 
+  it('superset: only the sets of the partner validated before its first set count (½ on a secondary muscle)', () => {
+    // A1 (0), B1 (1), A2 (2), B2 (3): one set of the partner came before B1.
+    const pushdown = entry('pushdown', ['triceps'], ['chest'], [0, 2, null, null]);
+    const benchB = entry('bench', ['chest'], ['triceps'], [1, 3, null, null]);
+    expect(entryPreFatigue(benchB, [pushdown, benchB])).toEqual({ value: 0.5, muscles: ['chest'] });
+    // Partner on independent muscles: nothing.
+    const laterals = entry('laterals', ['shoulders_side'], [], [0, 2, null, null]);
+    expect(entryPreFatigue(benchB, [laterals, benchB])).toEqual({ value: 0, muscles: [] });
+  });
+
   it('done first: no pre-fatigue', () => {
     const bench = entry('bench', ['chest'], ['triceps'], [-5, null, null, null]);
     expect(entryPreFatigue(bench, [dips, curls, bench])).toEqual({ value: 0, muscles: [] });
