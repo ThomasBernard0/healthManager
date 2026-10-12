@@ -191,6 +191,11 @@ export const tokens = {
     supersetBadge: '22px',
     supersetBadgeSmall: '18px',
     supersetBar: '3px',
+    /** First column of a superset set row: badge + set number ("A1"). */
+    supersetIndexColumn: '34px',
+    /** One of the two stacked thumbnails of a superset card. */
+    thumbStacked: '38px',
+    supersetImage: '96px',
   },
 } as const
 

@@ -97,3 +97,50 @@
 .finish:hover {
   border-color: var(--color-accent);
 }
+
+/* → Modifier la séance */
+.edit {
+  color: var(--color-muted);
+}
+
+/* Superset card — transcribed from design/musculation/superset-2-seance-liste.html */
+.stack {
+  position: relative;
+  width: var(--size-thumb);
+  height: var(--size-thumb);
+  flex-shrink: 0;
+}
+
+.stacked {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--size-thumb-stacked);
+  height: var(--size-thumb-stacked);
+  box-sizing: border-box;
+  border: 2px solid var(--color-card);
+  border-radius: var(--radius-md);
+}
+
+.stacked + .stacked {
+  left: auto;
+  top: auto;
+  right: 0;
+  bottom: 0;
+}
+
+.pair {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.supersetLabel {
+  font-size: var(--font-size-11);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-soft-ink);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}

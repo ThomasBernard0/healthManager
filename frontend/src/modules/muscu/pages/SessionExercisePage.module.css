@@ -43,129 +43,6 @@
   color: var(--color-muted);
 }
 
-/* Set rows */
-.sets {
-  background: var(--color-card);
-  border-radius: var(--radius-panel);
-  padding: var(--space-6) var(--space-14) var(--space-14);
-  display: flex;
-  flex-direction: column;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns:
-    var(--size-set-index-column) var(--size-set-target-column) minmax(0, 1fr) minmax(0, 1fr)
-    var(--size-touch);
-  gap: var(--space-8);
-  align-items: center;
-}
-
-.head {
-  padding: var(--space-10) 0 var(--space-6);
-  font-size: var(--font-size-12);
-  color: var(--color-muted);
-}
-
-/* Same height for every row: the input height. */
-.row {
-  min-height: var(--size-input);
-  padding: var(--space-6) 0;
-  border-top: 1px solid var(--color-divider);
-}
-
-.index {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-muted);
-}
-
-.currentRow .index {
-  color: var(--color-ink);
-}
-
-.target {
-  font-size: var(--font-size-13);
-  color: var(--color-muted);
-}
-
-.currentRow .target {
-  color: var(--color-ink);
-}
-
-.input {
-  height: var(--size-input);
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  background: var(--color-ground);
-  padding: 0 var(--space-10);
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-18);
-  outline: none;
-}
-
-.input::placeholder {
-  color: var(--color-reference);
-}
-
-.currentRow .input {
-  border: 1.5px solid var(--color-accent);
-}
-
-.input:focus {
-  border-color: var(--color-accent);
-}
-
-.doneValue {
-  padding: 0 var(--space-10);
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-18);
-}
-
-.met {
-  color: var(--color-accent);
-}
-
-.under {
-  color: var(--color-over);
-}
-
-.check,
-.checkDone {
-  width: var(--size-touch);
-  height: var(--size-touch);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.check {
-  border: 1px solid var(--color-border-strong);
-  background: transparent;
-  color: var(--color-reference);
-}
-
-.currentRow .check {
-  border: 1.5px solid var(--color-accent);
-  color: var(--color-accent);
-}
-
-.check:disabled {
-  opacity: 0.5;
-}
-
-.checkDone {
-  border: none;
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
 /* Dernière fois */
 .lastTime {
   display: flex;
@@ -202,21 +79,6 @@
   gap: var(--space-8);
 }
 
-.feelingButton {
-  height: var(--size-input);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border);
-  background: var(--color-card);
-  color: var(--color-ink);
-  font-weight: var(--font-weight-semibold);
-}
-
-.selected {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
 .complete {
   margin-top: auto;
   height: var(--size-button);
@@ -226,21 +88,6 @@
   color: var(--color-ground);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-16);
-}
-
-/* Locked set: its target, read-only, until the sets before it are done. */
-.locked {
-  height: var(--size-input);
-  box-sizing: border-box;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: 0 var(--space-10);
-  display: flex;
-  align-items: center;
-  color: var(--color-reference);
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-18);
 }
 
 /* Terminer l'exercice plus tôt: small, not the usual flow. */

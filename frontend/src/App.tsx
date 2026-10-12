@@ -17,6 +17,7 @@ import HomePage from './modules/muscu/pages/HomePage'
 import ProgramPage from './modules/muscu/pages/ProgramPage'
 import SessionExercisePage from './modules/muscu/pages/SessionExercisePage'
 import SessionPage from './modules/muscu/pages/SessionPage'
+import SessionSupersetPage from './modules/muscu/pages/SessionSupersetPage'
 import WorkoutEditPage from './modules/muscu/pages/WorkoutEditPage'
 import { EXERCISES_PATH, MUSCU_PATH, NEW_EXERCISE_PATH, NEW_WORKOUT_PATH } from './modules/muscu/routes'
 
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/muscu/programmes/:id" element={<ProgramPage />} />
           <Route path="/muscu/seance/:sessionId" element={<SessionPage />} />
           <Route path="/muscu/seance/:sessionId/:entryId" element={<SessionExercisePage />} />
+          <Route path="/muscu/seance/:sessionId/superset/:entryId" element={<SessionSupersetPage />} />
           <Route path="*" element={<Navigate to={launchPath()} replace />} />
         </Routes>
         {background && (

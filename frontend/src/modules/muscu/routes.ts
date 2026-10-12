@@ -30,3 +30,7 @@ export const sessionPath = (sessionId: string): string => `/muscu/seance/${sessi
 /** Exercice en cours. */
 export const sessionExercisePath = (sessionId: string, entryId: string): string =>
   `/muscu/seance/${sessionId}/${entryId}`
+
+/** Superset en cours, by its first exercise (A). */
+export const sessionSupersetPath = (sessionId: string, entryId: string): string =>
+  `/muscu/seance/${sessionId}/superset/${entryId}`

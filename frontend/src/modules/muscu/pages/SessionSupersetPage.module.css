@@ -1,0 +1,80 @@
+/* Transcribed from design/musculation/superset-3-superset-en-cours.html */
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-muted);
+}
+
+/* The two exercises side by side. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-10);
+}
+
+.exercise {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.exercise:hover {
+  color: var(--color-ink);
+}
+
+.imageBox {
+  position: relative;
+  display: block;
+}
+
+.image {
+  height: var(--size-superset-image);
+  border-radius: var(--radius-xl);
+}
+
+.imageBadge {
+  position: absolute;
+  left: var(--space-8);
+  top: var(--space-8);
+}
+
+.exerciseText {
+  display: flex;
+  flex-direction: column;
+}
+
+.exerciseName {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+  line-height: 1.25;
+}
+
+.scheme {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+/* Dernière fois, one line per exercise */
+.lastTimes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.badged {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+/* Ressenti: badge + Facile / OK / Dur */
+.feelings {
+  display: grid;
+  grid-template-columns: var(--size-superset-badge) repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-items: center;
+}
