@@ -339,8 +339,8 @@ export const fr = {
     kcalPerDay: 'Calories par jour',
     decrease: 'Diminuer de 50 kcal',
     increase: 'Augmenter de 50 kcal',
-    proteinPerDay: 'Protéines / jour',
-    carbsPerDay: 'Glucides / jour',
-    fatPerDay: 'Lipides / jour',
+    proteinPerDay: 'Protéines par jour',
+    fatPerDay: 'Lipides par jour',
+    carbsPerDay: 'Glucides par jour, calculés',
   },
 } as const

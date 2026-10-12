@@ -1,4 +1,4 @@
-import { roundMacro } from '@healthmanager/shared'
+import { deriveCarbs, isGoalValid, macroKcal, roundMacro } from '@healthmanager/shared'
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { goalsCurrent, goalsUpdate } from '../../../api/generated/endpoints/goals/goals'
@@ -14,13 +14,13 @@ import { dayPath } from '../routes'
 import styles from './GoalPage.module.css'
 
 /** Starting values before any goal exists. */
-const INITIAL_GOAL = { dailyKcal: 2200, protein: 150, carbs: 230, fat: 70 }
+const INITIAL_GOAL = { dailyKcal: 2200, protein: 150, fat: 70 }
 
 const KCAL_STEP = 50
 const KCAL_MIN = 500
 const KCAL_MAX = 10000
 
-/** Mon objectif: daily kcal (±50) and daily macros. Saving applies from today on. */
+/** Mon objectif: daily kcal (±50), protein and fat; carbs are derived. Saving applies from today on. */
 export default function GoalPage() {
   const current = useAsync(() => goalsCurrent(), 'goal')
   const navigate = useNavigate()
@@ -54,29 +54,30 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
   const [kcal, setKcal] = useState(start.dailyKcal)
   const [macros, setMacros] = useState({
     protein: String(start.protein),
-    carbs: String(start.carbs),
     fat: String(start.fat),
   })
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
 
   const values = {
     protein: parseNumber(macros.protein),
-    carbs: parseNumber(macros.carbs),
     fat: parseNumber(macros.fat),
   }
-  const valid = Object.values(values).every((v) => v !== null && v >= 0 && v <= 1000)
+  const protein = roundMacro(values.protein ?? 0)
+  const fat = roundMacro(values.fat ?? 0)
+  // Carbs are what kcal leave once protein and fat are counted.
+  const carbs = deriveCarbs(kcal, protein, fat)
+  const fits = isGoalValid(kcal, protein, fat)
+  const valid = fits && Object.values(values).every((v) => v !== null && v >= 0 && v <= 1000)
+
+  const split = macroKcal({ protein, carbs: Math.max(carbs, 0), fat })
+  const share = (part: number) => ({ width: `${(part / kcal) * 100}%` })
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (!valid) return
     setState('saving')
     try {
-      await goalsUpdate({
-        dailyKcal: kcal,
-        protein: roundMacro(values.protein ?? 0),
-        carbs: roundMacro(values.carbs ?? 0),
-        fat: roundMacro(values.fat ?? 0),
-      })
+      await goalsUpdate({ dailyKcal: kcal, protein, fat })
       invalidateData()
       onSaved()
     } catch {
@@ -85,9 +86,8 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
   }
 
   const rows = [
-    { key: 'protein', label: fr.goal.proteinPerDay },
-    { key: 'carbs', label: fr.goal.carbsPerDay },
-    { key: 'fat', label: fr.goal.fatPerDay },
+    { key: 'protein', name: fr.macros.protein, label: fr.goal.proteinPerDay },
+    { key: 'fat', name: fr.macros.fat, label: fr.goal.fatPerDay },
   ] as const
 
   return (
@@ -106,12 +106,20 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
         >
           {formatInt(kcal)} <span className={styles.unit}>{fr.common.kcal}</span>
         </Stepper>
+        <div className={styles.bar} aria-hidden="true">
+          <div className={styles.protein} style={share(split.protein)} />
+          <div className={styles.carbs} style={share(split.carbs)} />
+          <div className={styles.fat} style={share(split.fat)} />
+        </div>
       </section>
 
       <section className={styles.list}>
-        {rows.map(({ key, label }) => (
+        {rows.map(({ key, name, label }) => (
           <label key={key} className={styles.row}>
-            <span>{label}</span>
+            <span className={styles.name}>
+              <span className={`${styles.dot} ${styles[key]}`} />
+              {name}
+            </span>
             <span className={styles.inputWrap}>
               <input
                 className={styles.input}
@@ -125,6 +133,21 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
             </span>
           </label>
         ))}
+        <div className={styles.row}>
+          <span className={styles.name}>
+            <span className={`${styles.dot} ${styles.carbs}`} />
+            {fr.macros.carbs}
+          </span>
+          <span className={styles.inputWrap}>
+            <output
+              className={`${styles.derived} ${fits ? '' : styles.derivedOver}`}
+              aria-label={fr.goal.carbsPerDay}
+            >
+              {formatInt(carbs)}
+            </output>
+            <span className={styles.unit}>{fr.common.grams}</span>
+          </span>
+        </div>
       </section>
 
       {state === 'error' && (

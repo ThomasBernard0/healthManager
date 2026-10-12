@@ -13,7 +13,7 @@ export class GoalDto {
   @ApiProperty({ example: 150, description: 'Daily protein (g)' })
   protein: number;
 
-  @ApiProperty({ example: 230, description: 'Daily carbs (g)' })
+  @ApiProperty({ example: 243, description: 'Daily carbs (g), derived from kcal, protein and fat when saved' })
   carbs: number;
 
   @ApiProperty({ example: 70, description: 'Daily fat (g)' })

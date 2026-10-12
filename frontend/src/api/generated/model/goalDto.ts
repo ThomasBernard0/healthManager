@@ -12,7 +12,7 @@ export interface GoalDto {
   dailyKcal: number;
   /** Daily protein (g) */
   protein: number;
-  /** Daily carbs (g) */
+  /** Daily carbs (g), derived from kcal, protein and fat when saved */
   carbs: number;
   /** Daily fat (g) */
   fat: number;

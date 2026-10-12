@@ -66,6 +66,27 @@
   color: var(--color-muted);
 }
 
+/* kcal split: protein / carbs / fat */
+.bar {
+  display: flex;
+  height: var(--space-10);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--color-track);
+}
+
+.protein {
+  background: var(--color-protein);
+}
+
+.carbs {
+  background: var(--color-carbs);
+}
+
+.fat {
+  background: var(--color-fat);
+}
+
 .list {
   background: var(--color-card);
   border-radius: var(--radius-panel);
@@ -85,6 +106,18 @@
   border-top: 1px solid var(--color-divider);
 }
 
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dot {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-bar);
+}
+
 .inputWrap {
   display: flex;
   align-items: center;
@@ -99,6 +132,24 @@
   background: var(--color-card);
   text-align: right;
   padding: 0 var(--space-10);
+}
+
+/* Carbs: calculated, not editable */
+.derived {
+  width: var(--size-number-input);
+  height: var(--space-40);
+  border-radius: var(--radius-lg);
+  background: var(--color-ground);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--space-10);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink);
+}
+
+.derivedOver {
+  color: var(--color-over);
 }
 
 .input:focus {

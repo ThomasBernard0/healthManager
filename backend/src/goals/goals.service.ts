@@ -1,11 +1,13 @@
 import {
+  deriveCarbs,
   fromUtcDate,
   goalForDate,
+  isGoalValid,
   parisToday,
   roundMacro,
   toUtcDate,
 } from '@healthmanager/shared';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { num } from '../common/decimal.js';
 import type { Goal } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -41,14 +43,20 @@ export class GoalsService {
   /**
    * Takes effect immediately: a version valid from today (Paris).
    * Saving again the same day replaces that version; past days keep theirs.
+   * Carbs are derived from kcal, protein and fat; 400 when protein and fat exceed the kcal.
    */
   async update(dto: UpdateGoalDto): Promise<GoalDto> {
+    const protein = roundMacro(dto.protein);
+    const fat = roundMacro(dto.fat);
+    if (!isGoalValid(dto.dailyKcal, protein, fat)) {
+      throw new BadRequestException('protein and fat exceed dailyKcal');
+    }
     const validFrom = toUtcDate(parisToday());
     const data = {
       dailyKcal: dto.dailyKcal,
-      protein: roundMacro(dto.protein),
-      carbs: roundMacro(dto.carbs),
-      fat: roundMacro(dto.fat),
+      protein,
+      carbs: deriveCarbs(dto.dailyKcal, protein, fat),
+      fat,
     };
     const goal = await this.prisma.goal.upsert({
       where: { validFrom },
