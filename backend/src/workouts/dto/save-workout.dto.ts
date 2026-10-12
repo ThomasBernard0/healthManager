@@ -1,9 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
   IsInt,
+  IsOptional,
   IsString,
   IsUUID,
   Length,
@@ -45,6 +46,14 @@ export class SaveWorkoutDto {
   @IsString()
   @Length(1, 40)
   name: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Program of a new workout (default: the active one). Ignored on edit',
+  })
+  @IsOptional()
+  @IsUUID()
+  programId?: string;
 
   @ApiProperty({ type: [SaveWorkoutItemDto] })
   @IsArray()

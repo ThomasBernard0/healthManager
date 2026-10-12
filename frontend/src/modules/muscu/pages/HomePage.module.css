@@ -66,18 +66,11 @@
   color: var(--color-muted);
 }
 
-/* Mes séances */
+/* Mes programmes */
 .section {
   display: flex;
   flex-direction: column;
   gap: var(--space-10);
-}
-
-.listHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-12);
 }
 
 .sectionTitle {
@@ -165,6 +158,65 @@
   color: var(--color-muted);
 }
 
+/* The active program, above its séances. */
+.programHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-row);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.programHeader:hover {
+  color: var(--color-ink);
+}
+
+.programName {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-16);
+}
+
+.programHeader + .rows {
+  border-top: 1px solid var(--color-divider);
+}
+
+/* The other programs: name (→ its page) and Activer. */
+.programRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.programRow .row {
+  flex: 1;
+  min-width: 0;
+}
+
+.activate {
+  height: var(--size-toggle);
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-13);
+}
+
+.activate:disabled {
+  color: var(--color-muted);
+}
+
+.sheetForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
 .newWorkout {
   height: var(--size-touch);
   border-radius: var(--radius-lg);
@@ -211,29 +263,8 @@
   padding: var(--space-18) var(--space-20);
 }
 
-.columns .listHeader {
-  padding-bottom: var(--space-8);
-}
-
-.columns .rows {
-  border-top: 1px solid var(--color-divider);
-}
-
 .columns .row {
   min-height: var(--size-row);
-}
-
-.newSmall {
-  height: var(--size-toggle);
-  padding: 0 var(--space-12);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  color: var(--color-accent);
-  display: flex;
-  align-items: center;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-13);
-  text-decoration: none;
 }
 
 .nextList li {
@@ -247,7 +278,7 @@
   text-align: right;
 }
 
-/* Desktop left column: Prochaine séance, then Mes séances. */
+/* Desktop left column: Prochaine séance, then Mes programmes. */
 .stack {
   display: flex;
   flex-direction: column;

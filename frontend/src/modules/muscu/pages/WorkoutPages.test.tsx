@@ -9,10 +9,26 @@ import {
   workoutsRemove,
   workoutsUpdate,
 } from '../../../api/generated/endpoints/workouts/workouts'
-import type { ExerciseDto, WorkoutDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import {
+  programsActivate,
+  programsCreate,
+  programsGet,
+  programsList,
+  programsRemove,
+  programsUpdate,
+} from '../../../api/generated/endpoints/programs/programs'
+import type {
+  ExerciseDto,
+  ExerciseWorkoutDto,
+  ProgramDto,
+  ProgramSummaryDto,
+  WorkoutDto,
+  WorkoutSummaryDto,
+} from '../../../api/generated/model'
 import { sessionsCurrent, sessionsStart } from '../../../api/generated/endpoints/sessions/sessions'
 import { ToastProvider } from '../../../core/ui/Toast'
 import HomePage from './HomePage'
+import ProgramPage from './ProgramPage'
 import WorkoutEditPage from './WorkoutEditPage'
 
 vi.mock('../../../api/generated/endpoints/workouts/workouts', () => ({
@@ -21,6 +37,14 @@ vi.mock('../../../api/generated/endpoints/workouts/workouts', () => ({
   workoutsCreate: vi.fn(),
   workoutsUpdate: vi.fn(),
   workoutsRemove: vi.fn(),
+}))
+vi.mock('../../../api/generated/endpoints/programs/programs', () => ({
+  programsList: vi.fn(),
+  programsGet: vi.fn(),
+  programsCreate: vi.fn(),
+  programsUpdate: vi.fn(),
+  programsRemove: vi.fn(),
+  programsActivate: vi.fn(),
 }))
 vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({ exercisesList: vi.fn(), exercisesCreate: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/sessions/sessions', () => ({ sessionsCurrent: vi.fn(), sessionsStart: vi.fn() }))
@@ -54,10 +78,33 @@ const summary = (
   ...extra,
 })
 
+const program = (id: string, name: string, active: boolean, workoutCount = 2): ProgramSummaryDto => ({
+  id,
+  name,
+  position: 1,
+  active,
+  workoutCount,
+})
+const PUSH_PULL = program('pp', 'Push Pull', true)
+const LEGS = program('legs', 'Jambes', false, 3)
+
+/** The exercise is in this workout. */
+const inWorkout = (id: string, name: string, programId = 'pp', programActive = true): ExerciseWorkoutDto => ({
+  id,
+  name,
+  sets: 4,
+  repMin: 8,
+  repMax: 12,
+  programId,
+  programActive,
+})
+
 const PULL: WorkoutDto = {
   id: 'pull',
   name: 'Pull',
   position: 2,
+  programId: 'pp',
+  programActive: true,
   items: [
     { exercise: TIRAGE, sets: 4, repMin: 8, repMax: 12 },
     { exercise: ROWING, sets: 4, repMin: 8, repMax: 12 },
@@ -77,6 +124,7 @@ function renderAt(path: string) {
           <Route path="/muscu" element={<><HomePage /><Where /></>} />
           <Route path="/muscu/seances/nouvelle" element={<WorkoutEditPage />} />
           <Route path="/muscu/seances/:id" element={<WorkoutEditPage />} />
+          <Route path="/muscu/programmes/:id" element={<><ProgramPage /><Where /></>} />
           <Route path="/muscu/seance/:sessionId" element={<Where />} />
         </Routes>
       </MemoryRouter>
@@ -89,6 +137,7 @@ describe('Accueil', () => {
     vi.resetAllMocks()
     vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
     vi.mocked(exercisesList).mockResolvedValue([])
+    vi.mocked(programsList).mockResolvedValue([PUSH_PULL])
   })
 
   it('shows the next workout and the rotation, the next one tagged', async () => {
@@ -150,14 +199,14 @@ describe('Accueil', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s9'))
   })
 
-  it('lists Mes exercices (only those in my séances, once) and has no Exercices link', async () => {
-    const inPull = { id: 'pull', name: 'Pull', sets: 4, repMin: 8, repMax: 12 }
-    const inPushA = { id: 'a', name: 'Push A', sets: 4, repMin: 8, repMax: 12 }
+  it('lists Mes exercices (only those of the active program, once) and has no Exercices link', async () => {
+    const inPull = inWorkout('pull', 'Pull')
+    const inPushA = inWorkout('a', 'Push A')
     vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
     vi.mocked(exercisesList).mockResolvedValue([
       { ...CURL, workouts: [inPull, inPushA] },
       { ...ROWING, workouts: [inPull] },
-      TIRAGE,
+      { ...TIRAGE, workouts: [inWorkout('squat', 'Jambes A', 'legs', false)] },
     ])
     renderAt('/muscu')
     const section = (await screen.findByRole('heading', { name: 'Mes exercices' })).closest('section')!
@@ -165,8 +214,47 @@ describe('Accueil', () => {
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/c', '/muscu/exercices/r'])
     expect(within(section).queryByText('Tirage vertical prise large')).toBeNull()
     expect(screen.queryByRole('link', { name: 'Exercices' })).toBeNull()
-    // Mobile order: next workout, my exercises, my séances.
-    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Mes exercices', 'Mes séances'])
+    // Mobile order: next workout, my exercises, my programs.
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+      'Mes exercices',
+      'Mes programmes',
+    ])
+  })
+
+  it('shows the active program on top with its séances, the others below with Activer', async () => {
+    vi.mocked(programsList).mockResolvedValue([PUSH_PULL, LEGS])
+    vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
+    vi.mocked(programsActivate).mockResolvedValue({ ...LEGS, active: true, workouts: [] })
+    const user = userEvent.setup()
+    renderAt('/muscu')
+    const section = (await screen.findByRole('heading', { name: 'Mes programmes' })).closest('section')!
+    const programLinks = within(section)
+      .getAllByRole('link')
+      .filter((l) => l.getAttribute('href')?.startsWith('/muscu/programmes/'))
+    expect(programLinks.map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
+      ['Push PullActif', '/muscu/programmes/pp'],
+      ['Jambes3 séances', '/muscu/programmes/legs'],
+    ])
+    expect(within(section).getByText('Suivante')).toBeInTheDocument()
+    // Only the other programs can be activated.
+    expect(within(section).getAllByRole('button', { name: /^Activer/ })).toHaveLength(1)
+    await user.click(within(section).getByRole('button', { name: 'Activer Jambes' }))
+    expect(programsActivate).toHaveBeenCalledWith('legs')
+    await waitFor(() => expect(programsList).toHaveBeenCalledTimes(2))
+  })
+
+  it('creates a program and opens its page', async () => {
+    vi.mocked(workoutsList).mockResolvedValue([])
+    vi.mocked(programsCreate).mockResolvedValue({ ...LEGS, workouts: [] })
+    vi.mocked(programsGet).mockResolvedValue({ ...LEGS, workouts: [] })
+    const user = userEvent.setup()
+    renderAt('/muscu')
+    await user.click(await screen.findByRole('button', { name: '+ Nouveau programme' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Nouveau programme' })
+    await user.type(within(sheet).getByRole('textbox', { name: 'Nom' }), ' Jambes ')
+    await user.click(within(sheet).getByRole('button', { name: 'Enregistrer' }))
+    expect(programsCreate).toHaveBeenCalledWith({ name: 'Jambes' })
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/programmes/legs'))
   })
 
   it('has no next workout card without workouts', async () => {
@@ -185,6 +273,7 @@ describe('Modifier la séance', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(workoutsList).mockResolvedValue([])
+    vi.mocked(programsList).mockResolvedValue([PUSH_PULL])
     vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
     vi.mocked(exercisesList).mockResolvedValue([])
   })
@@ -301,6 +390,22 @@ describe('Modifier la séance', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s7'))
   })
 
+  it('has no start link in an inactive program', async () => {
+    vi.mocked(workoutsGet).mockResolvedValue({ ...PULL, programId: 'legs', programActive: false })
+    renderAt('/muscu/seances/pull')
+    await screen.findByRole('button', { name: 'Enregistrer' })
+    expect(screen.queryByRole('button', { name: 'Démarrer cette séance' })).toBeNull()
+  })
+
+  it('creates a séance in the program it was opened from', async () => {
+    vi.mocked(workoutsCreate).mockResolvedValue(PULL)
+    const user = userEvent.setup()
+    renderAt('/muscu/seances/nouvelle?programme=legs')
+    await user.type(await screen.findByRole('textbox', { name: 'Nom' }), 'Jambes A')
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(workoutsCreate).toHaveBeenCalledWith({ name: 'Jambes A', programId: 'legs', items: [] })
+  })
+
   it('hides the start link while a séance is in progress', async () => {
     vi.mocked(workoutsGet).mockResolvedValue(PULL)
     vi.mocked(sessionsCurrent).mockResolvedValue({
@@ -321,5 +426,77 @@ describe('Modifier la séance', () => {
     await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }))
     expect(workoutsRemove).toHaveBeenCalledWith('pull')
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+})
+
+describe('Programme', () => {
+  const legs: ProgramDto = {
+    id: 'legs',
+    name: 'Jambes',
+    position: 2,
+    active: false,
+    workouts: [summary('squat', 'Jambes A', 1, ['Tirage vertical prise large'])],
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(workoutsList).mockResolvedValue([])
+    vi.mocked(programsList).mockResolvedValue([PUSH_PULL, LEGS])
+    vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
+    vi.mocked(programsGet).mockResolvedValue(legs)
+    vi.mocked(exercisesList).mockResolvedValue([
+      { ...TIRAGE, workouts: [inWorkout('squat', 'Jambes A', 'legs', false)] },
+      { ...ROWING, workouts: [inWorkout('pull', 'Pull')] },
+    ])
+  })
+
+  it('shows its séances and exercises; Nouvelle séance goes into it', async () => {
+    renderAt('/muscu/programmes/legs')
+    expect(await screen.findByRole('link', { name: /Jambes A/ })).toHaveAttribute('href', '/muscu/seances/squat')
+    const exercises = (await screen.findByRole('heading', { name: 'Exercices' })).closest('section')!
+    expect(within(exercises).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/t'])
+    expect(screen.getByRole('link', { name: '+ Nouvelle séance' })).toHaveAttribute(
+      'href',
+      '/muscu/seances/nouvelle?programme=legs',
+    )
+  })
+
+  it('activates it and goes back to Accueil', async () => {
+    vi.mocked(programsActivate).mockResolvedValue({ ...legs, active: true })
+    const user = userEvent.setup()
+    renderAt('/muscu/programmes/legs')
+    await user.click(await screen.findByRole('button', { name: 'Activer ce programme' }))
+    expect(programsActivate).toHaveBeenCalledWith('legs')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/muscu$/))
+  })
+
+  it('renames it', async () => {
+    vi.mocked(programsUpdate).mockResolvedValue({ ...legs, name: 'Bas du corps' })
+    const user = userEvent.setup()
+    renderAt('/muscu/programmes/legs')
+    const input = await screen.findByRole('textbox', { name: 'Nom' })
+    expect(screen.queryByRole('button', { name: 'Enregistrer' })).toBeNull()
+    await user.clear(input)
+    await user.type(input, 'Bas du corps')
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(programsUpdate).toHaveBeenCalledWith('legs', { name: 'Bas du corps' })
+  })
+
+  it('deletes an inactive program after confirmation; the active one has no delete nor Activer', async () => {
+    vi.mocked(programsRemove).mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    const { unmount } = renderAt('/muscu/programmes/legs')
+    await user.click(await screen.findByRole('button', { name: 'Supprimer le programme' }))
+    const confirm = screen.getByRole('dialog', { name: 'Supprimer « Jambes » et ses séances ?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }))
+    expect(programsRemove).toHaveBeenCalledWith('legs')
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/muscu$/))
+    unmount()
+
+    vi.mocked(programsGet).mockResolvedValue({ ...legs, id: 'pp', name: 'Push Pull', active: true })
+    renderAt('/muscu/programmes/pp')
+    await screen.findByDisplayValue('Push Pull')
+    expect(screen.queryByRole('button', { name: 'Supprimer le programme' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Activer ce programme' })).toBeNull()
   })
 })

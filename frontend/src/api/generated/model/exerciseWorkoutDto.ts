@@ -11,4 +11,7 @@ export interface ExerciseWorkoutDto {
   sets: number;
   repMin: number;
   repMax: number;
+  programId: string;
+  /** The workout is in the active program */
+  programActive: boolean;
 }

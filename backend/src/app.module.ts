@@ -12,6 +12,7 @@ import { HealthModule } from './health/health.module.js';
 import { LogEntriesModule } from './log-entries/log-entries.module.js';
 import { MealsModule } from './meals/meals.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { ProgramsModule } from './programs/programs.module.js';
 import { SessionsModule } from './sessions/sessions.module.js';
 import { SummaryModule } from './summary/summary.module.js';
 import { WorkoutsModule } from './workouts/workouts.module.js';
@@ -47,6 +48,7 @@ const HASHED_ASSET = /[\\/]assets[\\/]/;
     MealsModule,
     SummaryModule,
     ExercisesModule,
+    ProgramsModule,
     WorkoutsModule,
     SessionsModule,
   ],

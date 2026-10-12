@@ -9,7 +9,7 @@ import type { WorkoutSummaryExerciseDto } from './workoutSummaryExerciseDto';
 export interface WorkoutSummaryDto {
   id: string;
   name: string;
-  /** Order in the rotation, from 1 */
+  /** Order in its program rotation, from 1 */
   position: number;
   /** In list order */
   exercises: WorkoutSummaryExerciseDto[];
@@ -18,6 +18,6 @@ export interface WorkoutSummaryDto {
    * @nullable
    */
   lastDoneOn: string | null;
-  /** Next in the rotation (after the workout of the last finished session) */
+  /** Next in the active program rotation (after the workout of the last session finished since its activation) */
   isNext: boolean;
 }

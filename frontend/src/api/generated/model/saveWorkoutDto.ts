@@ -12,5 +12,7 @@ export interface SaveWorkoutDto {
    * @maxLength 40
    */
   name: string;
+  /** Program of a new workout (default: the active one). Ignored on edit */
+  programId?: string;
   items: SaveWorkoutItemDto[];
 }

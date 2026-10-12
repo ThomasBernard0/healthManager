@@ -2,12 +2,12 @@
 
 Second module of healthManager, next to Alimentation. Same stack, same conventions (CLAUDE.md), same theme tokens, French UI, no helper text. Mockups: `design/musculation/` (dark theme, as the app renders on the user's devices).
 
-**Context:** one user, about 15 exercises, 3 fixed sessions in rotation of ~5 exercises × 4 sets (Push A → Pull → Push B → …), machines and free weights, rep ranges mostly 8–12. No rest timer. Sport never changes food targets.
+**Context:** one user, about 15 exercises, 3 fixed sessions in rotation of ~5 exercises × 4 sets (Push A → Pull → Push B → …), machines and free weights, rep ranges mostly 8–12. Sessions are grouped in **programs** (e.g. a summer program and a winter one); only one is active at a time and its sessions are the rotation. No rest timer. Sport never changes food targets.
 
 ## 1. Navigation
 
 - The module title in the top bar ("Alimentation" today) becomes a **module switcher**: title + chevron, opens a small menu listing the modules (Alimentation, Musculation). Same on mobile and desktop. Remember the last module per device and open it at launch.
-- Routes under `/muscu/*`. Code in `frontend/src/modules/muscu/`, backend domains `exercises/`, `workouts/`, `sessions/` (one Nest module each).
+- Routes under `/muscu/*`. Code in `frontend/src/modules/muscu/`, backend domains `exercises/`, `programs/`, `workouts/`, `sessions/` (one Nest module each).
 
 ## 2. Data model
 
@@ -17,8 +17,11 @@ Exercise { id, name, equipment: "barbell" | "dumbbell" | "machine" | "cable" | "
            primaryMuscles: Muscle[], secondaryMuscles: Muscle[],
            imageUrl?, archived }
 
-// Workout — a session template ("Push A")
-Workout { id, name, position /* order in the rotation */,
+// Program — a group of workouts; exactly one is active
+Program { id, name, position /* order in Mes programmes */, active, activatedAt /* last activation */ }
+
+// Workout — a session template ("Push A"), in one program
+Workout { id, programId, name, position /* order in its program's rotation */,
           items: { exerciseId, sets /* default 4 */, repMin /* 8 */, repMax /* 12 */, order }[] }
 
 // Session — one performed workout
@@ -34,7 +37,8 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 ```
 
 - Exercise bank seeded from **free-exercise-db** (public domain, images + muscles), names translated to French, only the ~40 most common exercises imported. Images stored with the app, not hot-linked. Never Basic-Fit images.
-- **Next workout** = the workout after the last finished session in `position` order (wraps around). The user can start any other one ("Démarrer cette séance", a link at the bottom of Modifier la séance); the rotation then continues after the one finished.
+- **Programs**: there is always exactly one active program (the existing workouts went into "Mon programme", active). A new program is created inactive. **Activer** makes it the only active one and its rotation **restarts at its first workout** (also when re-activating a program used before). The active program can't be deleted; deleting another one deletes its workouts (the history of their sessions is kept).
+- **Next workout** = in the active program, the workout after the last session finished since its activation, in `position` order (wraps around); none yet → its first workout. The user can start any other workout of the active program ("Démarrer cette séance", a link at the bottom of Modifier la séance); the rotation then continues after the one finished. Workouts of an inactive program can't be started (no link, and the API refuses).
 
 ## 3. Progression rules (double progression)
 
@@ -87,8 +91,11 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Accueil (mobile `muscu-1-accueil`, desktop `bureau-muscu-accueil`)
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
-- **Mes séances**: workouts in rotation order with exercise count and last date; the next one tagged "Suivante". Tap → edit. "+ Nouvelle séance".
-- **Mes exercices** (mobile: between Prochaine séance and Mes séances; desktop: right column, Prochaine séance and Mes séances stacked on the left): every exercise used in my séances, once, by name → its Fiche exercice. No link to the bank on Accueil (it is reached from Modifier la séance).
+- **Mes programmes** (where Mes séances was):
+  - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then "+ Nouvelle séance" (added to the active program);
+  - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (one tap, no confirmation);
+  - "+ Nouveau programme": a sheet asking for the name, then the new program's page.
+- **Mes exercices** (mobile: between Prochaine séance and Mes programmes; desktop: right column, Prochaine séance and Mes programmes stacked on the left): every exercise used in the **active program**, once, by name → its Fiche exercice. Exercises only in other programs are on their Programme page. No link to the bank on Accueil (it is reached from Modifier la séance).
 - No session history on this page (progress lives in each exercise page).
 
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)
@@ -110,8 +117,16 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
 - **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume).
 
+### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
+- Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
+- Name field; Enregistrer appears once it is changed.
+- **Activer ce programme** (inactive programs only) → back to Accueil, which proposes its first workout.
+- **Séances**: its workouts in rotation order ("Actif" tag if it is the active one), tap → Modifier la séance; "+ Nouvelle séance" adds one to this program.
+- **Exercices**: every exercise of its workouts, once → Fiche exercice.
+
 ### Modifier la séance (mobile `muscu-5-modifier-seance`)
 - Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit), swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.
+- "Démarrer cette séance" link at the bottom: only in the active program, when no session is in progress.
 
 ### Exercices (mobile `muscu-6-exercices`)
 - Search (accent/case-insensitive) and the list (thumbnail, name, muscles · equipment). No filters. Opened from a workout (picker in Modifier la séance): "+" adds to it; exercises already in it show the workout name; "+ Créer un exercice" creates a custom exercise and adds it to the workout.
@@ -130,6 +145,7 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 4. Séance: list, exercise logging with target vs done, resume after reload, Terminer.
 5. Progression rules in `shared/` + targets.
 6. Combined chart, history, desktop layouts.
+7. Programs: group workouts, one active (rotation restarts on activation), Programme page.
 
 ## 6. Acceptance checks
 
@@ -148,4 +164,9 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 - Drop set 60×12 · 57,5×12 · 55×12 → 62,5 · 60 · 57,5.
 - ✓ on an empty row records the target; a set done under target shows its reps in orange.
 - Reloading the page in the middle of a session keeps every validated set.
+- Existing workouts end up in one active program, "Mon programme", and the next workout doesn't change.
+- Activating program B proposes B's first workout; after finishing it, B's second. Re-activating A proposes A's first workout, whatever was done last in A.
+- Mes exercices lists only the active program's exercises; another program's are on its Programme page.
+- A workout of an inactive program has no "Démarrer cette séance" link, and starting it through the API is refused (400).
+- The active program can't be deleted (409); deleting another one removes its workouts.
 - Food pages are unchanged except the switcher in the top bar.

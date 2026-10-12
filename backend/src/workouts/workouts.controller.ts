@@ -26,7 +26,7 @@ import { WorkoutsService } from './workouts.service.js';
 export class WorkoutsController {
   constructor(private readonly workouts: WorkoutsService) {}
 
-  /** Mes séances, in rotation order, with the next one flagged. */
+  /** The active program's séances, in rotation order, with the next one flagged. */
   @Get()
   @ApiOkResponse({ type: [WorkoutSummaryDto] })
   list(): Promise<WorkoutSummaryDto[]> {
@@ -40,7 +40,7 @@ export class WorkoutsController {
     return this.workouts.get(id);
   }
 
-  /** Nouvelle séance: added at the end of the rotation. */
+  /** Nouvelle séance: added at the end of its program's rotation (the active program by default). */
   @Post()
   @ApiCreatedResponse({ type: WorkoutDto })
   create(@Body() dto: SaveWorkoutDto): Promise<WorkoutDto> {

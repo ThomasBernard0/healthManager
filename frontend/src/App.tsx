@@ -14,6 +14,7 @@ import ExerciseEditPage from './modules/muscu/pages/ExerciseEditPage'
 import ExercisePage from './modules/muscu/pages/ExercisePage'
 import ExercisesPage from './modules/muscu/pages/ExercisesPage'
 import HomePage from './modules/muscu/pages/HomePage'
+import ProgramPage from './modules/muscu/pages/ProgramPage'
 import SessionExercisePage from './modules/muscu/pages/SessionExercisePage'
 import SessionPage from './modules/muscu/pages/SessionPage'
 import WorkoutEditPage from './modules/muscu/pages/WorkoutEditPage'
@@ -43,6 +44,7 @@ export default function App() {
           <Route path={`${EXERCISES_PATH}/:id/modifier`} element={<ExerciseEditPage />} />
           <Route path={NEW_WORKOUT_PATH} element={<WorkoutEditPage />} />
           <Route path="/muscu/seances/:id" element={<WorkoutEditPage />} />
+          <Route path="/muscu/programmes/:id" element={<ProgramPage />} />
           <Route path="/muscu/seance/:sessionId" element={<SessionPage />} />
           <Route path="/muscu/seance/:sessionId/:entryId" element={<SessionExercisePage />} />
           <Route path="*" element={<Navigate to={launchPath()} replace />} />

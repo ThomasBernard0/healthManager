@@ -61,7 +61,7 @@ frontend/                React SPA
     core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
     core/modules.ts      module list + last module per device (launch opens it); core/ui/ModuleSwitcher in each top bar
     modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
-    modules/muscu/       Musculation module (/muscu/*), spec docs/specs/musculation.md
+    modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, spec docs/specs/musculation.md
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
@@ -92,7 +92,6 @@ Backend (`cd backend`):
 | `npm run prisma:generate`                | regenerate the Prisma client                                 |
 | `node dist/scripts/import-ciqual.js`     | load CIQUAL foods into `Food` (new codes only; `--force` updates) |
 | `node dist/scripts/import-exercises.js`  | load the exercise bank into `Exercise` (new keys only; `--force` updates) |
-| `node dist/scripts/import-exercises.js`  | load the exercise bank into `Exercise` (new ones only; `--force` updates) |
 
 Frontend (`cd frontend`):
 

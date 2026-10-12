@@ -41,6 +41,7 @@ export class SessionsController {
   @Post()
   @ApiCreatedResponse({ type: SessionDto })
   @ApiNotFoundResponse()
+  @ApiBadRequestResponse({ description: 'No exercise, or not in the active program' })
   @ApiConflictResponse({ description: 'A session is already in progress' })
   start(@Body() dto: StartSessionDto): Promise<SessionDto> {
     return this.sessions.start(dto.workoutId);

@@ -1,64 +1,72 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
+import { programsList } from '../../../api/generated/endpoints/programs/programs'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
-import type { ExerciseDto, SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import type { ExerciseDto, ProgramSummaryDto, SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
 import { ChevronRight, Play } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
+import { useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
 import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
+import { NewProgramSheet, ProgramRows, WorkoutRows } from '../components/ProgramLists'
 import { formatSessionDate, formatTargets } from '../format'
-import { NEW_WORKOUT_PATH, sessionPath, workoutPath } from '../routes'
+import { NEW_WORKOUT_PATH, programPath, sessionPath } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './HomePage.module.css'
 
-/** Musculation Accueil: the next workout of the rotation, the rotation (Mes séances) and Mes exercices. */
+/**
+ * Musculation Accueil: the next workout of the active program, Mes exercices (of the active program) and
+ * Mes programmes (the active one with its séances, then the others with Activer).
+ */
 export default function HomePage() {
   const desktop = useIsDesktop()
   const version = useDataVersion()
   const workouts = useAsync(() => workoutsList(), `workouts#${version}`)
+  const programs = useAsync(() => programsList(), `programs#${version}`)
   const current = useAsync(() => sessionsCurrent(), `current#${version}`)
   const next = workouts.data?.find((w) => w.isNext)
   const inProgress = current.data?.session ?? null
   // Wait for both, so Démarrer never starts a second session.
   const ready = workouts.data && current.data
   const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
-  // Mes exercices: the ones used in my séances (the bank itself is reached from Modifier la séance).
-  const mine = (exercises.data ?? []).filter((e) => e.workouts.length > 0)
+  // Mes exercices: the ones of the active program (the others are on their program's page).
+  const mine = (exercises.data ?? []).filter((e) => e.workouts.some((w) => w.programActive))
 
-  const error = workouts.status === 'error' && !workouts.data && (
+  const failed = [workouts, programs].find((r) => r.status === 'error' && !r.data)
+  const error = failed && (
     <div className={page.alert} role="alert">
       <span className={form.error}>{fr.common.loadError}</span>
-      <button type="button" className={form.secondary} onClick={workouts.reload}>
+      <button
+        type="button"
+        className={form.secondary}
+        onClick={() => {
+          workouts.reload()
+          programs.reload()
+        }}
+      >
         {fr.common.retry}
       </button>
     </div>
   )
+  const loaded = workouts.data && programs.data
 
   if (desktop) {
     return (
       <MuscuLayout width="wide">
         {error}
-        {workouts.data && (
+        {loaded && (
           <div className={styles.columns}>
-            {/* Left: what to do next, then the rotation. Right: my exercises. */}
+            {/* Left: what to do next, then the programs. Right: my exercises. */}
             <div className={`${styles.column} ${styles.stack}`}>
               {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}
-              <section className={styles.listCard}>
-                <div className={styles.listHeader}>
-                  <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
-                  <Link to={NEW_WORKOUT_PATH} className={styles.newSmall}>
-                    {fr.muscu.home.newWorkout}
-                  </Link>
-                </div>
-                <WorkoutRows workouts={workouts.data} />
-              </section>
+              <MyPrograms programs={programs.data!} workouts={workouts.data!} />
             </div>
             <div className={styles.column}>
               <MyExercises exercises={mine} />
@@ -73,26 +81,48 @@ export default function HomePage() {
     <MuscuLayout>
       <ModuleSwitcher current="muscu" />
       {error}
-      {workouts.data && (
+      {loaded && (
         <>
           {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} />}
           <MyExercises exercises={mine} />
-          <section className={styles.section}>
-            <div className={styles.listHeader}>
-              <h2 className={styles.sectionTitle}>{fr.muscu.home.myWorkouts}</h2>
-            </div>
-            {workouts.data.length > 0 && (
-              <div className={styles.listCard}>
-                <WorkoutRows workouts={workouts.data} />
-              </div>
-            )}
-            <Link to={NEW_WORKOUT_PATH} className={styles.newWorkout}>
-              {fr.muscu.home.newWorkout}
-            </Link>
-          </section>
+          <MyPrograms programs={programs.data!} workouts={workouts.data!} />
         </>
       )}
     </MuscuLayout>
+  )
+}
+
+/** Mes programmes: the active one on top with its séances (rotation), the others below with Activer. */
+function MyPrograms({ programs, workouts }: { programs: ProgramSummaryDto[]; workouts: WorkoutSummaryDto[] }) {
+  const creating = useOverlayParam('ajout')
+  const active = programs.find((p) => p.active)
+  const others = programs.filter((p) => !p.active)
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>{fr.muscu.home.myPrograms}</h2>
+      {active && (
+        <div className={styles.listCard}>
+          <Link to={programPath(active.id)} className={styles.programHeader}>
+            <span className={styles.programName}>{active.name}</span>
+            <span className={styles.upNext}>{fr.muscu.program.active}</span>
+            <ChevronRight size={18} className={styles.chevron} />
+          </Link>
+          <WorkoutRows workouts={workouts} />
+        </div>
+      )}
+      <Link to={NEW_WORKOUT_PATH} className={styles.newWorkout}>
+        {fr.muscu.home.newWorkout}
+      </Link>
+      {others.length > 0 && (
+        <div className={styles.listCard}>
+          <ProgramRows programs={others} />
+        </div>
+      )}
+      <button type="button" className={styles.newWorkout} onClick={() => creating.open('programme')}>
+        {fr.muscu.home.newProgram}
+      </button>
+      {creating.value === 'programme' && <NewProgramSheet onClose={creating.close} />}
+    </section>
   )
 }
 
@@ -162,29 +192,5 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
         {inProgress ? fr.muscu.session.resume : fr.muscu.home.start}
       </button>
     </section>
-  )
-}
-
-function WorkoutRows({ workouts }: { workouts: WorkoutSummaryDto[] }) {
-  return (
-    <ul className={styles.rows}>
-      {workouts.map((w) => (
-        <li key={w.id}>
-          <Link to={workoutPath(w.id)} className={styles.row}>
-            <span className={`${styles.position} ${w.isNext ? styles.positionNext : ''}`}>{w.position}</span>
-            <span className={styles.rowText}>
-              <span className={styles.rowName}>{w.name}</span>
-              <span className={styles.rowMeta}>
-                {[fr.muscu.home.exerciseCount(w.exercises.length), w.lastDoneOn && formatSessionDate(w.lastDoneOn)]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </span>
-            </span>
-            {w.isNext && <span className={styles.upNext}>{fr.muscu.home.upNext}</span>}
-            <ChevronRight size={18} className={styles.chevron} />
-          </Link>
-        </li>
-      ))}
-    </ul>
   )
 }

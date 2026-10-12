@@ -19,6 +19,6 @@ export interface ExerciseDto {
    * @nullable
    */
   imageUrl: string | null;
-  /** In rotation order */
+  /** Active program first, then in program and rotation order */
   workouts: ExerciseWorkoutDto[];
 }
