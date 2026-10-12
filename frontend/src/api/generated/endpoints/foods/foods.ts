@@ -8,7 +8,8 @@ import type {
   BarcodeLookupDto,
   CreateFoodDto,
   FoodDto,
-  FoodsSearchParams
+  FoodsSearchParams,
+  UpdateFoodDto
 } from '../../model';
 
 import { apiClient } from '../../../http';
@@ -36,6 +37,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const foodsListAll = (
+    
+ options?: SecondParameter<typeof apiClient<FoodDto[]>>,) => {
+      return apiClient<FoodDto[]>(
+      {url: `/api/foods/all`, method: 'GET'
+    },
+      options);
+    }
   export const foodsLookupBarcode = (
     code: string,
  options?: SecondParameter<typeof apiClient<BarcodeLookupDto>>,) => {
@@ -52,7 +61,29 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const foodsUpdate = (
+    id: string,
+    updateFoodDto: UpdateFoodDto,
+ options?: SecondParameter<typeof apiClient<FoodDto>>,) => {
+      return apiClient<FoodDto>(
+      {url: `/api/foods/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateFoodDto
+    },
+      options);
+    }
+  export const foodsRemove = (
+    id: string,
+ options?: SecondParameter<typeof apiClient<void>>,) => {
+      return apiClient<void>(
+      {url: `/api/foods/${id}`, method: 'DELETE'
+    },
+      options);
+    }
   export type FoodsSearchResult = NonNullable<Awaited<ReturnType<typeof foodsSearch>>>
 export type FoodsCreateResult = NonNullable<Awaited<ReturnType<typeof foodsCreate>>>
+export type FoodsListAllResult = NonNullable<Awaited<ReturnType<typeof foodsListAll>>>
 export type FoodsLookupBarcodeResult = NonNullable<Awaited<ReturnType<typeof foodsLookupBarcode>>>
 export type FoodsGetResult = NonNullable<Awaited<ReturnType<typeof foodsGet>>>
+export type FoodsUpdateResult = NonNullable<Awaited<ReturnType<typeof foodsUpdate>>>
+export type FoodsRemoveResult = NonNullable<Awaited<ReturnType<typeof foodsRemove>>>

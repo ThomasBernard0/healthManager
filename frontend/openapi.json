@@ -479,6 +479,30 @@
         ]
       }
     },
+    "/api/foods/all": {
+      "get": {
+        "operationId": "Foods_listAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FoodDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      }
+    },
     "/api/foods/barcode/{code}": {
       "get": {
         "operationId": "Foods_lookupBarcode",
@@ -541,6 +565,81 @@
           },
           "404": {
             "description": ""
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      },
+      "put": {
+        "operationId": "Foods_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFoodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      },
+      "delete": {
+        "operationId": "Foods_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "A saved meal uses this food",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodInUseDto"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -2336,6 +2435,63 @@
         "required": [
           "name",
           "per100g"
+        ]
+      },
+      "UpdateFoodDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Granola maison",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "brand": {
+            "type": "string",
+            "example": "Bjorg",
+            "maxLength": 80
+          },
+          "per100g": {
+            "description": "Per 100 g",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NutrientsDto"
+              }
+            ]
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodUnitDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "per100g"
+        ]
+      },
+      "FoodInUseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "message": {
+            "type": "string",
+            "example": "A meal uses this food"
+          },
+          "mealName": {
+            "type": "string",
+            "example": "Pâtes au thon",
+            "description": "One of the meals using it (the first by name)"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "mealName"
         ]
       },
       "NutrientsDeltaDto": {

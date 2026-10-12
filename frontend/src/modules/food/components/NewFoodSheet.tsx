@@ -1,8 +1,8 @@
 import { isPlausiblePer100g, roundKcal, roundMacro } from '@healthmanager/shared'
 import { useState, type FormEvent } from 'react'
-import { foodsCreate } from '../../../api/generated/endpoints/foods/foods'
+import { foodsCreate, foodsUpdate } from '../../../api/generated/endpoints/foods/foods'
 import type { FoodDto } from '../../../api/generated/model'
-import { parseNumber } from '../../../core/format'
+import { formatDecimal, parseNumber } from '../../../core/format'
 import { Sheet } from '../../../core/ui/Sheet'
 import form from '../../../core/ui/form.module.css'
 import { fr } from '../../../i18n/fr'
@@ -10,10 +10,14 @@ import styles from './NewFoodSheet.module.css'
 
 interface NewFoodSheetProps {
   name: string
+  /** Editing this food instead of creating one. */
+  food?: FoodDto
   /** Scanned product missing from Open Food Facts: saved with the food so the next scan finds it. */
   barcode?: string
+  /** "back" inside the ingredient flow of a meal (default), "close" when opened on its own. */
+  dismiss?: 'back' | 'close'
   onClose: () => void
-  onCreated: (food: FoodDto) => void
+  onSaved: (food: FoodDto) => void
 }
 
 const MACROS = [
@@ -22,12 +26,22 @@ const MACROS = [
   { key: 'fat', label: fr.macros.fat, aria: fr.quick.fatGrams },
 ] as const
 
-/** Mon aliment: a food missing from the database, per 100 g, created once and reused. */
-export function NewFoodSheet({ name: initialName, barcode, onClose, onCreated }: NewFoodSheetProps) {
-  const [name, setName] = useState(initialName)
-  const [values, setValues] = useState({ kcal: '', protein: '', carbs: '', fat: '' })
-  const [unitLabel, setUnitLabel] = useState('')
-  const [unitGrams, setUnitGrams] = useState('')
+/** Mon aliment: a food per 100 g, created once and reused — or Modifier l'ingrédient when `food` is given. */
+export function NewFoodSheet({ name: initialName, food, barcode, dismiss = 'back', onClose, onSaved }: NewFoodSheetProps) {
+  const [name, setName] = useState(food?.name ?? initialName)
+  const [values, setValues] = useState(() =>
+    food
+      ? {
+          kcal: String(food.per100g.kcal),
+          protein: formatDecimal(food.per100g.protein),
+          carbs: formatDecimal(food.per100g.carbs),
+          fat: formatDecimal(food.per100g.fat),
+        }
+      : { kcal: '', protein: '', carbs: '', fat: '' },
+  )
+  // The form edits the first unit; a food's other units are kept as they are.
+  const [unitLabel, setUnitLabel] = useState(food?.units[0]?.label ?? '')
+  const [unitGrams, setUnitGrams] = useState(food?.units[0] ? formatDecimal(food.units[0].grams) : '')
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle')
 
   const parsed = {
@@ -54,18 +68,18 @@ export function NewFoodSheet({ name: initialName, barcode, onClose, onCreated }:
     if (!valid) return
     setState('saving')
     try {
-      const food = await foodsCreate({
+      const body = {
         name: name.trim(),
-        ...(barcode ? { barcode } : {}),
+        ...(food?.brand ? { brand: food.brand } : {}),
         per100g: {
           kcal: roundKcal(parsed.kcal ?? 0),
           protein: roundMacro(parsed.protein ?? 0),
           carbs: roundMacro(parsed.carbs ?? 0),
           fat: roundMacro(parsed.fat ?? 0),
         },
-        units: unitLabel.trim() && grams ? [{ label: unitLabel.trim(), grams }] : [],
-      })
-      onCreated(food)
+        units: [...(unitLabel.trim() && grams ? [{ label: unitLabel.trim(), grams }] : []), ...(food?.units.slice(1) ?? [])],
+      }
+      onSaved(food ? await foodsUpdate(food.id, body) : await foodsCreate({ ...body, ...(barcode ? { barcode } : {}) }))
     } catch {
       setState('error')
     }
@@ -75,7 +89,7 @@ export function NewFoodSheet({ name: initialName, barcode, onClose, onCreated }:
     setValues((v) => ({ ...v, [key]: e.target.value }))
 
   return (
-    <Sheet title={fr.food.newTitle} onClose={onClose} dismiss="back">
+    <Sheet title={food ? fr.food.editTitle : fr.food.newTitle} onClose={onClose} dismiss={dismiss}>
       <form className={styles.form} onSubmit={submit}>
         <label className={form.field}>
           {fr.food.name}
@@ -155,7 +169,7 @@ export function NewFoodSheet({ name: initialName, barcode, onClose, onCreated }:
         )}
 
         <button className={form.primary} type="submit" disabled={!valid || state === 'saving'}>
-          {fr.food.create100}
+          {food ? fr.common.save : fr.food.create100}
         </button>
       </form>
     </Sheet>

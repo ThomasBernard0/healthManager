@@ -75,7 +75,7 @@ Same ring, but for the week: kcal left this week, eaten, weekly target (sum of t
 
 ### 5 · Mon objectif
 
-Daily kcal stepper (±50), daily protein, carbs, fat in grams. Opened only from the pencil next to "Objectif du jour" (Jour) or "Objectif semaine" (Semaine), so goals stay inside the Food module. Meals are managed from "Gérer" next to the Mes repas list (Mes repas and Modifier le repas open as modals over the page, like Nouveau repas and Mon objectif) (edit, favourite, delete for good after a confirmation; days it was logged on keep their totals). The access key is asked once per device; no screen for it in the Food module.
+Daily kcal stepper (±50), daily protein, carbs, fat in grams. Opened only from the pencil next to "Objectif du jour" (Jour) or "Objectif semaine" (Semaine), so goals stay inside the Food module. Meals are managed from "Gérer" next to the Mes repas list (Mes repas and Modifier le repas open as modals over the page, like Nouveau repas and Mon objectif) (edit, favourite, delete for good after a confirmation; days it was logged on keep their totals). That page has two tabs, **Repas | Ingrédients**: the second lists every ingredient (search, "+ Nouvel ingrédient"); tapping one edits its name, values per 100 g and unit (saved meals using it follow, logged days don't), and the bin deletes it after a confirmation — refused while a saved meal uses it, naming one such meal ("Utilisé dans le repas « X »"). The access key is asked once per device; no screen for it in the Food module.
 
 ### 6 · Desktop (≥ 1024 px)
 
