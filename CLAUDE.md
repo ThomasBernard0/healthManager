@@ -31,7 +31,6 @@ shared/                  @healthmanager/shared — pure TS, no deps (nutrients, 
                          supersets: interleaveSets, blocks, superset context)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
-  data/ciqual/           CIQUAL 2020 foods (TSV, Licence Ouverte) + convert.mjs (from the ANSES XML)
   data/exercises/        Musculation bank (TSV: French names, muscles mapped by hand) + convert.mjs → line-art drawings
                          from Everkinetic (CC BY-SA 4.0, credited on Exercices) in frontend/public/exercises/*.svg
                          (served with the SPA, not under /api, not precached; tinted with a CSS mask)
@@ -46,7 +45,7 @@ backend/                 NestJS API
     common/              NutrientsDto, Decimal helpers, date/time validators
     <domain>/            one module per domain: *.module.ts, *.controller.ts, *.service.ts, dto/
     foods/open-food-facts.client.ts   Open Food Facts lookup (server-side, 8 s timeout, 502 if unreachable)
-    scripts/             export-openapi.ts, import-ciqual.ts, import-exercises.ts (both run on every deploy, idempotent)
+    scripts/             export-openapi.ts, import-exercises.ts (runs on every deploy, idempotent)
     generated/prisma/    Prisma client (generated, gitignored)
   test/                  e2e tests (*.e2e-spec.ts)
 frontend/                React SPA
@@ -76,7 +75,7 @@ Root:
 | Command                 | What it does                                                          |
 | ----------------------- | --------------------------------------------------------------------- |
 | `npm run build`         | `npm ci` both apps, `prisma generate` + `nest build`, `vite build`    |
-| `npm start`             | `prisma migrate deploy`, CIQUAL + exercises import, then start Nest (Railway) |
+| `npm start`             | `prisma migrate deploy`, exercises import, then start Nest (Railway) |
 | `npm run api:sync`      | `export:openapi` (backend) + `generate-client` (frontend)             |
 | `npm run lint` / `test` | lint / unit tests (`shared`, backend, frontend)                       |
 | `npm run dev:backend` / `dev:frontend` | dev servers                                            |
@@ -91,7 +90,6 @@ Backend (`cd backend`):
 | `npm run export:openapi`                 | build + write `../frontend/openapi.json` (no DB needed)      |
 | `npx prisma migrate dev --name <x>`     | create + apply a dev migration (needs a DB)                  |
 | `npm run prisma:generate`                | regenerate the Prisma client                                 |
-| `node dist/scripts/import-ciqual.js`     | load CIQUAL foods into `Food` (new codes only; `--force` updates) |
 | `node dist/scripts/import-exercises.js`  | load the exercise bank into `Exercise` (new keys only; `--force` updates) |
 
 Frontend (`cd frontend`):

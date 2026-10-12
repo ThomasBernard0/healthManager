@@ -17,7 +17,7 @@ interface FoodPickerSheetProps {
   onCreate: (name: string) => void
 }
 
-/** + Ingrédient: search CIQUAL and my own foods. */
+/** + Ingrédient: search my foods. */
 export function FoodPickerSheet({ onClose, onPick, onCreate }: FoodPickerSheetProps) {
   const [query, setQuery] = useState('')
   const q = useDebounced(query.trim(), 200)

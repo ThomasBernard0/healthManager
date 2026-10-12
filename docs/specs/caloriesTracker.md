@@ -6,7 +6,7 @@ No login screen. A long random **access key** (env var on the server). Each devi
 
 ### Food data
 
-Ingredient values come from databases so you rarely type numbers: CIQUAL (French public table of generic foods, imported into the DB once) and Open Food Facts (free API, lookup by barcode scanned with the phone camera). Plus custom foods.
+Ingredient values come from Open Food Facts (free API, lookup by barcode scanned with the phone camera) so you rarely type numbers. Plus custom foods.
 
 Repo: `apps/web`, `apps/api`, `packages/shared` (Zod schemas, nutrition and week maths); one Railway build runs both. In web: `src/modules/food` and `src/core`, so Sport/Finances can be added later as new modules. No module tabs or navigation for them yet. All UI strings in `src/i18n/fr.ts`; numbers with `Intl.NumberFormat('fr-FR')`; dates in Europe/Paris.
 
@@ -14,7 +14,7 @@ Repo: `apps/web`, `apps/api`, `packages/shared` (Zod schemas, nutrition and week
 
 ```ts
 // Food — one ingredient
-Food { id, name, brand?, source: "custom" | "ciqual" | "off", barcode?,
+Food { id, name, brand?, source: "custom" | "off", barcode?,
        per100g: Nutrients, units?: { label: string; grams: number }[], updatedAt }
 
 // Meal — a saved meal ("Mes repas")
@@ -100,7 +100,7 @@ Space Grotesk for numbers and headings, IBM Plex Sans for text. White cards, 16�
 ## 6. Build order
 
 1.  **Foundation** — monorepo, API with access-key check, DB schema and migrations, Railway deploy (service + Postgres), app shell, Mon objectif (applies immediately), Aujourd'hui with Saisie rapide only.
-2.  **Foods & meals** — custom foods, CIQUAL import, Nouveau repas (both modes), saved meals, the Mes repas list with search, one-tap re-log.
+2.  **Foods & meals** — custom foods, Nouveau repas (both modes), saved meals, the Mes repas list with search, one-tap re-log.
 3.  **Semaine** — weekly ring, chart, averages, day drill-down, past weeks.
 4.  **Desktop** — three-column Jour, Semaine with table, dialogs.
 5.  **Extras** — barcode scan with Open Food Facts, PWA install.

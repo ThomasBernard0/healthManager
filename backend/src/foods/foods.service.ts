@@ -15,7 +15,7 @@ const isUniqueViolation = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002';
 
 export const FOOD_SEARCH_LIMIT = 30;
-/** Candidates fetched before ranking (CIQUAL has ~3 200 foods). */
+/** Candidates fetched before ranking. */
 const CANDIDATES = 300;
 
 function parseUnits(units: unknown): FoodUnitDto[] {
@@ -38,14 +38,13 @@ export function toFoodDto(food: Food): FoodDto {
 }
 
 /**
- * Search ranking: my own foods first, then names starting with the query,
- * then names where a word starts with the first term, then shorter (more generic) names.
+ * Search ranking: names starting with the query, then names where a word starts with the first term,
+ * then shorter (more generic) names.
  */
-export function rankFoods<F extends Pick<Food, 'source' | 'searchName'>>(foods: F[], query: string): F[] {
+export function rankFoods<F extends Pick<Food, 'searchName'>>(foods: F[], query: string): F[] {
   const key = searchKey(query);
   const first = searchTerms(query)[0] ?? '';
   const score = (f: F) =>
-    (f.source === 'ciqual' ? 0 : 4) +
     (f.searchName.startsWith(key) ? 2 : 0) +
     (f.searchName.startsWith(first) || f.searchName.includes(` ${first}`) ? 1 : 0);
   return [...foods].sort(
@@ -60,16 +59,15 @@ export class FoodsService {
     private readonly off: OpenFoodFactsClient,
   ) {}
 
-  /** Accent/case-insensitive search on every word; empty query → my own foods, latest first. */
+  /** Accent/case-insensitive search on every word; empty query → latest first. */
   async search(query: string): Promise<FoodDto[]> {
     const terms = searchTerms(query);
     if (terms.length === 0) {
-      const own = await this.prisma.food.findMany({
-        where: { source: { not: 'ciqual' } },
+      const latest = await this.prisma.food.findMany({
         orderBy: { updatedAt: 'desc' },
         take: FOOD_SEARCH_LIMIT,
       });
-      return own.map(toFoodDto);
+      return latest.map(toFoodDto);
     }
     const candidates = await this.prisma.food.findMany({
       where: { AND: terms.map((term) => ({ searchName: { contains: term } })) },
