@@ -7,7 +7,7 @@ import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
-import { ExerciseDrawing } from '../components/ExerciseDrawing'
+import { ExerciseImage } from '../components/ExerciseImage'
 import { HistoryList } from '../components/HistoryList'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { ProgressionChart } from '../components/ProgressionChart'
@@ -19,7 +19,7 @@ import styles from './ExercisePage.module.css'
 /** The Progression chart covers the last 12 weeks. */
 const CHART_DAYS = 12 * 7
 
-/** Fiche exercice: name, equipment · workouts, drawing with its muscles, Progression, Historique. */
+/** Fiche exercice: name, equipment · workouts, picture with its muscles, Progression, Historique. */
 export default function ExercisePage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
@@ -61,7 +61,7 @@ export default function ExercisePage() {
           {!desktop && <Heading name={data.name} details={exerciseDetails(data)} />}
           <div className={styles.top}>
             <figure className={styles.image}>
-              <ExerciseDrawing imageUrl={data.imageUrl} className={styles.drawing} />
+              <ExerciseImage exercise={data} className={styles.drawing} />
               <figcaption className={styles.pills}>
                 {data.primaryMuscles.map((m) => (
                   <span key={m} className={styles.primary}>

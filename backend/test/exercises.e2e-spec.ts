@@ -9,12 +9,21 @@ import { PrismaService } from './../src/prisma/prisma.service.js';
 
 type Row = Record<string, unknown> & { id: string };
 
-/** In-memory stand-in for the Exercise table. */
+interface Image {
+  mime: string;
+  data: Uint8Array;
+  updatedAt: Date;
+}
+
+/** In-memory stand-in for the Exercise and ExerciseImage tables. */
 function fakePrisma() {
   const rows: Row[] = [];
+  const images = new Map<string, Image>();
   const find = (id: string) => rows.find((r) => r.id === id) ?? null;
+  const withImage = (r: Row) => ({ ...r, image: images.get(r.id) ?? null });
   return {
     rows,
+    images,
     // Finished sessions of Rowing barre, most recent first (as the query orders them).
     sessionExercise: {
       findMany: ({ where }: { where: { exerciseId: string } }) =>
@@ -48,15 +57,26 @@ function fakePrisma() {
     },
     exercise: {
       findMany: ({ where }: { where: { archived: boolean } }) =>
-        Promise.resolve(rows.filter((r) => r.archived === where.archived)),
-      findUnique: ({ where }: { where: { id: string } }) => Promise.resolve(find(where.id)),
+        Promise.resolve(rows.filter((r) => r.archived === where.archived).map(withImage)),
+      findUnique: ({ where }: { where: { id: string } }) => {
+        const row = find(where.id);
+        return Promise.resolve(row && withImage(row));
+      },
       create: ({ data }: { data: Record<string, unknown> }) => {
-        const row = { id: `00000000-0000-4000-8000-0000000000${10 + rows.length}`, archived: false, image: null, workoutItems: [], ...data };
+        const row = { id: `00000000-0000-4000-8000-0000000000${10 + rows.length}`, archived: false, workoutItems: [], ...data };
         rows.push(row);
-        return Promise.resolve(row);
+        return Promise.resolve(withImage(row));
       },
       update: ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) =>
-        Promise.resolve(Object.assign(find(where.id)!, data)),
+        Promise.resolve(withImage(Object.assign(find(where.id)!, data))),
+    },
+    exerciseImage: {
+      findUnique: ({ where }: { where: { exerciseId: string } }) => Promise.resolve(images.get(where.exerciseId) ?? null),
+      upsert: ({ where, update }: { where: { exerciseId: string }; update: Omit<Image, 'updatedAt'> }) => {
+        images.set(where.exerciseId, { ...update, updatedAt: new Date('2026-10-12T10:00:00Z') });
+        return Promise.resolve();
+      },
+      deleteMany: ({ where }: { where: { exerciseId: string } }) => Promise.resolve(images.delete(where.exerciseId)),
     },
   };
 }
@@ -75,7 +95,6 @@ describe('Exercises (e2e)', () => {
         equipment: 'barbell',
         primaryMuscles: ['back'],
         secondaryMuscles: ['biceps', 'shoulders_rear'],
-        image: 'rowing-barre.svg',
         archived: false,
         workoutItems: [],
       },
@@ -86,7 +105,6 @@ describe('Exercises (e2e)', () => {
         equipment: 'cable',
         primaryMuscles: ['chest'],
         secondaryMuscles: [],
-        image: 'ecarte-poulie.svg',
         archived: false,
         workoutItems: [],
       },
@@ -97,11 +115,15 @@ describe('Exercises (e2e)', () => {
         equipment: 'machine',
         primaryMuscles: ['chest'],
         secondaryMuscles: [],
-        image: null,
         archived: true,
         workoutItems: [],
       },
     );
+    prisma.images.set('00000000-0000-4000-8000-000000000001', {
+      mime: 'image/svg+xml',
+      data: new TextEncoder().encode('<svg/>'),
+      updatedAt: new Date('2026-10-01T00:00:00Z'),
+    });
     const moduleRef = await Test.createTestingModule({
       controllers: [ExercisesController],
       providers: [ExercisesService, { provide: PrismaService, useValue: prisma }],
@@ -112,7 +134,7 @@ describe('Exercises (e2e)', () => {
   });
   afterAll(() => app.close());
 
-  it('lists the bank by name, without archived exercises, with the image path', async () => {
+  it('lists the exercises by name, without archived ones, with the image version', async () => {
     const res = await request(app.getHttpServer()).get('/api/exercises').expect(200);
     expect(res.body.map((e: { name: string }) => e.name)).toEqual(['Écarté poulie vis-à-vis', 'Rowing barre']);
     expect(res.body[1]).toEqual({
@@ -121,7 +143,7 @@ describe('Exercises (e2e)', () => {
       equipment: 'barbell',
       primaryMuscles: ['back'],
       secondaryMuscles: ['biceps', 'shoulders_rear'],
-      imageUrl: '/exercises/rowing-barre.svg',
+      imageVersion: String(Date.UTC(2026, 9, 1)),
       workouts: [],
     });
   });
@@ -131,18 +153,49 @@ describe('Exercises (e2e)', () => {
     expect(res.body.map((e: { name: string }) => e.name)).toEqual(['Écarté poulie vis-à-vis']);
   });
 
-  it('creates and edits a custom exercise (no image)', async () => {
+  it('creates and edits an exercise (no image)', async () => {
     const created = await request(app.getHttpServer())
       .post('/api/exercises')
       .send({ name: ' Pull-over ', equipment: 'dumbbell', primaryMuscles: ['back'], secondaryMuscles: ['chest'] })
       .expect(201);
-    expect(created.body).toMatchObject({ name: 'Pull-over', imageUrl: null });
+    expect(created.body).toMatchObject({ name: 'Pull-over', imageVersion: null });
 
     const updated = await request(app.getHttpServer())
       .put(`/api/exercises/${created.body.id}`)
       .send({ name: 'Pull-over haltère', equipment: 'dumbbell', primaryMuscles: ['chest'], secondaryMuscles: [] })
       .expect(200);
     expect(updated.body).toMatchObject({ name: 'Pull-over haltère', primaryMuscles: ['chest'], secondaryMuscles: [] });
+  });
+
+  it('serves, replaces and removes the image', async () => {
+    const url = '/api/exercises/00000000-0000-4000-8000-000000000001/image';
+    const stored = await request(app.getHttpServer()).get(url).expect(200);
+    expect(stored.headers['content-type']).toBe('image/svg+xml');
+    expect(stored.headers['cache-control']).toContain('immutable');
+    expect(Buffer.from(stored.body).toString()).toBe('<svg/>');
+
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+    const set = await request(app.getHttpServer()).put(url).attach('file', png, { filename: 'a.png', contentType: 'image/png' }).expect(200);
+    expect(set.body.imageVersion).toBe(String(Date.UTC(2026, 9, 12, 10)));
+    const replaced = await request(app.getHttpServer()).get(url).expect(200);
+    expect(replaced.headers['content-type']).toBe('image/png');
+    expect(Buffer.from(replaced.body)).toEqual(png);
+
+    const removed = await request(app.getHttpServer()).delete(url).expect(200);
+    expect(removed.body.imageVersion).toBeNull();
+    const gone = await request(app.getHttpServer()).get(url).expect(404);
+    expect(gone.headers['cache-control']).toBeUndefined();
+  });
+
+  it('rejects an upload that is not a picture, too big, or for an unknown exercise', async () => {
+    const url = '/api/exercises/00000000-0000-4000-8000-000000000002/image';
+    const put = (path: string, data: Buffer, contentType: string) =>
+      request(app.getHttpServer()).put(path).attach('file', data, { filename: 'a', contentType });
+    await put(url, Buffer.from('<svg/>'), 'image/svg+xml').expect(400);
+    await request(app.getHttpServer()).put(url).expect(400);
+    await put(url, Buffer.alloc(2 * 1024 * 1024 + 1), 'image/png').expect(413);
+    await put('/api/exercises/00000000-0000-4000-8000-000000000099/image', Buffer.from([1]), 'image/png').expect(404);
+    await request(app.getHttpServer()).get(url).expect(404);
   });
 
   it('returns the history: Paris date, sets, feeling, pre-fatigue, volume, heaviest weight', async () => {

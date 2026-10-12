@@ -89,7 +89,7 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
       </header>
 
       <Link to={exercisePath(entry.exercise.id)} className={styles.identity}>
-        <ExerciseThumb imageUrl={entry.exercise.imageUrl} size="lg" />
+        <ExerciseThumb exercise={entry.exercise} size="lg" />
         <span className={styles.identityText}>
           <h1 className={styles.name}>{entry.exercise.name}</h1>
           <span className={styles.scheme}>{fr.muscu.setsReps(entry.sets.length, entry.repMin, entry.repMax)}</span>

@@ -9,7 +9,7 @@ import { Check, ChevronRight, Close, Pencil } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
-import { ExerciseDrawing } from '../components/ExerciseDrawing'
+import { ExerciseImage } from '../components/ExerciseImage'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SupersetBadge } from '../components/SupersetBadge'
@@ -116,8 +116,8 @@ function SessionList({ session }: { session: SessionDto }) {
                 {second ? (
                   <>
                     <span className={styles.stack}>
-                      <ExerciseDrawing imageUrl={entry.exercise.imageUrl} className={styles.stacked} />
-                      <ExerciseDrawing imageUrl={second.exercise.imageUrl} className={styles.stacked} />
+                      <ExerciseImage exercise={entry.exercise} className={styles.stacked} />
+                      <ExerciseImage exercise={second.exercise} className={styles.stacked} />
                     </span>
                     <span className={styles.pair}>
                       <span className={styles.supersetLabel}>{fr.muscu.superset.label}</span>
@@ -131,7 +131,7 @@ function SessionList({ session }: { session: SessionDto }) {
                   </>
                 ) : (
                   <>
-                    <ExerciseThumb imageUrl={entry.exercise.imageUrl} />
+                    <ExerciseThumb exercise={entry.exercise} />
                     <span className={`${styles.name} ${status === 'done' ? styles.doneName : ''}`}>
                       {entry.exercise.name}
                     </span>

@@ -60,7 +60,7 @@ enum Muscle {
   calves
 }
 
-/// Musculation exercise bank: seeded from data/exercises (bankKey), or custom (bankKey null).
+/// A musculation exercise (Mes exercices).
 model Exercise {
   id               String            @id @default(uuid())
   name             String
@@ -69,17 +69,23 @@ model Exercise {
   equipment        Equipment
   primaryMuscles   Muscle[]
   secondaryMuscles Muscle[]
-  /// Key of the row in data/exercises/exercises.tsv; makes the seed idempotent.
-  bankKey          String?           @unique
-  /// Drawing in frontend/public/exercises/ (bank exercises only).
-  image            String?
   archived         Boolean           @default(false)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  image            ExerciseImage?
   workoutItems     WorkoutItem[]
   sessionExercises SessionExercise[]
 
   @@index([searchName])
+}
+
+/// Picture of an exercise, apart from Exercise so lists never load the bytes.
+model ExerciseImage {
+  exerciseId String   @id
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  mime       String
+  data       Bytes
+  updatedAt  DateTime @updatedAt
 }
 
 /// A group of workouts. Exactly one is active: its workouts are the rotation, restarted when it is activated.

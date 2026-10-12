@@ -15,10 +15,10 @@ export interface ExerciseDto {
   primaryMuscles: Muscle[];
   secondaryMuscles: Muscle[];
   /**
-   * Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)
+   * Changes with the image (null: no image). Pass it as ?v= to GET /exercises/:id/image
    * @nullable
    */
-  imageUrl: string | null;
+  imageVersion: string | null;
   /** Active program first, then in program and rotation order */
   workouts: ExerciseWorkoutDto[];
 }

@@ -30,7 +30,7 @@ const ex = (id: string, name: string): ExerciseDto => ({
   equipment: 'barbell',
   primaryMuscles: ['back'],
   secondaryMuscles: [],
-  imageUrl: null,
+  imageVersion: null,
   workouts: [],
 })
 

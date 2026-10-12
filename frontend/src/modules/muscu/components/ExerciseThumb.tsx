@@ -1,12 +1,13 @@
-import { ExerciseDrawing } from './ExerciseDrawing'
+import type { ExerciseDto } from '../../../api/generated/model'
+import { ExerciseImage } from './ExerciseImage'
 import styles from './ExerciseThumb.module.css'
 
 interface ExerciseThumbProps {
-  imageUrl: string | null
+  exercise: Pick<ExerciseDto, 'id' | 'imageVersion'>
   size?: 'sm' | 'md' | 'lg'
 }
 
-/** Square thumbnail of an exercise (empty tile without a drawing). */
-export function ExerciseThumb({ imageUrl, size = 'md' }: ExerciseThumbProps) {
-  return <ExerciseDrawing imageUrl={imageUrl} className={`${styles.thumb} ${size === 'md' ? '' : styles[size]}`} />
+/** Square thumbnail of an exercise (empty tile without a picture). */
+export function ExerciseThumb({ exercise, size = 'md' }: ExerciseThumbProps) {
+  return <ExerciseImage exercise={exercise} className={`${styles.thumb} ${size === 'md' ? '' : styles[size]}`} />
 }

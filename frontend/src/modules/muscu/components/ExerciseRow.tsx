@@ -18,7 +18,7 @@ interface ExerciseRowProps {
 export function ExerciseRow({ exercise, link, action }: ExerciseRowProps) {
   const content = (
     <>
-      <ExerciseThumb imageUrl={exercise.imageUrl} />
+      <ExerciseThumb exercise={exercise} />
       <span className={styles.text}>
         <span className={styles.name}>{exercise.name}</span>
         <span className={styles.meta}>{exerciseSubtitle(exercise)}</span>

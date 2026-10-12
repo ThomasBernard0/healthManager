@@ -784,6 +784,122 @@
         ]
       }
     },
+    "/api/exercises/{id}/image": {
+      "get": {
+        "operationId": "Exercises_image",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "required": false,
+            "in": "query",
+            "description": "imageVersion of the exercise (cache key only)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      },
+      "put": {
+        "operationId": "Exercises_setImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ExerciseImageUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a JPEG, PNG or WebP image"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      },
+      "delete": {
+        "operationId": "Exercises_removeImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "exercises"
+        ]
+      }
+    },
     "/api/programs": {
       "get": {
         "operationId": "Programs_list",
@@ -2587,11 +2703,11 @@
               "$ref": "#/components/schemas/Muscle"
             }
           },
-          "imageUrl": {
+          "imageVersion": {
             "type": "string",
             "nullable": true,
-            "example": "/exercises/rowing-barre.svg",
-            "description": "Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)"
+            "example": "1791800000000",
+            "description": "Changes with the image (null: no image). Pass it as ?v= to GET /exercises/:id/image"
           },
           "workouts": {
             "description": "Active program first, then in program and rotation order",
@@ -2607,7 +2723,7 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles",
-          "imageUrl",
+          "imageVersion",
           "workouts"
         ]
       },
@@ -2730,6 +2846,19 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles"
+        ]
+      },
+      "ExerciseImageUploadDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "JPEG, PNG or WebP, 2 MB at most"
+          }
+        },
+        "required": [
+          "file"
         ]
       },
       "ProgramSummaryDto": {

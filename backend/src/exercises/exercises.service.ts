@@ -1,20 +1,24 @@
 import { matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
-import type { Exercise, Program, Workout, WorkoutItem } from '../generated/prisma/client.js';
+import type { Exercise, ExerciseImage, Program, Workout, WorkoutItem } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ExerciseHistoryEntryDto } from './dto/exercise-history.dto.js';
+import { EXERCISE_IMAGE_TYPES, type UploadedImage } from './dto/exercise-image.dto.js';
 import { ExerciseDto } from './dto/exercise.dto.js';
 import { SaveExerciseDto } from './dto/save-exercise.dto.js';
 
-/** Bank images are static files of the SPA (frontend/public/exercises). */
-export const EXERCISE_IMAGE_DIR = '/exercises';
-
-/** An exercise with the workouts it is part of (and their programs). */
-export type ExerciseRow = Exercise & { workoutItems: (WorkoutItem & { workout: Workout & { program: Program } })[] };
+/** An exercise with the workouts it is part of (and their programs), and when its image last changed. */
+export type ExerciseRow = Exercise & {
+  image: Pick<ExerciseImage, 'updatedAt'> | null;
+  workoutItems: (WorkoutItem & { workout: Workout & { program: Program } })[];
+};
 
 /** Load an exercise with what toExerciseDto needs. */
-export const EXERCISE_INCLUDE = { workoutItems: { include: { workout: { include: { program: true } } } } } as const;
+export const EXERCISE_INCLUDE = {
+  image: { select: { updatedAt: true } },
+  workoutItems: { include: { workout: { include: { program: true } } } },
+} as const;
 
 /** Active program first, then programs in order, then workouts in rotation order. */
 function workoutOrder(a: Workout & { program: Program }, b: Workout & { program: Program }): number {
@@ -32,7 +36,7 @@ export function toExerciseDto(exercise: ExerciseRow): ExerciseDto {
     equipment: exercise.equipment,
     primaryMuscles: exercise.primaryMuscles,
     secondaryMuscles: exercise.secondaryMuscles,
-    imageUrl: exercise.image ? `${EXERCISE_IMAGE_DIR}/${exercise.image}` : null,
+    imageVersion: exercise.image ? String(exercise.image.updatedAt.getTime()) : null,
     workouts: [...exercise.workoutItems]
       .sort((a, b) => workoutOrder(a.workout, b.workout))
       .map((item) => ({
@@ -66,7 +70,7 @@ function toData(dto: SaveExerciseDto) {
 export class ExercisesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** The bank (about fifty exercises): every word of the query, accent/case-insensitive; by name. */
+  /** Mes exercices: every word of the query, accent/case-insensitive; by name. */
   async list(query: string): Promise<ExerciseDto[]> {
     const all = await this.prisma.exercise.findMany({ where: { archived: false }, include: EXERCISE_INCLUDE });
     return all
@@ -111,5 +115,27 @@ export class ExercisesService {
   async update(id: string, dto: SaveExerciseDto): Promise<ExerciseDto> {
     await this.get(id);
     return toExerciseDto(await this.prisma.exercise.update({ where: { id }, data: toData(dto), include: EXERCISE_INCLUDE }));
+  }
+
+  async image(id: string): Promise<Pick<ExerciseImage, 'mime' | 'data'>> {
+    const image = await this.prisma.exerciseImage.findUnique({ where: { exerciseId: id } });
+    if (!image) throw new NotFoundException('Exercise image not found');
+    return image;
+  }
+
+  async setImage(id: string, file: UploadedImage | undefined): Promise<ExerciseDto> {
+    await this.get(id);
+    if (!file || !(EXERCISE_IMAGE_TYPES as readonly string[]).includes(file.mimetype)) {
+      throw new BadRequestException('file must be a JPEG, PNG or WebP image');
+    }
+    const image = { mime: file.mimetype, data: new Uint8Array(file.buffer) };
+    await this.prisma.exerciseImage.upsert({ where: { exerciseId: id }, create: { exerciseId: id, ...image }, update: image });
+    return this.get(id);
+  }
+
+  async removeImage(id: string): Promise<ExerciseDto> {
+    await this.get(id);
+    await this.prisma.exerciseImage.deleteMany({ where: { exerciseId: id } });
+    return this.get(id);
   }
 }

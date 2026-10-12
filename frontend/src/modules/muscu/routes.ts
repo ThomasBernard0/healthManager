@@ -1,7 +1,7 @@
 /** Musculation home (Accueil). */
 export const MUSCU_PATH = '/muscu'
 
-/** The exercise bank. */
+/** Mes exercices. */
 export const EXERCISES_PATH = '/muscu/exercices'
 
 export const NEW_EXERCISE_PATH = '/muscu/exercices/nouveau'
