@@ -60,8 +60,8 @@ export function DayDesktop({ data, week, onOpenEntry, onAdd }: DayDesktopProps) 
 
         <div className={styles.macros}>
           <MacroBar variant="inline" macro="protein" eaten={eaten.protein} target={goal?.protein ?? null} />
-          <MacroBar variant="inline" macro="carbs" eaten={eaten.carbs} target={goal?.carbs ?? null} />
           <MacroBar variant="inline" macro="fat" eaten={eaten.fat} target={goal?.fat ?? null} />
+          <MacroBar variant="inline" macro="carbs" eaten={eaten.carbs} target={goal?.carbs ?? null} />
         </div>
 
         <MiniWeek data={data} week={week} />

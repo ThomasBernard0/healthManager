@@ -90,11 +90,11 @@ describe('Mon objectif', () => {
     expect(goalsUpdate).not.toHaveBeenCalled()
   })
 
-  it('draws the kcal split, hidden from assistive tech: 4P / 4C / 9F over kcal', async () => {
+  it('draws the kcal split, hidden from assistive tech: 4P / 9F / 4C over kcal, carbs last', async () => {
     await openGoal(goal(2400, 160, 260, 80))
     const bar = document.body.querySelector('[aria-hidden="true"][class*="bar"]') as HTMLElement
     const widths = Array.from(bar.children).map((c) => parseFloat((c as HTMLElement).style.width).toFixed(1))
-    expect(widths).toEqual(['26.7', '43.3', '30.0'])
+    expect(widths).toEqual(['26.7', '30.0', '43.3'])
   })
 
   it('starts from 2 200 kcal, P 150, F 70 → 243 before any goal exists', async () => {

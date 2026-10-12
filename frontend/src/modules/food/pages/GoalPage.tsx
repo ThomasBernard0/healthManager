@@ -108,8 +108,8 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
         </Stepper>
         <div className={styles.bar} aria-hidden="true">
           <div className={styles.protein} style={share(split.protein)} />
-          <div className={styles.carbs} style={share(split.carbs)} />
           <div className={styles.fat} style={share(split.fat)} />
+          <div className={styles.carbs} style={share(split.carbs)} />
         </div>
       </section>
 
