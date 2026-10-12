@@ -1,7 +1,8 @@
+import { blockStatus, toBlocks } from '@healthmanager/shared'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { sessionsFinish, sessionsGet, sessionsRemove } from '../../../api/generated/endpoints/sessions/sessions'
-import type { SessionDto, SessionExerciseStatus } from '../../../api/generated/model'
+import type { SessionDto } from '../../../api/generated/model'
 import { invalidateData, useDataVersion } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { Check, ChevronRight, Close, Pencil } from '../../../core/ui/icons'
@@ -12,16 +13,9 @@ import { ExerciseDrawing } from '../components/ExerciseDrawing'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SupersetBadge } from '../components/SupersetBadge'
-import { toBlocks } from '../reorder'
 import { MUSCU_PATH, sessionExercisePath, sessionSupersetPath, workoutPath } from '../routes'
 import page from './page.module.css'
 import styles from './SessionPage.module.css'
-
-/** One status for a card: a superset is done only when both exercises are, and in progress once one is started. */
-function blockStatus(block: { status: SessionExerciseStatus }[]): SessionExerciseStatus {
-  if (block.every((e) => e.status === 'done')) return 'done'
-  return block.every((e) => e.status === 'todo') ? 'todo' : 'inProgress'
-}
 
 /** Séance — liste: the exercises of the session in progress, done in any order. */
 export default function SessionPage() {
@@ -52,7 +46,7 @@ function SessionList({ session }: { session: SessionDto }) {
   const [finishing, setFinishing] = useState<'idle' | 'busy' | 'error'>('idle')
   // A superset is one card, and counts as one.
   const blocks = toBlocks(session.exercises.map((e) => ({ ...e, group: e.supersetGroup })))
-  const done = blocks.filter((block) => blockStatus(block) === 'done').length
+  const done = blocks.filter((block) => blockStatus(block.map((e) => e.status)) === 'done').length
   const logged = session.exercises.some((e) => e.status !== 'todo')
 
   async function discard() {
@@ -112,7 +106,7 @@ function SessionList({ session }: { session: SessionDto }) {
       <ul className={styles.cards}>
         {blocks.map((block) => {
           const [entry, second] = block
-          const status = blockStatus(block)
+          const status = blockStatus(block.map((e) => e.status))
           return (
             <li key={entry.id}>
               <Link

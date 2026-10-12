@@ -1,3 +1,5 @@
+import { toBlocks } from '@healthmanager/shared'
+
 /** The list with the item at `from` moved to `to` (indexes clamped to the list). */
 export function moveItem<T>(list: T[], from: number, to: number): T[] {
   const target = Math.max(0, Math.min(list.length - 1, to))
@@ -11,17 +13,6 @@ export function moveItem<T>(list: T[], from: number, to: number): T[] {
 interface Grouped {
   /** Superset group (null: solo). */
   group: string | null
-}
-
-/** The list cut in blocks: two consecutive items of the same group (a superset), or one item. */
-export function toBlocks<T extends Grouped>(items: T[]): T[][] {
-  const blocks: T[][] = []
-  for (let i = 0; i < items.length; i++) {
-    const paired = items[i].group !== null && items[i + 1]?.group === items[i].group
-    blocks.push(paired ? [items[i], items[i + 1]] : [items[i]])
-    if (paired) i++
-  }
-  return blocks
 }
 
 /** The list with a block moved by `steps` blocks: a superset moves as one, and is never split by another item. */

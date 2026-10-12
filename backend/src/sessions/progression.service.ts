@@ -45,6 +45,8 @@ export interface TargetsQuery {
   repMin: number;
   repMax: number;
   todayPreFatigue: number;
+  /** The exercise is in a superset now. */
+  todayInSuperset: boolean;
   /** The session the targets are for (not part of the history). */
   sessionId?: string;
 }
@@ -62,16 +64,21 @@ export class ProgressionService {
     return nextTargets({
       last: history[0] ?? null,
       previous: history[1] ?? null,
+      beforePrevious: history[2] ?? null,
       setCount: query.setCount,
       repMin: query.repMin,
       repMax: query.repMax,
       known,
       step: DEFAULT_STEP[query.equipment],
       todayPreFatigue: query.todayPreFatigue,
+      todayInSuperset: query.todayInSuperset,
     });
   }
 
-  /** The last two finished sessions with this exercise (skipped ones were dropped: they don't count). */
+  /**
+   * The last three finished sessions with this exercise (skipped ones were dropped: they don't count). The
+   * third only tells whether the second was a first time in a superset.
+   */
   async history(exerciseId: string, excludeSessionId?: string): Promise<ExerciseLog[]> {
     const where: Prisma.SessionExerciseWhereInput = {
       exerciseId,
@@ -82,7 +89,7 @@ export class ProgressionService {
     const entries = await this.prisma.sessionExercise.findMany({
       where,
       orderBy: { session: { finishedAt: 'desc' } },
-      take: 2,
+      take: 3,
       // Every set: the ones not done tell an exercise stopped early.
       include: { sets: { orderBy: { index: 'asc' } } },
     });
@@ -90,6 +97,7 @@ export class ProgressionService {
       feeling: e.feeling,
       preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
       complete: e.sets.every((s) => s.done),
+      inSuperset: e.supersetGroup !== null,
       sets: e.sets
         .filter((s) => s.done)
         .map((s) => ({

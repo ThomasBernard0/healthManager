@@ -83,7 +83,7 @@ describe('Fiche exercice', () => {
     vi.mocked(exercisesGet).mockResolvedValue(ROWING)
     vi.mocked(exercisesHistory).mockResolvedValue([
       { sessionId: 's3', date: addDays(today, -7), sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })), feeling: 'ok', preFatigue: 0, inSuperset: false, volume: 2160, heaviest: 60 },
-      { sessionId: 's2', date: addDays(today, -14), sets: [12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), feeling: 'easy', preFatigue: 3, inSuperset: false, volume: 2587.5, heaviest: 57.5 },
+      { sessionId: 's2', date: addDays(today, -14), sets: [12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), feeling: 'easy', preFatigue: 3, inSuperset: true, volume: 2587.5, heaviest: 57.5 },
       // Older than 12 weeks: in the history, not in the chart.
       { sessionId: 's1', date: addDays(today, -100), sets: [{ weight: 50, reps: 10 }], feeling: null, preFatigue: 0, inSuperset: false, volume: 500, heaviest: 50 },
     ])
@@ -104,6 +104,10 @@ describe('Fiche exercice', () => {
     expect(within(history).getAllByRole('listitem')).toHaveLength(3)
     expect(within(history).getByText('60 kg × 10 · 9 · 9 · 8')).toBeInTheDocument()
     expect(within(history).queryByRole('img', { name: 'Muscles déjà travaillés' })).toBeNull()
+    // Only the session done in a superset has the link icon.
+    const rows = within(history).getAllByRole('listitem')
+    expect(within(rows[1]).getByRole('img', { name: 'En superset' })).toBeInTheDocument()
+    expect(within(history).getAllByRole('img', { name: 'En superset' })).toHaveLength(1)
     expect(within(history).getByText('Facile')).toBeInTheDocument()
   })
 

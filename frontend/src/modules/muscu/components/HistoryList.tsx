@@ -1,10 +1,18 @@
 import type { ExerciseHistoryEntryDto, Feeling } from '../../../api/generated/model'
 import { formatInt } from '../../../core/format'
+import { LinkIcon } from '../../../core/ui/icons'
 import { fr } from '../../../i18n/fr'
 import { formatHistoryDay, formatSessionDate, formatSets, formatWeight } from '../format'
 import styles from './HistoryList.module.css'
 
 const feelingClass = (f: Feeling | null) => (f === 'easy' ? styles.easy : f === 'hard' ? styles.hard : '')
+
+/** Small link icon next to the date of a session done in a superset. */
+const SupersetMark = () => (
+  <span className={styles.mark} role="img" aria-label={fr.muscu.superset.inHistory}>
+    <LinkIcon size={12} />
+  </span>
+)
 
 interface HistoryListProps {
   /** Most recent first. */
@@ -21,7 +29,10 @@ export function HistoryList({ entries, variant = 'mobile' }: HistoryListProps) {
       <ul className={styles.list}>
         {entries.map((e) => (
           <li key={e.sessionId} className={styles.row}>
-            <span className={styles.date}>{formatHistoryDay(e.date)}</span>
+            <span className={styles.date}>
+              {formatHistoryDay(e.date)}
+              {e.inSuperset && <SupersetMark />}
+            </span>
             <span className={styles.sets}>
               {formatSets(e.sets).map((line) => (
                 <span key={line}>{line}</span>
@@ -61,7 +72,10 @@ function HistoryTable({ entries }: { entries: ExerciseHistoryEntryDto[] }) {
           {entries.map((e) => (
             <tr key={e.sessionId}>
               <td className={styles.dateCell}>
-                {formatSessionDate(e.date)}
+                <span className={styles.dateWithMark}>
+                  {formatSessionDate(e.date)}
+                  {e.inSuperset && <SupersetMark />}
+                </span>
               </td>
               {Array.from({ length: columns }, (_, i) => (
                 <td key={i}>{e.sets[i] ? `${formatWeight(e.sets[i].weight)} × ${e.sets[i].reps}` : ''}</td>
