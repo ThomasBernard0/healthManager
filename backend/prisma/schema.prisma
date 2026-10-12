@@ -64,6 +64,10 @@ model Exercise {
   equipment        Equipment
   primaryMuscles   Muscle[]
   secondaryMuscles Muscle[]
+  /// Sets and rep range, the same in every workout (snapshotted by each session).
+  sets             Int               @default(4)
+  repMin           Int               @default(8)
+  repMax           Int               @default(12)
   archived         Boolean           @default(false)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -112,16 +116,13 @@ model Workout {
   @@index([programId])
 }
 
-/// An exercise of a workout, in list order, with its sets and rep range.
+/// An exercise of a workout, in list order.
 model WorkoutItem {
   id            String   @id @default(uuid())
   workoutId     String
   workout       Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   exerciseId    String
   exercise      Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  sets          Int      @default(4)
-  repMin        Int      @default(8)
-  repMax        Int      @default(12)
   position      Int
   /// Superset: shared by exactly two adjacent items of the workout (null: solo).
   supersetGroup String?
@@ -243,7 +244,7 @@ model SessionExercise {
   exercise      Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   /// Order in the workout (list order); the real order is firstSetAt.
   position      Int
-  /// Snapshot of the workout item, so editing the template doesn't rewrite history.
+  /// Snapshot of the exercise at start, so editing it doesn't rewrite history.
   repMin        Int
   repMax        Int
   /// Time of the first validated set (the real order of the exercises).

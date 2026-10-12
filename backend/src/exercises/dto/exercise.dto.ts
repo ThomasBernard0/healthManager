@@ -1,22 +1,13 @@
 import { EQUIPMENTS, MUSCLES, type Equipment, type Muscle } from '@healthmanager/shared';
 import { ApiProperty } from '@nestjs/swagger';
 
-/** A workout the exercise is part of, with its sets and rep range there. */
+/** A workout the exercise is part of. */
 export class ExerciseWorkoutDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
 
   @ApiProperty({ example: 'Pull' })
   name: string;
-
-  @ApiProperty({ example: 4 })
-  sets: number;
-
-  @ApiProperty({ example: 8 })
-  repMin: number;
-
-  @ApiProperty({ example: 12 })
-  repMax: number;
 
   @ApiProperty({ format: 'uuid' })
   programId: string;
@@ -40,6 +31,15 @@ export class ExerciseDto {
 
   @ApiProperty({ enum: MUSCLES, enumName: 'Muscle', isArray: true })
   secondaryMuscles: Muscle[];
+
+  @ApiProperty({ example: 4, description: 'Sets, in every workout' })
+  sets: number;
+
+  @ApiProperty({ example: 8 })
+  repMin: number;
+
+  @ApiProperty({ example: 12 })
+  repMax: number;
 
   @ApiProperty({
     type: String,

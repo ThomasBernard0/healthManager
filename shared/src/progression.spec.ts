@@ -270,9 +270,39 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     });
   });
 
-  it('the set count changed: new sets copy the last set’s target, removed sets are dropped', () => {
-    const last = log(50, [10, 10, 10, 8]);
-    expect(next(last, { setCount: 5 })!.at(-1)).toEqual({ weight: 50, reps: 9 });
-    expect(next(last, { setCount: 3 })).toHaveLength(3);
+  describe('the scheme of the exercise changed', () => {
+    it('more sets: the added ones copy the last set’s target', () => {
+      const last = log(50, [10, 10, 10, 8]);
+      const t = next(last, { setCount: 5 });
+      expect(weights(t)).toEqual([50, 50, 50, 50, 50]);
+      expect(reps(t)).toEqual([11, 11, 11, 9, 9]);
+      // Drop set: the added set takes the last (lightest) weight.
+      expect(weights(next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 4 }))).toEqual([60, 57.5, 55, 55]);
+    });
+
+    it('4 × 8–12 → 3 × 8–12: the next session has 3 sets, the removed one is dropped', () => {
+      const t = next(log(50, [10, 10, 10, 8]), { setCount: 3 });
+      expect(weights(t)).toEqual([50, 50, 50]);
+      expect(reps(t)).toEqual([11, 11, 11]);
+      // The last session is still judged on its own 4 sets (44 → up).
+      const up = next(log(50, [12, 12, 12, 8]), { setCount: 3 });
+      expect(weights(up)).toEqual([52.5, 52.5, 52.5]);
+      expect(reps(up)).toEqual([8, 8, 8]);
+    });
+
+    it('range changed to 6–10 with 3 sets: Up threshold 27 reps, Down threshold 18, weights unchanged', () => {
+      const scheme = { setCount: 3, repMin: 6, repMax: 10 };
+      expect(judge(log(50, [9, 9, 9]), null, 6, 10)).toBe('up');
+      expect(judge(log(50, [9, 9, 8]), null, 6, 10)).toBe('progress');
+      expect(judge(log(50, [6, 6, 6]), log(50, [6, 6, 5]), 6, 10)).toBe('progress');
+      expect(judge(log(50, [6, 6, 5]), log(50, [6, 6, 5]), 6, 10)).toBe('down');
+      // Same weights, +1 capped at the new maximum; a session done in 8–12 is judged with the new range.
+      const t = next(log(50, [9, 8, 8]), scheme);
+      expect(weights(t)).toEqual([50, 50, 50]);
+      expect(reps(t)).toEqual([10, 9, 9]);
+      const stepped = next(log(50, [11, 11, 10]), scheme);
+      expect(weights(stepped)).toEqual([52.5, 52.5, 52.5]);
+      expect(reps(stepped)).toEqual([6, 6, 6]);
+    });
   });
 });

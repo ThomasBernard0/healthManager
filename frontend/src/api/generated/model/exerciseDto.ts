@@ -14,6 +14,10 @@ export interface ExerciseDto {
   equipment: Equipment;
   primaryMuscles: Muscle[];
   secondaryMuscles: Muscle[];
+  /** Sets, in every workout */
+  sets: number;
+  repMin: number;
+  repMax: number;
   /**
    * Changes with the image (null: no image). Pass it as ?v= to GET /exercises/:id/image
    * @nullable

@@ -1,8 +1,11 @@
 import { EQUIPMENTS, MUSCLES, type Equipment, type Muscle } from '@healthmanager/shared';
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMinSize, ArrayUnique, IsArray, IsIn, IsString, Length } from 'class-validator';
+import { ArrayMinSize, ArrayUnique, IsArray, IsIn, IsInt, IsString, Length, Max, Min } from 'class-validator';
 
-/** Créer / Modifier l'exercice. A muscle is either primary or secondary, not both. */
+export const MAX_SETS = 10;
+export const MAX_REPS = 100;
+
+/** Créer / Modifier l'exercice. A muscle is either primary or secondary, not both; sets × repMin–repMax. */
 export class SaveExerciseDto {
   @ApiProperty({ example: 'Rowing barre', minLength: 1, maxLength: 80 })
   @IsString()
@@ -25,4 +28,22 @@ export class SaveExerciseDto {
   @ArrayUnique()
   @IsIn(MUSCLES, { each: true })
   secondaryMuscles: Muscle[];
+
+  @ApiProperty({ example: 4, minimum: 1, maximum: MAX_SETS })
+  @IsInt()
+  @Min(1)
+  @Max(MAX_SETS)
+  sets: number;
+
+  @ApiProperty({ example: 8, minimum: 1, maximum: MAX_REPS })
+  @IsInt()
+  @Min(1)
+  @Max(MAX_REPS)
+  repMin: number;
+
+  @ApiProperty({ example: 12, minimum: 1, maximum: MAX_REPS, description: '≥ repMin' })
+  @IsInt()
+  @Min(1)
+  @Max(MAX_REPS)
+  repMax: number;
 }

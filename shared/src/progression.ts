@@ -138,7 +138,7 @@ export interface NextTargetsInput {
   previous: ExerciseLog | null;
   /** The time before `previous` (default: none). */
   beforePrevious?: ExerciseLog | null;
-  /** Sets of the workout item now. */
+  /** Sets of the exercise now. */
   setCount: number;
   repMin: number;
   repMax: number;
@@ -177,6 +177,6 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
     }
   });
 
-  // The workout's set count changed: new sets copy the last set's target.
+  // The exercise's set count changed: added sets copy the last set's target, removed ones are dropped.
   return Array.from({ length: setCount }, (_, i) => targets[Math.min(i, targets.length - 1)]);
 }

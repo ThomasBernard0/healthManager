@@ -55,12 +55,16 @@ const ex = (id: string, name: string, primary: ExerciseDto['primaryMuscles'] = [
   equipment: 'machine',
   primaryMuscles: primary,
   secondaryMuscles: [],
+  sets: 4,
+  repMin: 8,
+  repMax: 12,
   imageVersion: null,
   workouts: [],
 })
 const TIRAGE = ex('t', 'Tirage vertical prise large')
 const ROWING = ex('r', 'Rowing barre')
-const CURL = ex('c', 'Curl haltères', ['biceps'])
+/** 3 × 12–15 */
+const CURL: ExerciseDto = { ...ex('c', 'Curl haltères', ['biceps']), sets: 3, repMin: 12, repMax: 15 }
 
 const summary = (
   id: string,
@@ -92,9 +96,6 @@ const LEGS = program('legs', 'Jambes', false, 3)
 const inWorkout = (id: string, name: string, programId = 'pp', programActive = true): ExerciseWorkoutDto => ({
   id,
   name,
-  sets: 4,
-  repMin: 8,
-  repMax: 12,
   programId,
   programActive,
 })
@@ -106,8 +107,8 @@ const PULL: WorkoutDto = {
   programId: 'pp',
   programActive: true,
   items: [
-    { exercise: TIRAGE, sets: 4, repMin: 8, repMax: 12, group: null },
-    { exercise: ROWING, sets: 4, repMin: 8, repMax: 12, group: null },
+    { exercise: TIRAGE, group: null },
+    { exercise: ROWING, group: null },
   ],
 }
 
@@ -288,7 +289,7 @@ describe('Modifier la séance', () => {
     vi.mocked(exercisesList).mockResolvedValue([])
   })
 
-  it('creates a workout from my exercises in picking mode, 4 × 8–12 by default', async () => {
+  it('creates a workout from my exercises in picking mode, each with its own sets × rep range (read-only)', async () => {
     vi.mocked(exercisesList).mockResolvedValue([CURL, ROWING])
     vi.mocked(workoutsCreate).mockResolvedValue(PULL)
     const user = userEvent.setup()
@@ -303,17 +304,19 @@ describe('Modifier la séance', () => {
     expect(within(picker).getByText('Bras')).toBeInTheDocument()
     await user.click(within(picker).getByRole('button', { name: 'Retour' }))
 
-    expect(screen.getByRole('button', { name: 'Modifier Curl haltères : séries et répétitions' })).toHaveTextContent('4 × 8–12')
+    // The scheme of the exercise: plain text, nothing to tap.
+    const scheme = screen.getByText('3 × 12–15')
+    expect(scheme.tagName).toBe('SPAN')
+    expect(scheme.closest('button, a')).toBeNull()
+    await user.click(scheme)
+    expect(screen.queryByRole('dialog')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(workoutsCreate).toHaveBeenCalledWith({
-      name: 'Bras',
-      items: [{ exerciseId: 'c', sets: 4, repMin: 8, repMax: 12 }],
-    })
+    expect(workoutsCreate).toHaveBeenCalledWith({ name: 'Bras', items: [{ exerciseId: 'c' }] })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
   })
 
-  it('creates a custom exercise from the picker and adds it to the séance (4 × 8–12)', async () => {
-    const pullover = { ...ex('po', 'Pull-over', ['back']), equipment: 'dumbbell' as const }
+  it('creates a custom exercise (with its sets × rep range) from the picker and adds it to the séance', async () => {
+    const pullover = { ...ex('po', 'Pull-over', ['back']), equipment: 'dumbbell' as const, sets: 3 }
     vi.mocked(exercisesList).mockResolvedValue([CURL])
     vi.mocked(exercisesCreate).mockResolvedValue(pullover)
     const user = userEvent.setup()
@@ -326,6 +329,9 @@ describe('Modifier la séance', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Haltères' }))
     await user.click(within(sheet).getByRole('button', { name: 'Dos : non travaillé' }))
     await user.click(within(sheet).getByRole('button', { name: 'Dos : secondaire' }))
+    const sets = within(sheet).getByRole('textbox', { name: 'Nombre de séries' })
+    await user.clear(sets)
+    await user.type(sets, '3')
     await user.click(within(sheet).getByRole('button', { name: 'Enregistrer' }))
 
     expect(exercisesCreate).toHaveBeenCalledWith({
@@ -333,43 +339,38 @@ describe('Modifier la séance', () => {
       equipment: 'dumbbell',
       primaryMuscles: ['back'],
       secondaryMuscles: [],
+      sets: 3,
+      repMin: 8,
+      repMax: 12,
     })
-    expect(await screen.findByRole('button', { name: 'Modifier Pull-over : séries et répétitions' })).toHaveTextContent(
-      '4 × 8–12',
-    )
+    expect((await screen.findByText('Pull-over')).closest('li')).toHaveTextContent('3 × 8–12')
     expect(screen.queryByRole('dialog')).toBeNull()
     // Many typed/clicked steps: room for a loaded CI machine.
   }, 15000)
 
-  it('edits sets and rep range, reorders with the keyboard and saves', async () => {
-    vi.mocked(workoutsGet).mockResolvedValue(PULL)
+  it('shows the sets × rep range of each exercise, reorders with the keyboard and saves', async () => {
+    vi.mocked(workoutsGet).mockResolvedValue({ ...PULL, items: [{ exercise: TIRAGE, group: null }, { exercise: { ...ROWING, sets: 3, repMin: 6, repMax: 10 }, group: null }] })
     vi.mocked(workoutsUpdate).mockResolvedValue(PULL)
     const user = userEvent.setup()
     renderAt('/muscu/seances/pull')
 
-    await user.click(await screen.findByRole('button', { name: 'Modifier Rowing barre : séries et répétitions' }))
-    const sheet = await screen.findByRole('dialog', { name: 'Rowing barre' })
-    await user.click(within(sheet).getByRole('button', { name: 'Séries : moins' }))
-    for (let i = 0; i < 5; i++) await user.click(within(sheet).getByRole('button', { name: 'Répétitions min : plus' }))
-    // min 13 pushed the max up to 13.
-    await user.click(within(sheet).getByRole('button', { name: 'OK' }))
-    expect(screen.getByRole('button', { name: 'Modifier Rowing barre : séries et répétitions' })).toHaveTextContent('3 × 13–13')
+    expect((await screen.findByText('Rowing barre')).closest('li')).toHaveTextContent('3 × 6–10')
+    expect(screen.getByText('Tirage vertical prise large').closest('li')).toHaveTextContent('4 × 8–12')
+    // Nothing to edit here: sets and rep range are set in Modifier l'exercice.
+    expect(screen.queryByRole('button', { name: /séries et répétitions/ })).toBeNull()
 
     screen.getByRole('button', { name: 'Déplacer Rowing barre' }).focus()
     await user.keyboard('{ArrowUp}')
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
     expect(workoutsUpdate).toHaveBeenCalledWith('pull', {
       name: 'Pull',
-      items: [
-        { exerciseId: 'r', sets: 3, repMin: 13, repMax: 13 },
-        { exerciseId: 't', sets: 4, repMin: 8, repMax: 12 },
-      ],
+      items: [{ exerciseId: 'r' }, { exerciseId: 't' }],
     })
   })
 
   describe('supersets', () => {
-    const item = (exercise: ExerciseDto, group: string | null = null) => ({ exercise, sets: 4, repMin: 8, repMax: 12, group })
-    const saved = (exerciseId: string, group?: string) => ({ exerciseId, sets: 4, repMin: 8, repMax: 12, ...(group ? { group } : {}) })
+    const item = (exercise: ExerciseDto, group: string | null = null) => ({ exercise, group })
+    const saved = (exerciseId: string, group?: string) => ({ exerciseId, ...(group ? { group } : {}) })
     const THREE: WorkoutDto = { ...PULL, items: [item(TIRAGE), item(ROWING), item(CURL)] }
     const LINKED: WorkoutDto = { ...PULL, items: [item(TIRAGE), item(ROWING, 'g'), item(CURL, 'g')] }
     const save = () => userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
@@ -388,6 +389,9 @@ describe('Modifier la séance', () => {
       expect(within(block).getByText('Superset')).toBeInTheDocument()
       expect(within(block).getByText('A').parentElement).toHaveTextContent('Rowing barre')
       expect(within(block).getByText('B').parentElement).toHaveTextContent('Curl haltères')
+      // Each keeps its own sets × rep range.
+      expect(within(block).getByText('A').parentElement).toHaveTextContent('4 × 8–12')
+      expect(within(block).getByText('B').parentElement).toHaveTextContent('3 × 12–15')
       // Tirage is next to a superset: nothing left to link.
       expect(screen.queryByRole('button', { name: 'Relier en superset' })).toBeNull()
 
@@ -398,11 +402,8 @@ describe('Modifier la séance', () => {
       })
     })
 
-    it('unlinks: both exercises stay, with their targets and their order', async () => {
-      vi.mocked(workoutsGet).mockResolvedValue({
-        ...LINKED,
-        items: [item(TIRAGE), { ...item(ROWING, 'g'), sets: 3, repMin: 12, repMax: 15 }, item(CURL, 'g')],
-      })
+    it('unlinks: both exercises stay, with their sets × rep range and their order', async () => {
+      vi.mocked(workoutsGet).mockResolvedValue(LINKED)
       vi.mocked(workoutsUpdate).mockResolvedValue(THREE)
       const user = userEvent.setup()
       renderAt('/muscu/seances/pull')
@@ -410,11 +411,12 @@ describe('Modifier la séance', () => {
       await user.click(await screen.findByRole('button', { name: 'Délier le superset' }))
       expect(screen.queryByText('Superset')).toBeNull()
       expect(screen.getAllByRole('button', { name: 'Relier en superset' })).toHaveLength(2)
+      expect(screen.getByText('Curl haltères').closest('li')).toHaveTextContent('3 × 12–15')
 
       await save()
       expect(workoutsUpdate).toHaveBeenCalledWith('pull', {
         name: 'Pull',
-        items: [saved('t'), { exerciseId: 'r', sets: 3, repMin: 12, repMax: 15 }, saved('c')],
+        items: [saved('t'), saved('r'), saved('c')],
       })
     })
 
@@ -433,21 +435,22 @@ describe('Modifier la séance', () => {
       })
     })
 
-    it('edits the sets of an exercise of a superset; removing it makes the other solo, Annuler links them again', async () => {
+    it('removing an exercise next to a superset keeps the pair; Annuler puts it back before it', async () => {
       vi.mocked(workoutsGet).mockResolvedValue(LINKED)
       const user = userEvent.setup()
       renderAt('/muscu/seances/pull')
 
-      await user.click(await screen.findByRole('button', { name: 'Modifier Curl haltères : séries et répétitions' }))
-      const sheet = await screen.findByRole('dialog', { name: 'Curl haltères' })
-      await user.click(within(sheet).getByRole('button', { name: 'Retirer de la séance' }))
-      expect(screen.queryByText('Curl haltères')).toBeNull()
-      expect(screen.queryByText('Superset')).toBeNull()
-      expect(screen.getByRole('button', { name: 'Déplacer Rowing barre' })).toBeInTheDocument()
-
-      await user.click(screen.getByRole('button', { name: 'Annuler' }))
+      const row = (await screen.findByText('Tirage vertical prise large')).closest('li')!.firstElementChild!
+      fireEvent.pointerDown(row, { pointerType: 'touch', clientX: 300 })
+      fireEvent.pointerMove(row, { pointerType: 'touch', clientX: 150 })
+      fireEvent.pointerUp(row, { pointerType: 'touch', clientX: 150 })
+      expect(screen.queryByText('Tirage vertical prise large')).toBeNull()
       const block = screen.getByRole('button', { name: 'Délier le superset' }).closest('li')!
       expect(within(block).getByText('B').parentElement).toHaveTextContent('Curl haltères')
+
+      await user.click(screen.getByRole('button', { name: 'Annuler' }))
+      expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Tirage vertical prise large')
+      expect(screen.getByRole('button', { name: 'Délier le superset' })).toBeInTheDocument()
     })
   })
 

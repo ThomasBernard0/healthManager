@@ -7,10 +7,8 @@
 import type { ExerciseDto } from './exerciseDto';
 
 export interface WorkoutItemDto {
+  /** With its sets and rep range */
   exercise: ExerciseDto;
-  sets: number;
-  repMin: number;
-  repMax: number;
   /**
    * Superset: shared with the item next to it (null: solo)
    * @nullable

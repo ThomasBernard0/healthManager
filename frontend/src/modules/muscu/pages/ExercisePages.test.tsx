@@ -35,6 +35,9 @@ const ROWING: ExerciseDto = {
   equipment: 'barbell',
   primaryMuscles: ['back'],
   secondaryMuscles: ['biceps', 'shoulders_rear'],
+  sets: 4,
+  repMin: 8,
+  repMax: 12,
   imageVersion: null,
   workouts: [],
 }
@@ -44,6 +47,9 @@ const ECARTE: ExerciseDto = {
   equipment: 'cable',
   primaryMuscles: ['chest'],
   secondaryMuscles: ['shoulders_front'],
+  sets: 3,
+  repMin: 12,
+  repMax: 15,
   imageVersion: null,
   workouts: [],
 }
@@ -118,11 +124,18 @@ describe('Fiche exercice', () => {
     expect(within(history).getByText('Facile')).toBeInTheDocument()
   })
 
-  it('shows the name, equipment and muscles as pills', async () => {
-    vi.mocked(exercisesGet).mockResolvedValue(ROWING)
+  it('shows the name, equipment, workouts and sets × rep range, and muscles as pills', async () => {
+    vi.mocked(exercisesGet).mockResolvedValue({
+      ...ROWING,
+      sets: 3,
+      workouts: [
+        { id: 'pull', name: 'Pull', programId: 'pp', programActive: true },
+        { id: 'b', name: 'Push B', programId: 'pp', programActive: true },
+      ],
+    })
     renderAt('/muscu/exercices/r1')
     expect(await screen.findByRole('heading', { name: 'Rowing barre' })).toBeInTheDocument()
-    expect(screen.getByText('Barre')).toBeInTheDocument()
+    expect(screen.getByText('Barre · Pull · Push B · 3 × 8–12')).toBeInTheDocument()
     expect(screen.getByText('Dos')).toBeInTheDocument()
     expect(screen.getByText('Arrière d’épaule')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Modifier l’exercice' })).toHaveAttribute('href', '/muscu/exercices/r1/modifier')
@@ -142,6 +155,10 @@ describe('Créer / Modifier l’exercice', () => {
     renderAt('/muscu/exercices/nouveau')
     const save = await screen.findByRole('button', { name: 'Enregistrer' })
     expect(save).toBeDisabled()
+    // 4 × 8–12 by default.
+    expect(screen.getByRole('textbox', { name: 'Nombre de séries' })).toHaveValue('4')
+    expect(screen.getByRole('textbox', { name: 'Répétitions minimum' })).toHaveValue('8')
+    expect(screen.getByRole('textbox', { name: 'Répétitions maximum' })).toHaveValue('12')
 
     await user.type(screen.getByRole('textbox', { name: 'Nom' }), 'Pull-over')
     await user.click(screen.getByRole('button', { name: 'Haltères' }))
@@ -160,6 +177,9 @@ describe('Créer / Modifier l’exercice', () => {
       equipment: 'dumbbell',
       primaryMuscles: ['back'],
       secondaryMuscles: ['chest'],
+      sets: 4,
+      repMin: 8,
+      repMax: 12,
     })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/exercices/new1'))
   })
@@ -180,6 +200,54 @@ describe('Créer / Modifier l’exercice', () => {
       equipment: 'barbell',
       primaryMuscles: ['back', 'biceps'],
       secondaryMuscles: ['shoulders_rear'],
+      sets: 4,
+      repMin: 8,
+      repMax: 12,
+    })
+  })
+
+  it('edits the sets and the rep range; Enregistrer is disabled while they are not valid', async () => {
+    vi.mocked(exercisesGet).mockResolvedValue(ROWING)
+    vi.mocked(exercisesUpdate).mockResolvedValue({ ...ROWING, sets: 3, repMin: 6, repMax: 10 })
+    const user = userEvent.setup()
+    renderAt('/muscu/exercices/r1/modifier')
+    const sets = await screen.findByRole('textbox', { name: 'Nombre de séries' })
+    const min = screen.getByRole('textbox', { name: 'Répétitions minimum' })
+    const max = screen.getByRole('textbox', { name: 'Répétitions maximum' })
+    const save = screen.getByRole('button', { name: 'Enregistrer' })
+    expect([sets, min, max].map((i) => (i as HTMLInputElement).value)).toEqual(['4', '8', '12'])
+
+    const type = async (input: HTMLElement, text: string) => {
+      await user.clear(input)
+      if (text) await user.type(input, text)
+    }
+    // Empty, 0 or more than 10 sets; min above max; more than 100 reps.
+    await type(sets, '')
+    expect(save).toBeDisabled()
+    await type(sets, '0')
+    expect(save).toBeDisabled()
+    await type(sets, '11')
+    expect(save).toBeDisabled()
+    await type(sets, '3')
+    expect(save).toBeEnabled()
+    await type(min, '13')
+    expect(save).toBeDisabled()
+    await type(min, '6')
+    await type(max, '101')
+    expect(save).toBeDisabled()
+    // Digits only.
+    await type(max, '1a0')
+    expect(max).toHaveValue('10')
+
+    await user.click(save)
+    expect(exercisesUpdate).toHaveBeenCalledWith('r1', {
+      name: 'Rowing barre',
+      equipment: 'barbell',
+      primaryMuscles: ['back'],
+      secondaryMuscles: ['shoulders_rear', 'biceps'],
+      sets: 3,
+      repMin: 6,
+      repMax: 10,
     })
   })
 

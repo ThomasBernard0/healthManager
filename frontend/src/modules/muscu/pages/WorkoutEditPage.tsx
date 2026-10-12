@@ -24,7 +24,6 @@ import { ExerciseSearchList } from '../components/ExerciseSearchList'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SupersetBadge } from '../components/SupersetBadge'
-import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSheet'
 import { primarySubtitle } from '../format'
 import { moveBlock, moveItem, normalizeGroups } from '../reorder'
 import { exercisePath, MUSCU_PATH } from '../routes'
@@ -32,14 +31,12 @@ import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './WorkoutEditPage.module.css'
 
-interface Item extends ItemSettings {
+interface Item {
+  /** With its sets and rep range (set in Modifier l’exercice). */
   exercise: ExerciseDto
   /** Superset: shared with the item next to it (null: solo). */
   group: string | null
 }
-
-/** A new exercise in a workout: 4 × 8–12. */
-const DEFAULT_SETTINGS: ItemSettings = { sets: 4, repMin: 8, repMax: 12 }
 
 /** Swiping a row this far to the left removes it. */
 const SWIPE_REMOVE_PX = 96
@@ -75,8 +72,6 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
   const [status, setStatus] = useState<'idle' | 'busy' | 'error'>('idle')
   const [confirmDelete, setConfirmDelete] = useState<'closed' | 'open' | 'busy' | 'error'>('closed')
   const picker = useOverlayParam('ajout')
-  const editing = useOverlayParam('exercice')
-  const edited = items.find((i) => i.exercise.id === editing.value)
   // Nouvelle séance from a program's page: into that program (else the active one).
   const [params] = useSearchParams()
   const programId = params.get('programme')
@@ -89,7 +84,7 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
   const blocks = toBlocks(items)
-  const add = (exercise: ExerciseDto) => setItems((list) => [...list, { exercise, ...DEFAULT_SETTINGS, group: null }])
+  const add = (exercise: ExerciseDto) => setItems((list) => [...list, { exercise, group: null }])
 
   function remove(exerciseId: string) {
     const index = items.findIndex((i) => i.exercise.id === exerciseId)
@@ -130,9 +125,6 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
       name: name.trim(),
       items: items.map((i) => ({
         exerciseId: i.exercise.id,
-        sets: i.sets,
-        repMin: i.repMin,
-        repMax: i.repMax,
         ...(i.group ? { group: i.group } : {}),
       })),
     }
@@ -197,7 +189,6 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
                   key={item.group}
                   items={[item, second]}
                   onMove={onMove}
-                  onEdit={(exerciseId) => editing.open(exerciseId)}
                   onUnlink={() => unlink(item.group!)}
                 />
               ) : (
@@ -205,7 +196,6 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
                   key={item.exercise.id}
                   item={item}
                   onMove={onMove}
-                  onEdit={() => editing.open(item.exercise.id)}
                   onRemove={() => remove(item.exercise.id)}
                   // Only with the next exercise, when it is not in a superset either.
                   onLink={blocks[index + 1]?.length === 1 ? () => link(item.exercise.id) : undefined}
@@ -270,22 +260,6 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
         </Sheet>
       )}
 
-      {edited && (
-        <WorkoutItemSheet
-          name={edited.exercise.name}
-          value={edited}
-          onApply={(settings) => {
-            setItems((list) => list.map((i) => (i.exercise.id === edited.exercise.id ? { ...i, ...settings } : i)))
-            editing.close()
-          }}
-          onRemove={() => {
-            editing.close()
-            remove(edited.exercise.id)
-          }}
-          onClose={editing.close}
-        />
-      )}
-
       {workout && confirmDelete !== 'closed' && (
         <ConfirmSheet
           title={fr.muscu.workout.confirmDelete(workout.name)}
@@ -304,7 +278,6 @@ interface ItemRowProps {
   item: Item
   /** Move by this many places (negative: up). */
   onMove: (steps: number) => void
-  onEdit: () => void
   onRemove: () => void
   /** Relier en superset with the next exercise (absent: not possible). */
   onLink?: () => void
@@ -354,8 +327,9 @@ function useReorderHandle(onMove: (steps: number) => void) {
   }
 }
 
-/** Thumbnail, name, "4 × 8–12" chip and link to the Fiche exercice (after the handle or the A/B badge). */
-function ItemContent({ item, onEdit }: { item: Item; onEdit: () => void }) {
+/** Thumbnail, name, "4 × 8–12" (read-only) and link to the Fiche exercice (after the handle or the A/B badge). */
+function ItemContent({ item }: { item: Item }) {
+  const { sets, repMin, repMax } = item.exercise
   return (
     <>
       <ExerciseThumb exercise={item.exercise} size="sm" />
@@ -363,9 +337,7 @@ function ItemContent({ item, onEdit }: { item: Item; onEdit: () => void }) {
         <span className={styles.itemName}>{item.exercise.name}</span>
         <span className={styles.itemMeta}>{primarySubtitle(item.exercise)}</span>
       </span>
-      <button type="button" className={styles.chip} aria-label={fr.muscu.workout.edit(item.exercise.name)} onClick={onEdit}>
-        {fr.muscu.setsReps(item.sets, item.repMin, item.repMax)}
-      </button>
+      <span className={styles.scheme}>{fr.muscu.setsReps(sets, repMin, repMax)}</span>
       {/* Fiche exercice (progression, history). Not part of the swipe. */}
       <Link
         to={exercisePath(item.exercise.id)}
@@ -379,8 +351,8 @@ function ItemContent({ item, onEdit }: { item: Item; onEdit: () => void }) {
   )
 }
 
-/** One exercise: drag handle (or ↑/↓ keys), thumbnail, name, "4 × 8–12" chip; swipe left to remove. */
-function ItemRow({ item, onMove, onEdit, onRemove, onLink }: ItemRowProps) {
+/** One exercise: drag handle (or ↑/↓ keys), thumbnail, name, "4 × 8–12"; swipe left to remove. */
+function ItemRow({ item, onMove, onRemove, onLink }: ItemRowProps) {
   const { row, dragging, handle } = useReorderHandle(onMove)
   const swipe = useRef<{ x: number; dx: number } | null>(null)
   const [offset, setOffset] = useState(0)
@@ -422,7 +394,7 @@ function ItemRow({ item, onMove, onEdit, onRemove, onLink }: ItemRowProps) {
         >
           <Grip />
         </button>
-        <ItemContent item={item} onEdit={onEdit} />
+        <ItemContent item={item} />
       </div>
       {onLink && (
         <button type="button" className={styles.link} aria-label={fr.muscu.superset.link} onClick={onLink}>
@@ -437,12 +409,11 @@ interface SupersetBlockProps {
   items: [Item, Item]
   /** Move the whole block by this many places (negative: up). */
   onMove: (steps: number) => void
-  onEdit: (exerciseId: string) => void
   onUnlink: () => void
 }
 
 /** A superset: one block moved by its accent bar, Délier, and its two exercises with their A / B badges. */
-function SupersetBlock({ items, onMove, onEdit, onUnlink }: SupersetBlockProps) {
+function SupersetBlock({ items, onMove, onUnlink }: SupersetBlockProps) {
   const { row, dragging, handle } = useReorderHandle(onMove)
   return (
     <li ref={row} className={`${styles.item} ${styles.superset} ${dragging ? styles.dragging : ''}`}>
@@ -460,7 +431,7 @@ function SupersetBlock({ items, onMove, onEdit, onUnlink }: SupersetBlockProps) 
         {items.map((item, index) => (
           <div key={item.exercise.id} className={styles.blockRow}>
             <SupersetBadge letter={index === 0 ? 'A' : 'B'} />
-            <ItemContent item={item} onEdit={() => onEdit(item.exercise.id)} />
+            <ItemContent item={item} />
           </div>
         ))}
       </div>

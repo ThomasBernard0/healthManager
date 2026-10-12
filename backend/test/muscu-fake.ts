@@ -5,13 +5,19 @@ export const BENCH = uuid(3);
 /** The program created by the migration. */
 export const FIRST_PROGRAM = uuid(10);
 
-const exercise = (id: string, name: string) => ({
+/** Sets and rep range of an exercise. */
+type Scheme = [sets: number, repMin: number, repMax: number];
+
+const exercise = (id: string, name: string, [sets, repMin, repMax]: Scheme = [4, 8, 12]) => ({
   id,
   name,
   searchName: name.toLowerCase(),
   equipment: 'barbell',
   primaryMuscles: ['back'],
   secondaryMuscles: [],
+  sets,
+  repMin,
+  repMax,
   image: null,
   archived: false,
 });
@@ -19,9 +25,6 @@ const exercise = (id: string, name: string) => ({
 interface Item {
   workoutId: string;
   exerciseId: string;
-  sets: number;
-  repMin: number;
-  repMax: number;
   position: number;
   supersetGroup: string | null;
 }
@@ -45,9 +48,13 @@ interface FinishedSession {
 
 type Where = Record<string, unknown> & { id?: string | { not: string } };
 
-/** In-memory stand-in for Program / Workout / WorkoutItem / Exercise / finished sessions. */
+/** In-memory stand-in for Program / Workout / WorkoutItem / Exercise / finished sessions. Curl haltères is 3 × 10–15. */
 export function fakePrisma() {
-  const exercises = [exercise(ROWING, 'Rowing barre'), exercise(CURL, 'Curl haltères'), exercise(BENCH, 'Développé couché barre')];
+  const exercises = [
+    exercise(ROWING, 'Rowing barre'),
+    exercise(CURL, 'Curl haltères', [3, 10, 15]),
+    exercise(BENCH, 'Développé couché barre'),
+  ];
   const programs: Program[] = [
     { id: FIRST_PROGRAM, name: 'Mon programme', position: 1, active: true, activatedAt: new Date(0) },
   ];
@@ -196,4 +203,4 @@ export function fakePrisma() {
   };
 }
 
-export const item = (exerciseId: string, sets = 4, repMin = 8, repMax = 12) => ({ exerciseId, sets, repMin, repMax });
+export const item = (exerciseId: string) => ({ exerciseId });

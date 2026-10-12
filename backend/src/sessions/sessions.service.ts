@@ -58,15 +58,15 @@ export class SessionsService {
   }
 
   /**
-   * Démarrer: one session at a time, workouts of the active program only; every exercise of the workout with its
-   * sets (targets set on the first one).
+   * Démarrer: one session at a time, workouts of the active program only; every exercise of the workout with the
+   * sets and rep range it has now (targets set on the first one).
    */
   async start(workoutId: string): Promise<SessionDto> {
     const open = await this.prisma.session.findFirst({ where: { finishedAt: null } });
     if (open) throw new ConflictException('A session is already in progress');
     const workout = await this.prisma.workout.findUnique({
       where: { id: workoutId },
-      include: { items: { orderBy: { position: 'asc' } }, program: true },
+      include: { items: { orderBy: { position: 'asc' }, include: { exercise: true } }, program: true },
     });
     if (!workout) throw new NotFoundException('Workout not found');
     if (!workout.program.active) throw new BadRequestException('The workout is not in the active program');
@@ -79,10 +79,10 @@ export class SessionsService {
           create: workout.items.map((item) => ({
             exerciseId: item.exerciseId,
             position: item.position,
-            repMin: item.repMin,
-            repMax: item.repMax,
+            repMin: item.exercise.repMin,
+            repMax: item.exercise.repMax,
             supersetGroup: item.supersetGroup,
-            sets: { create: Array.from({ length: item.sets }, (_, index) => ({ index })) },
+            sets: { create: Array.from({ length: item.exercise.sets }, (_, index) => ({ index })) },
           })),
         },
       },

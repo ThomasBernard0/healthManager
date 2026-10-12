@@ -82,9 +82,47 @@ describe('SessionsService.finish: superset partner skipped', () => {
   });
 });
 
+describe('SessionsService.start: the scheme of each exercise', () => {
+  it('creates the sets of the exercise and snapshots its rep range', async () => {
+    const workout = {
+      id: 'w1',
+      name: 'Pull',
+      program: { active: true },
+      items: [
+        { exerciseId: 'x1', position: 0, supersetGroup: null, exercise: { sets: 3, repMin: 6, repMax: 10 } },
+        { exerciseId: 'x2', position: 1, supersetGroup: null, exercise: { sets: 4, repMin: 8, repMax: 12 } },
+      ],
+    };
+    const create = vi.fn().mockRejectedValue(PASSED);
+    const prisma = {
+      session: { findFirst: () => Promise.resolve(null), create },
+      workout: { findUnique: () => Promise.resolve(workout) },
+    };
+    await expect(
+      new SessionsService(prisma as unknown as PrismaService, {} as ProgressionService).start('w1'),
+    ).rejects.toBe(PASSED);
+    expect(create.mock.calls[0][0].data.exercises.create).toEqual([
+      { exerciseId: 'x1', position: 0, repMin: 6, repMax: 10, supersetGroup: null, sets: { create: [{ index: 0 }, { index: 1 }, { index: 2 }] } },
+      {
+        exerciseId: 'x2',
+        position: 1,
+        repMin: 8,
+        repMax: 12,
+        supersetGroup: null,
+        sets: { create: [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }] },
+      },
+    ]);
+  });
+});
+
 describe('SessionsService.start: active program only', () => {
   function starting(active: boolean) {
-    const workout = { id: 'w1', name: 'Push A', items: [{ exerciseId: 'x1' }], program: { active } };
+    const workout = {
+      id: 'w1',
+      name: 'Push A',
+      items: [{ exerciseId: 'x1', exercise: { sets: 4, repMin: 8, repMax: 12 } }],
+      program: { active },
+    };
     const prisma = {
       session: { findFirst: () => Promise.resolve(null), create: () => Promise.reject(PASSED) },
       workout: { findUnique: () => Promise.resolve(workout) },
