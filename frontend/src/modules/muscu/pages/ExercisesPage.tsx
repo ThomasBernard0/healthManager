@@ -10,7 +10,7 @@ import { MuscuLayout } from '../components/MuscuLayout'
 import { MUSCU_PATH, NEW_EXERCISE_PATH } from '../routes'
 import page from './page.module.css'
 
-/** Exercices: the bank, searchable (accents/case ignored). */
+/** Exercices: my exercises, searchable (accents/case ignored). */
 export default function ExercisesPage() {
   const navigate = useNavigate()
   const location = useLocation()

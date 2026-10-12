@@ -4,7 +4,10 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import {
   exercisesCreate,
   exercisesGet,
+  exercisesImage,
   exercisesList,
+  exercisesRemoveImage,
+  exercisesSetImage,
   exercisesUpdate,
   exercisesHistory,
 } from '../../../api/generated/endpoints/exercises/exercises'
@@ -20,7 +23,11 @@ vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({
   exercisesCreate: vi.fn(),
   exercisesUpdate: vi.fn(),
   exercisesHistory: vi.fn(),
+  exercisesImage: vi.fn(),
+  exercisesSetImage: vi.fn(),
+  exercisesRemoveImage: vi.fn(),
 }))
+vi.mock('../resizeImage', () => ({ resizeImage: vi.fn(async (file: Blob) => file) }))
 
 const ROWING: ExerciseDto = {
   id: 'r1',
@@ -28,7 +35,7 @@ const ROWING: ExerciseDto = {
   equipment: 'barbell',
   primaryMuscles: ['back'],
   secondaryMuscles: ['biceps', 'shoulders_rear'],
-  imageUrl: '/exercises/rowing-barre.svg',
+  imageVersion: null,
   workouts: [],
 }
 const ECARTE: ExerciseDto = {
@@ -37,7 +44,7 @@ const ECARTE: ExerciseDto = {
   equipment: 'cable',
   primaryMuscles: ['chest'],
   secondaryMuscles: ['shoulders_front'],
-  imageUrl: null,
+  imageVersion: null,
   workouts: [],
 }
 
@@ -61,7 +68,7 @@ function renderAt(path: string) {
 describe('Exercices', () => {
   beforeEach(() => vi.resetAllMocks())
 
-  it('lists the bank with muscles and equipment, searchable without accents', async () => {
+  it('lists the exercises with muscles and equipment, searchable without accents', async () => {
     vi.mocked(exercisesList).mockResolvedValue([ECARTE, ROWING])
     const user = userEvent.setup()
     renderAt('/muscu/exercices')
@@ -173,6 +180,48 @@ describe('Créer / Modifier l’exercice', () => {
       equipment: 'barbell',
       primaryMuscles: ['back', 'biceps'],
       secondaryMuscles: ['shoulders_rear'],
+    })
+  })
+
+  describe('image', () => {
+    const PHOTO = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' })
+    const WITH_IMAGE = { ...ROWING, id: 'r2', imageVersion: '1' }
+
+    beforeEach(() => {
+      vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:picture') }))
+      vi.mocked(exercisesImage).mockResolvedValue(new Blob(['<svg/>'], { type: 'image/svg+xml' }))
+    })
+
+    it('uploads the picked picture once the exercise is created', async () => {
+      vi.mocked(exercisesCreate).mockResolvedValue({ ...ECARTE, id: 'new1' })
+      vi.mocked(exercisesSetImage).mockResolvedValue({ ...ECARTE, id: 'new1', imageVersion: '2' })
+      vi.mocked(exercisesGet).mockResolvedValue({ ...ECARTE, id: 'new1' })
+      const user = userEvent.setup()
+      renderAt('/muscu/exercices/nouveau')
+      await user.type(await screen.findByRole('textbox', { name: 'Nom' }), 'Pull-over')
+      await user.click(screen.getByRole('button', { name: 'Haltères' }))
+      await user.click(screen.getByRole('button', { name: 'Dos : non travaillé' }))
+      await user.click(screen.getByRole('button', { name: 'Dos : secondaire' }))
+      expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull()
+      await user.upload(screen.getByLabelText('Choisir une image'), PHOTO)
+      expect(await screen.findByLabelText('Remplacer')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+      await waitFor(() => expect(exercisesSetImage).toHaveBeenCalledWith('new1', { file: PHOTO }))
+      expect(exercisesRemoveImage).not.toHaveBeenCalled()
+    })
+
+    it('loads the stored picture and removes it on save', async () => {
+      vi.mocked(exercisesGet).mockResolvedValue(WITH_IMAGE)
+      vi.mocked(exercisesUpdate).mockResolvedValue(WITH_IMAGE)
+      vi.mocked(exercisesRemoveImage).mockResolvedValue({ ...WITH_IMAGE, imageVersion: null })
+      const user = userEvent.setup()
+      renderAt('/muscu/exercices/r2/modifier')
+      await user.click(await screen.findByRole('button', { name: 'Supprimer' }))
+      expect(exercisesImage).toHaveBeenCalledWith('r2', { v: '1' })
+      expect(screen.getByLabelText('Choisir une image')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+      await waitFor(() => expect(exercisesRemoveImage).toHaveBeenCalledWith('r2'))
+      expect(exercisesSetImage).not.toHaveBeenCalled()
     })
   })
 })

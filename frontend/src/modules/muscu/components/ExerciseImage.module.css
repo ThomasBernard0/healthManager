@@ -1,4 +1,4 @@
-/* Margin around the drawing; pages can override it (e.g. room for pills laid over the bottom). */
+/* Margin around a line-art drawing; pages can override it (e.g. room for pills laid over the bottom). */
 .frame {
   --drawing-inset: 4%;
   display: block;
@@ -17,4 +17,12 @@
   mask-position: center;
   -webkit-mask-size: contain;
   mask-size: contain;
+}
+
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

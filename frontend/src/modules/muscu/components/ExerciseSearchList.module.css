@@ -25,14 +25,3 @@
   color: var(--color-ink);
   font-size: var(--font-size-14);
 }
-
-.credit {
-  align-self: center;
-  font-size: var(--font-size-11);
-  color: var(--color-muted);
-  text-decoration: none;
-}
-
-.credit:hover {
-  color: var(--color-ink);
-}

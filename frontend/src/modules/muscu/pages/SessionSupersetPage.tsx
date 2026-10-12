@@ -13,7 +13,7 @@ import { ChevronLeft } from '../../../core/ui/icons'
 import { useToast } from '../../../core/ui/toastContext'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
-import { ExerciseDrawing } from '../components/ExerciseDrawing'
+import { ExerciseImage } from '../components/ExerciseImage'
 import { FeelingButtons } from '../components/FeelingButtons'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SetRow, SetTable } from '../components/SetTable'
@@ -135,7 +135,7 @@ function Logger({ a, b, onSaved }: LoggerProps) {
           return (
             <Link key={entry.id} to={exercisePath(entry.exercise.id)} className={styles.exercise}>
               <span className={styles.imageBox}>
-                <ExerciseDrawing imageUrl={entry.exercise.imageUrl} className={styles.image} />
+                <ExerciseImage exercise={entry.exercise} className={styles.image} />
                 <span className={styles.imageBadge}>
                   <SupersetBadge letter={LETTERS[which]} />
                 </span>

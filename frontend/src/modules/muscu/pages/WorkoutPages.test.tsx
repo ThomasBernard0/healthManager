@@ -55,7 +55,7 @@ const ex = (id: string, name: string, primary: ExerciseDto['primaryMuscles'] = [
   equipment: 'machine',
   primaryMuscles: primary,
   secondaryMuscles: [],
-  imageUrl: null,
+  imageVersion: null,
   workouts: [],
 })
 const TIRAGE = ex('t', 'Tirage vertical prise large')
@@ -288,7 +288,7 @@ describe('Modifier la séance', () => {
     vi.mocked(exercisesList).mockResolvedValue([])
   })
 
-  it('creates a workout from the bank in picking mode, 4 × 8–12 by default', async () => {
+  it('creates a workout from my exercises in picking mode, 4 × 8–12 by default', async () => {
     vi.mocked(exercisesList).mockResolvedValue([CURL, ROWING])
     vi.mocked(workoutsCreate).mockResolvedValue(PULL)
     const user = userEvent.setup()

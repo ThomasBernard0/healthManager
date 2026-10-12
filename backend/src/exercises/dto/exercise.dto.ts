@@ -44,10 +44,10 @@ export class ExerciseDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: '/exercises/rowing-barre.svg',
-    description: 'Same-origin path of the line-art drawing (served with the app, tint it with a CSS mask)',
+    example: '1791800000000',
+    description: 'Changes with the image (null: no image). Pass it as ?v= to GET /exercises/:id/image',
   })
-  imageUrl: string | null;
+  imageVersion: string | null;
 
   @ApiProperty({ type: [ExerciseWorkoutDto], description: 'Active program first, then in program and rotation order' })
   workouts: ExerciseWorkoutDto[];

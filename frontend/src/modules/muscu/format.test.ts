@@ -21,7 +21,7 @@ const ex = (
   equipment: 'barbell',
   primaryMuscles: p,
   secondaryMuscles: s,
-  imageUrl: null,
+  imageVersion: null,
   workouts,
 })
 

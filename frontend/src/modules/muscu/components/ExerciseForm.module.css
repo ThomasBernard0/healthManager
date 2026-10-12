@@ -40,6 +40,41 @@
   font-size: var(--font-size-13);
 }
 
+.picture {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.tile {
+  width: var(--size-exercise-thumb-large);
+  height: var(--size-exercise-thumb-large);
+  flex-shrink: 0;
+  border-radius: var(--radius-xl);
+}
+
+.filePill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.filePill:focus-within {
+  border-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* The pill is the control: the native input stays focusable but unseen. */
+.file {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .secondary {
   border-color: var(--color-accent);
   color: var(--color-ink);

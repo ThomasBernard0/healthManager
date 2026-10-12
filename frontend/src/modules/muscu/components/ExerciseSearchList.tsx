@@ -7,12 +7,9 @@ import page from '../pages/page.module.css'
 import { ExerciseRow } from './ExerciseRow'
 import styles from './ExerciseSearchList.module.css'
 
-/** Where the exercise drawings come from (their licence asks for credit). */
-const DRAWINGS_SOURCE = 'https://github.com/everkinetic/data'
-
 interface ExerciseSearchListProps {
   exercises: ExerciseDto[]
-  /** Rows link to the Fiche exercice (the bank), or not (picking for a workout). */
+  /** Rows link to the Fiche exercice, or not (picking for a workout). */
   linkRows: boolean
   /** Shown at the end of each row (picking: "+" or the workout name). */
   action?: (exercise: ExerciseDto) => ReactNode
@@ -42,10 +39,6 @@ export function ExerciseSearchList({ exercises, linkRows, action }: ExerciseSear
         ))}
         {visible.length === 0 && <li className={page.empty}>{fr.muscu.noExercise}</li>}
       </ul>
-
-      <a className={styles.credit} href={DRAWINGS_SOURCE} target="_blank" rel="noreferrer">
-        {fr.muscu.drawingsCredit}
-      </a>
     </>
   )
 }

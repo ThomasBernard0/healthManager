@@ -38,7 +38,7 @@
   overflow: hidden;
 }
 
-/* Room under the drawing for the muscle pills. */
+/* Room under a line-art drawing for the muscle pills. */
 .image .drawing {
   --drawing-inset: var(--space-12) var(--space-12) calc(var(--space-40) + var(--space-8));
   width: 100%;
@@ -52,7 +52,7 @@
   gap: var(--space-16);
 }
 
-/* Desktop: drawing beside the chart, the table below. */
+/* Desktop: picture beside the chart, the table below. */
 @media (min-width: 1024px) {
   .top {
     flex-direction: row;

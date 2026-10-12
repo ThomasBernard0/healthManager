@@ -7,6 +7,8 @@
 import type {
   ExerciseDto,
   ExerciseHistoryEntryDto,
+  ExerciseImageUploadDto,
+  ExercisesImageParams,
   ExercisesListParams,
   SaveExerciseDto
 } from '../../model';
@@ -63,8 +65,43 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
+  export const exercisesImage = (
+    id: string,
+    params?: ExercisesImageParams,
+ options?: SecondParameter<typeof apiClient<Blob>>,) => {
+      return apiClient<Blob>(
+      {url: `/api/exercises/${id}/image`, method: 'GET',
+        params,
+        responseType: 'blob'
+    },
+      options);
+    }
+  export const exercisesSetImage = (
+    id: string,
+    exerciseImageUploadDto: ExerciseImageUploadDto,
+ options?: SecondParameter<typeof apiClient<ExerciseDto>>,) => {const formData = new FormData();
+formData.append(`file`, exerciseImageUploadDto.file)
+
+      return apiClient<ExerciseDto>(
+      {url: `/api/exercises/${id}/image`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  export const exercisesRemoveImage = (
+    id: string,
+ options?: SecondParameter<typeof apiClient<ExerciseDto>>,) => {
+      return apiClient<ExerciseDto>(
+      {url: `/api/exercises/${id}/image`, method: 'DELETE'
+    },
+      options);
+    }
   export type ExercisesListResult = NonNullable<Awaited<ReturnType<typeof exercisesList>>>
 export type ExercisesCreateResult = NonNullable<Awaited<ReturnType<typeof exercisesCreate>>>
 export type ExercisesGetResult = NonNullable<Awaited<ReturnType<typeof exercisesGet>>>
 export type ExercisesUpdateResult = NonNullable<Awaited<ReturnType<typeof exercisesUpdate>>>
 export type ExercisesHistoryResult = NonNullable<Awaited<ReturnType<typeof exercisesHistory>>>
+export type ExercisesImageResult = NonNullable<Awaited<ReturnType<typeof exercisesImage>>>
+export type ExercisesSetImageResult = NonNullable<Awaited<ReturnType<typeof exercisesSetImage>>>
+export type ExercisesRemoveImageResult = NonNullable<Awaited<ReturnType<typeof exercisesRemoveImage>>>

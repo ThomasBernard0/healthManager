@@ -53,8 +53,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png}'],
-        // App shell only: exercise drawings load (and HTTP-cache) when a page shows them.
-        globIgnores: ['exercises/**'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,

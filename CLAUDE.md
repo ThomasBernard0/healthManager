@@ -31,9 +31,6 @@ shared/                  @healthmanager/shared — pure TS, no deps (nutrients, 
                          supersets: interleaveSets, blocks, superset context)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
-  data/exercises/        Musculation bank (TSV: French names, muscles mapped by hand) + convert.mjs → line-art drawings
-                         from Everkinetic (CC BY-SA 4.0, credited on Exercices) in frontend/public/exercises/*.svg
-                         (served with the SPA, not under /api, not precached; tinted with a CSS mask)
   prisma/                schema.prisma + migrations/
   prisma7.config.ts      Prisma CLI config (schema path, DATABASE_URL)
   src/
@@ -45,7 +42,7 @@ backend/                 NestJS API
     common/              NutrientsDto, Decimal helpers, date/time validators
     <domain>/            one module per domain: *.module.ts, *.controller.ts, *.service.ts, dto/
     foods/open-food-facts.client.ts   Open Food Facts lookup (server-side, 8 s timeout, 502 if unreachable)
-    scripts/             export-openapi.ts, import-exercises.ts (runs on every deploy, idempotent)
+    scripts/             export-openapi.ts
     generated/prisma/    Prisma client (generated, gitignored)
   test/                  e2e tests (*.e2e-spec.ts)
 frontend/                React SPA
@@ -75,7 +72,7 @@ Root:
 | Command                 | What it does                                                          |
 | ----------------------- | --------------------------------------------------------------------- |
 | `npm run build`         | `npm ci` both apps, `prisma generate` + `nest build`, `vite build`    |
-| `npm start`             | `prisma migrate deploy`, exercises import, then start Nest (Railway) |
+| `npm start`             | `prisma migrate deploy`, then start Nest (Railway)                    |
 | `npm run api:sync`      | `export:openapi` (backend) + `generate-client` (frontend)             |
 | `npm run lint` / `test` | lint / unit tests (`shared`, backend, frontend)                       |
 | `npm run dev:backend` / `dev:frontend` | dev servers                                            |
@@ -90,7 +87,6 @@ Backend (`cd backend`):
 | `npm run export:openapi`                 | build + write `../frontend/openapi.json` (no DB needed)      |
 | `npx prisma migrate dev --name <x>`     | create + apply a dev migration (needs a DB)                  |
 | `npm run prisma:generate`                | regenerate the Prisma client                                 |
-| `node dist/scripts/import-exercises.js`  | load the exercise bank into `Exercise` (new keys only; `--force` updates) |
 
 Frontend (`cd frontend`):
 
@@ -141,6 +137,11 @@ After editing `shared/src`, rebuild it so the apps see the change.
   created with the barcode. Camera scan on mobile only (native `BarcodeDetector`, else the ZXing wasm ponyfill loaded
   on demand from our origin); no Scanner button on desktop. `zxing-wasm` is pinned to the exact version
   `barcode-detector` expects (a test checks it): bump them together.
+- **No seeded data**: foods and exercises are only what was created in the app (or scanned). Nothing is imported on deploy.
+- **Exercise images** live in Postgres (`ExerciseImage`, apart from `Exercise` so lists never load the bytes) and are
+  served by `GET /api/exercises/:id/image?v=<imageVersion>` (immutable cache). The frontend loads them through the
+  generated client (`useExerciseImage`: blob → object URL, the access key can't go in an `<img src>`). Uploads
+  (Créer / Modifier l'exercice) are resized to a JPEG on the device; an SVG (the old line drawings) is tinted with a CSS mask.
 - **PWA**: the service worker precaches the app shell only; `/api` is never cached (offline → "Chargement impossible").
   It updates itself (`autoUpdate`). Not active in `vite` dev; test it on a build served by Nest.
 - **All UI strings live in `frontend/src/i18n/fr.ts`** (French only, no helper/explanatory text);

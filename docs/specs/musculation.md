@@ -12,10 +12,10 @@ Second module of healthManager, next to Alimentation. Same stack, same conventio
 ## 2. Data model
 
 ```ts
-// Exercise — the exercise bank (seeded, editable)
+// Exercise — my exercises (created in the app, editable)
 Exercise { id, name, equipment: "barbell" | "dumbbell" | "machine" | "cable" | "bodyweight",
            primaryMuscles: Muscle[], secondaryMuscles: Muscle[],
-           imageUrl?, archived }
+           image? /* uploaded picture, stored in the database */, archived }
 
 // Program — a group of workouts; exactly one is active
 Program { id, name, position /* order in Mes programmes */, active, activatedAt /* last activation */ }
@@ -36,7 +36,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
        | "triceps" | "forearms" | "abs" | "quads" | "hamstrings" | "glutes" | "calves"
 ```
 
-- Exercise bank seeded from **free-exercise-db** (public domain, images + muscles), names translated to French, only the ~40 most common exercises imported. Images stored with the app, not hot-linked. Never Basic-Fit images.
+- No seeded exercise bank: exercises are created in the app. An exercise can have one image, uploaded from Créer / Modifier l'exercice and stored in the database (served by the API, not with the app). Never Basic-Fit images.
 - **Programs**: there is always exactly one active program (the existing workouts went into "Mon programme", active). A new program is created inactive. **Activer** makes it the only active one and its rotation **restarts at its first workout** (also when re-activating a program used before). The active program can't be deleted; deleting another one deletes its workouts (the history of their sessions is kept).
 - **Next workout** = in the active program, the workout after the last session finished since its activation, in `position` order (wraps around); none yet → its first workout. The user can start any other workout of the active program ("Démarrer cette séance", a link at the bottom of Modifier la séance); the rotation then continues after the one finished. Workouts of an inactive program can't be started (no link, and the API refuses).
 
@@ -124,7 +124,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Séances**: its workouts in rotation order ("Actif" tag if it is the active one), tap → Modifier la séance; "+ Nouvelle séance" adds one to this program.
 
 ### Modifier la séance (mobile `muscu-5-modifier-seance`)
-- Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit) and a chevron → its Fiche exercice, swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.
+- Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit) and a chevron → its Fiche exercice, swipe to remove, "+ Ajouter un exercice" → my exercises in picking mode. Delete workout in the header.
 - "Démarrer cette séance" link at the bottom: only in the active program, when no session is in progress.
 
 ### Exercices (mobile `muscu-6-exercices`)
@@ -139,7 +139,7 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 ## 5. Build order
 
 1. Module switcher + empty Musculation module and routes.
-2. Exercise bank: schema, seed import, Exercices screen, Fiche exercice without chart.
+2. Exercises: schema, Exercices screen, Fiche exercice without chart.
 3. Workouts: create/edit, rotation, Accueil.
 4. Séance: list, exercise logging with target vs done, resume after reload, Terminer.
 5. Progression rules in `shared/` + targets.

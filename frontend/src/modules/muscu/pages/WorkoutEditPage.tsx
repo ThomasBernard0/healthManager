@@ -358,7 +358,7 @@ function useReorderHandle(onMove: (steps: number) => void) {
 function ItemContent({ item, onEdit }: { item: Item; onEdit: () => void }) {
   return (
     <>
-      <ExerciseThumb imageUrl={item.exercise.imageUrl} size="sm" />
+      <ExerciseThumb exercise={item.exercise} size="sm" />
       <span className={styles.itemText}>
         <span className={styles.itemName}>{item.exercise.name}</span>
         <span className={styles.itemMeta}>{primarySubtitle(item.exercise)}</span>
@@ -477,7 +477,7 @@ interface ExercisePickerProps {
   onClose: () => void
 }
 
-/** The bank in picking mode: "+" adds to the workout; exercises already in it show its name. */
+/** My exercises in picking mode: "+" adds to the workout; exercises already in it show its name. */
 function ExercisePicker({ workoutName, inWorkout, onAdd, onCreate, onClose }: ExercisePickerProps) {
   const exercises = useAsync(() => exercisesList(), 'exercises')
   return (
