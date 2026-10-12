@@ -11,7 +11,7 @@ import {
 import type { ExerciseDto, WorkoutDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
-import { ChevronLeft, ChevronRight, Grip, Play, Plus, Trash } from '../../../core/ui/icons'
+import { ChevronLeft, ChevronRight, Grip, LinkIcon, LinkOff, Play, Plus, Trash } from '../../../core/ui/icons'
 import { Sheet } from '../../../core/ui/Sheet'
 import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
@@ -22,9 +22,10 @@ import { ExerciseForm } from '../components/ExerciseForm'
 import { ExerciseSearchList } from '../components/ExerciseSearchList'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
+import { SupersetBadge } from '../components/SupersetBadge'
 import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSheet'
 import { primarySubtitle } from '../format'
-import { moveItem } from '../reorder'
+import { moveBlock, moveItem, normalizeGroups, toBlocks } from '../reorder'
 import { exercisePath, MUSCU_PATH } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
@@ -32,6 +33,8 @@ import styles from './WorkoutEditPage.module.css'
 
 interface Item extends ItemSettings {
   exercise: ExerciseDto
+  /** Superset: shared with the item next to it (null: solo). */
+  group: string | null
 }
 
 /** A new exercise in a workout: 4 × 8–12. */
@@ -84,24 +87,39 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
-  const add = (exercise: ExerciseDto) => setItems((list) => [...list, { exercise, ...DEFAULT_SETTINGS }])
+  const blocks = toBlocks(items)
+  const add = (exercise: ExerciseDto) => setItems((list) => [...list, { exercise, ...DEFAULT_SETTINGS, group: null }])
 
   function remove(exerciseId: string) {
     const index = items.findIndex((i) => i.exercise.id === exerciseId)
     if (index === -1) return
     const removed = items[index]
-    setItems((list) => list.filter((i) => i.exercise.id !== exerciseId))
+    // Its superset partner becomes solo, and is linked again if the removal is undone.
+    const partner = removed.group ? items.find((i) => i.group === removed.group && i !== removed) : undefined
+    setItems((list) => normalizeGroups(list.filter((i) => i.exercise.id !== exerciseId)))
     toast({
       message: fr.muscu.workout.removed(removed.exercise.name),
       action: {
         label: fr.common.cancel,
         onClick: () =>
-          setItems((list) =>
-            list.some((i) => i.exercise.id === exerciseId) ? list : moveItem([...list, removed], list.length, index),
-          ),
+          setItems((list) => {
+            if (list.some((i) => i.exercise.id === exerciseId)) return list
+            const restored = moveItem([...list, removed], list.length, index)
+            return normalizeGroups(
+              restored.map((i) => (i.exercise.id === partner?.exercise.id ? { ...i, group: removed.group } : i)),
+            )
+          }),
       },
     })
   }
+
+  /** Superset of the exercise and the one after it (the id only has to be unique in the workout). */
+  const link = (exerciseId: string) =>
+    setItems((list) => {
+      const index = list.findIndex((i) => i.exercise.id === exerciseId)
+      return list.map((i, k) => (k === index || k === index + 1 ? { ...i, group: exerciseId } : i))
+    })
+  const unlink = (group: string) => setItems((list) => list.map((i) => (i.group === group ? { ...i, group: null } : i)))
 
   async function save(e: FormEvent) {
     e.preventDefault()
@@ -109,7 +127,13 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
     setStatus('busy')
     const body = {
       name: name.trim(),
-      items: items.map((i) => ({ exerciseId: i.exercise.id, sets: i.sets, repMin: i.repMin, repMax: i.repMax })),
+      items: items.map((i) => ({
+        exerciseId: i.exercise.id,
+        sets: i.sets,
+        repMin: i.repMin,
+        repMax: i.repMax,
+        ...(i.group ? { group: i.group } : {}),
+      })),
     }
     try {
       if (workout) await workoutsUpdate(workout.id, body)
@@ -164,15 +188,29 @@ function Editor({ workout }: { workout: WorkoutDto | null }) {
 
         {items.length > 0 && (
           <ul className={styles.list}>
-            {items.map((item, index) => (
-              <ItemRow
-                key={item.exercise.id}
-                item={item}
-                onMove={(steps) => setItems((list) => moveItem(list, index, index + steps))}
-                onEdit={() => editing.open(item.exercise.id)}
-                onRemove={() => remove(item.exercise.id)}
-              />
-            ))}
+            {blocks.map((block, index) => {
+              const [item, second] = block
+              const onMove = (steps: number) => setItems((list) => moveBlock(list, index, steps))
+              return second ? (
+                <SupersetBlock
+                  key={item.group}
+                  items={[item, second]}
+                  onMove={onMove}
+                  onEdit={(exerciseId) => editing.open(exerciseId)}
+                  onUnlink={() => unlink(item.group!)}
+                />
+              ) : (
+                <ItemRow
+                  key={item.exercise.id}
+                  item={item}
+                  onMove={onMove}
+                  onEdit={() => editing.open(item.exercise.id)}
+                  onRemove={() => remove(item.exercise.id)}
+                  // Only with the next exercise, when it is not in a superset either.
+                  onLink={blocks[index + 1]?.length === 1 ? () => link(item.exercise.id) : undefined}
+                />
+              )
+            })}
           </ul>
         )}
 
@@ -267,42 +305,84 @@ interface ItemRowProps {
   onMove: (steps: number) => void
   onEdit: () => void
   onRemove: () => void
+  /** Relier en superset with the next exercise (absent: not possible). */
+  onLink?: () => void
 }
 
-/** One exercise: drag handle (or ↑/↓ keys), thumbnail, name, "4 × 8–12" chip; swipe left to remove. */
-function ItemRow({ item, onMove, onEdit, onRemove }: ItemRowProps) {
+/**
+ * Drag handle of a row (or ↑/↓ keys): each time the pointer travels half the row, it moves one place.
+ * A superset is one row.
+ */
+function useReorderHandle(onMove: (steps: number) => void) {
   const row = useRef<HTMLLIElement>(null)
   const drag = useRef<{ y: number } | null>(null)
-  const swipe = useRef<{ x: number; dx: number } | null>(null)
-  const [offset, setOffset] = useState(0)
   const [dragging, setDragging] = useState(false)
-
-  // Reorder: each time the pointer travels half a row, the item moves one place.
-  function onHandleDown(e: PointerEvent<HTMLButtonElement>) {
-    e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { y: e.clientY }
-    setDragging(true)
-  }
-  function onHandleMove(e: PointerEvent<HTMLButtonElement>) {
-    if (!drag.current || !row.current) return
-    const height = row.current.offsetHeight
-    const delta = e.clientY - drag.current.y
-    if (Math.abs(delta) > height / 2) {
-      const steps = Math.sign(delta)
-      drag.current.y += steps * height
-      onMove(steps)
-    }
-  }
-  function onHandleUp() {
+  const up = () => {
     drag.current = null
     setDragging(false)
   }
-  function onHandleKey(e: KeyboardEvent<HTMLButtonElement>) {
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault()
-      onMove(e.key === 'ArrowUp' ? -1 : 1)
-    }
+  return {
+    row,
+    dragging,
+    handle: {
+      onPointerDown(e: PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation()
+        e.currentTarget.setPointerCapture(e.pointerId)
+        drag.current = { y: e.clientY }
+        setDragging(true)
+      },
+      onPointerMove(e: PointerEvent<HTMLButtonElement>) {
+        if (!drag.current || !row.current) return
+        const height = row.current.offsetHeight
+        const delta = e.clientY - drag.current.y
+        if (Math.abs(delta) > height / 2) {
+          const steps = Math.sign(delta)
+          drag.current.y += steps * height
+          onMove(steps)
+        }
+      },
+      onPointerUp: up,
+      onPointerCancel: up,
+      onKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault()
+          onMove(e.key === 'ArrowUp' ? -1 : 1)
+        }
+      },
+    },
   }
+}
+
+/** Thumbnail, name, "4 × 8–12" chip and link to the Fiche exercice (after the handle or the A/B badge). */
+function ItemContent({ item, onEdit }: { item: Item; onEdit: () => void }) {
+  return (
+    <>
+      <ExerciseThumb imageUrl={item.exercise.imageUrl} size="sm" />
+      <span className={styles.itemText}>
+        <span className={styles.itemName}>{item.exercise.name}</span>
+        <span className={styles.itemMeta}>{primarySubtitle(item.exercise)}</span>
+      </span>
+      <button type="button" className={styles.chip} aria-label={fr.muscu.workout.edit(item.exercise.name)} onClick={onEdit}>
+        {fr.muscu.setsReps(item.sets, item.repMin, item.repMax)}
+      </button>
+      {/* Fiche exercice (progression, history). Not part of the swipe. */}
+      <Link
+        to={exercisePath(item.exercise.id)}
+        className={styles.open}
+        aria-label={fr.muscu.workout.open(item.exercise.name)}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <ChevronRight size={18} />
+      </Link>
+    </>
+  )
+}
+
+/** One exercise: drag handle (or ↑/↓ keys), thumbnail, name, "4 × 8–12" chip; swipe left to remove. */
+function ItemRow({ item, onMove, onEdit, onRemove, onLink }: ItemRowProps) {
+  const { row, dragging, handle } = useReorderHandle(onMove)
+  const swipe = useRef<{ x: number; dx: number } | null>(null)
+  const [offset, setOffset] = useState(0)
 
   // Swipe to remove (horizontal only: vertical scrolling stays native).
   function onRowDown(e: PointerEvent<HTMLDivElement>) {
@@ -337,39 +417,51 @@ function ItemRow({ item, onMove, onEdit, onRemove }: ItemRowProps) {
           type="button"
           className={styles.handle}
           aria-label={fr.muscu.workout.move(item.exercise.name)}
-          onPointerDown={(e) => {
-            e.stopPropagation()
-            onHandleDown(e)
-          }}
-          onPointerMove={onHandleMove}
-          onPointerUp={onHandleUp}
-          onPointerCancel={onHandleUp}
-          onKeyDown={onHandleKey}
+          {...handle}
         >
           <Grip />
         </button>
-        <ExerciseThumb imageUrl={item.exercise.imageUrl} size="sm" />
-        <span className={styles.itemText}>
-          <span className={styles.itemName}>{item.exercise.name}</span>
-          <span className={styles.itemMeta}>{primarySubtitle(item.exercise)}</span>
-        </span>
-        <button
-          type="button"
-          className={styles.chip}
-          aria-label={fr.muscu.workout.edit(item.exercise.name)}
-          onClick={onEdit}
-        >
-          {fr.muscu.setsReps(item.sets, item.repMin, item.repMax)}
+        <ItemContent item={item} onEdit={onEdit} />
+      </div>
+      {onLink && (
+        <button type="button" className={styles.link} aria-label={fr.muscu.superset.link} onClick={onLink}>
+          <LinkIcon />
         </button>
-        {/* Fiche exercice (progression, history). Not part of the swipe. */}
-        <Link
-          to={exercisePath(item.exercise.id)}
-          className={styles.open}
-          aria-label={fr.muscu.workout.open(item.exercise.name)}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <ChevronRight size={18} />
-        </Link>
+      )}
+    </li>
+  )
+}
+
+interface SupersetBlockProps {
+  items: [Item, Item]
+  /** Move the whole block by this many places (negative: up). */
+  onMove: (steps: number) => void
+  onEdit: (exerciseId: string) => void
+  onUnlink: () => void
+}
+
+/** A superset: one block moved by its accent bar, Délier, and its two exercises with their A / B badges. */
+function SupersetBlock({ items, onMove, onEdit, onUnlink }: SupersetBlockProps) {
+  const { row, dragging, handle } = useReorderHandle(onMove)
+  return (
+    <li ref={row} className={`${styles.item} ${styles.superset} ${dragging ? styles.dragging : ''}`}>
+      <button type="button" className={styles.blockHandle} aria-label={fr.muscu.superset.move} {...handle}>
+        <span className={styles.bar} />
+      </button>
+      <div className={styles.blockBody}>
+        <div className={styles.blockHead}>
+          <span className={styles.supersetLabel}>{fr.muscu.superset.label}</span>
+          <button type="button" className={styles.unlink} aria-label={fr.muscu.superset.unlinkLabel} onClick={onUnlink}>
+            <LinkOff />
+            {fr.muscu.superset.unlink}
+          </button>
+        </div>
+        {items.map((item, index) => (
+          <div key={item.exercise.id} className={styles.blockRow}>
+            <SupersetBadge letter={index === 0 ? 'A' : 'B'} />
+            <ItemContent item={item} onEdit={() => onEdit(item.exercise.id)} />
+          </div>
+        ))}
       </div>
     </li>
   )

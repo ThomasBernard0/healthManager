@@ -113,6 +113,13 @@ export const fr = {
       open: (name: string) => `Voir ${name}`,
       createExercise: '+ Créer un exercice',
     },
+    superset: {
+      label: 'Superset',
+      link: 'Relier en superset',
+      unlink: 'Délier',
+      unlinkLabel: 'Délier le superset',
+      move: 'Déplacer le superset',
+    },
     history: {
       progression: 'Progression',
       load: 'Charge',

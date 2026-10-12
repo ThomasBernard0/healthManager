@@ -367,6 +367,90 @@ describe('Modifier la séance', () => {
     })
   })
 
+  describe('supersets', () => {
+    const item = (exercise: ExerciseDto, group: string | null = null) => ({ exercise, sets: 4, repMin: 8, repMax: 12, group })
+    const saved = (exerciseId: string, group?: string) => ({ exerciseId, sets: 4, repMin: 8, repMax: 12, ...(group ? { group } : {}) })
+    const THREE: WorkoutDto = { ...PULL, items: [item(TIRAGE), item(ROWING), item(CURL)] }
+    const LINKED: WorkoutDto = { ...PULL, items: [item(TIRAGE), item(ROWING, 'g'), item(CURL, 'g')] }
+    const save = () => userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    it('links two consecutive exercises: one block with A and B, no link button around it', async () => {
+      vi.mocked(workoutsGet).mockResolvedValue(THREE)
+      vi.mocked(workoutsUpdate).mockResolvedValue(THREE)
+      const user = userEvent.setup()
+      renderAt('/muscu/seances/pull')
+
+      const links = await screen.findAllByRole('button', { name: 'Relier en superset' })
+      expect(links).toHaveLength(2)
+      await user.click(links[1])
+
+      const block = screen.getByRole('button', { name: 'Délier le superset' }).closest('li')!
+      expect(within(block).getByText('Superset')).toBeInTheDocument()
+      expect(within(block).getByText('A').parentElement).toHaveTextContent('Rowing barre')
+      expect(within(block).getByText('B').parentElement).toHaveTextContent('Curl haltères')
+      // Tirage is next to a superset: nothing left to link.
+      expect(screen.queryByRole('button', { name: 'Relier en superset' })).toBeNull()
+
+      await save()
+      expect(workoutsUpdate).toHaveBeenCalledWith('pull', {
+        name: 'Pull',
+        items: [saved('t'), saved('r', 'r'), saved('c', 'r')],
+      })
+    })
+
+    it('unlinks: both exercises stay, with their targets and their order', async () => {
+      vi.mocked(workoutsGet).mockResolvedValue({
+        ...LINKED,
+        items: [item(TIRAGE), { ...item(ROWING, 'g'), sets: 3, repMin: 12, repMax: 15 }, item(CURL, 'g')],
+      })
+      vi.mocked(workoutsUpdate).mockResolvedValue(THREE)
+      const user = userEvent.setup()
+      renderAt('/muscu/seances/pull')
+
+      await user.click(await screen.findByRole('button', { name: 'Délier le superset' }))
+      expect(screen.queryByText('Superset')).toBeNull()
+      expect(screen.getAllByRole('button', { name: 'Relier en superset' })).toHaveLength(2)
+
+      await save()
+      expect(workoutsUpdate).toHaveBeenCalledWith('pull', {
+        name: 'Pull',
+        items: [saved('t'), { exerciseId: 'r', sets: 3, repMin: 12, repMax: 15 }, saved('c')],
+      })
+    })
+
+    it('moves the superset as one block, and an exercise over it', async () => {
+      vi.mocked(workoutsGet).mockResolvedValue(LINKED)
+      vi.mocked(workoutsUpdate).mockResolvedValue(LINKED)
+      const user = userEvent.setup()
+      renderAt('/muscu/seances/pull')
+
+      ;(await screen.findByRole('button', { name: 'Déplacer le superset' })).focus()
+      await user.keyboard('{ArrowUp}')
+      await save()
+      expect(workoutsUpdate).toHaveBeenLastCalledWith('pull', {
+        name: 'Pull',
+        items: [saved('r', 'g'), saved('c', 'g'), saved('t')],
+      })
+    })
+
+    it('edits the sets of an exercise of a superset; removing it makes the other solo, Annuler links them again', async () => {
+      vi.mocked(workoutsGet).mockResolvedValue(LINKED)
+      const user = userEvent.setup()
+      renderAt('/muscu/seances/pull')
+
+      await user.click(await screen.findByRole('button', { name: 'Modifier Curl haltères : séries et répétitions' }))
+      const sheet = await screen.findByRole('dialog', { name: 'Curl haltères' })
+      await user.click(within(sheet).getByRole('button', { name: 'Retirer de la séance' }))
+      expect(screen.queryByText('Curl haltères')).toBeNull()
+      expect(screen.queryByText('Superset')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Déplacer Rowing barre' })).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Annuler' }))
+      const block = screen.getByRole('button', { name: 'Délier le superset' }).closest('li')!
+      expect(within(block).getByText('B').parentElement).toHaveTextContent('Curl haltères')
+    })
+  })
+
   it('removes an exercise with a swipe, and Annuler puts it back in place', async () => {
     vi.mocked(workoutsGet).mockResolvedValue(PULL)
     const user = userEvent.setup()
