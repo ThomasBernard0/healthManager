@@ -15,7 +15,7 @@ Today the daily goal stores kcal, protein, carbs and fat independently, so they 
 
 ## Screen "Mon objectif"
 - Calories: stepper ±50 (unchanged).
-- Under it, a thin stacked bar showing the kcal split: protein (protein colour), carbs (carbs colour), fat (fat colour), proportional to 4P / 4C / 9F over kcal. Decorative (`aria-hidden`).
+- Under it, a thin stacked bar showing the kcal split: protein (protein colour), fat (fat colour), carbs (carbs colour, last like its row), proportional to 4P / 9F / 4C over kcal. Decorative (`aria-hidden`).
 - Rows: Protéines (input), Lipides (input), Glucides (read-only value on a ground-coloured box, `aria-label="Glucides par jour, calculés"`). Each row has its macro colour dot. Carbs update live while typing.
 - No helper text.
 

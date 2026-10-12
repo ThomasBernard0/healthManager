@@ -244,8 +244,8 @@ function SummaryCard({ data, isToday }: { data: DaySummaryDto; isToday: boolean 
 
       <div className={styles.macros}>
         <MacroBar macro="protein" eaten={eaten.protein} target={goal?.protein ?? null} />
-        <MacroBar macro="carbs" eaten={eaten.carbs} target={goal?.carbs ?? null} />
         <MacroBar macro="fat" eaten={eaten.fat} target={goal?.fat ?? null} />
+        <MacroBar macro="carbs" eaten={eaten.carbs} target={goal?.carbs ?? null} />
       </div>
     </section>
   )

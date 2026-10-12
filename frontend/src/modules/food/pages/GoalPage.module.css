@@ -66,7 +66,7 @@
   color: var(--color-muted);
 }
 
-/* kcal split: protein / carbs / fat */
+/* kcal split: protein / fat / carbs */
 .bar {
   display: flex;
   height: var(--space-10);
