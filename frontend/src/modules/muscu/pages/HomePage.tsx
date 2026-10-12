@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { programsList } from '../../../api/generated/endpoints/programs/programs'
@@ -36,8 +37,7 @@ export default function HomePage() {
   // Wait for both, so Démarrer never starts a second session.
   const ready = workouts.data && current.data
   const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
-  // Mes exercices: the ones of the active program (the others are on their program's page).
-  const mine = (exercises.data ?? []).filter((e) => e.workouts.some((w) => w.programActive))
+  const mine = exercises.data ?? []
 
   const failed = [workouts, programs].find((r) => r.status === 'error' && !r.data)
   const error = failed && (
@@ -126,17 +126,45 @@ function MyPrograms({ programs, workouts }: { programs: ProgramSummaryDto[]; wor
   )
 }
 
-/** Mes exercices: each exercise of my séances once, by name, opening its Fiche (progression, history). */
+/**
+ * Mes exercices: each exercise once, by name, opening its Fiche (progression, history). Tabs: the active program's,
+ * and those only in other programs.
+ */
 function MyExercises({ exercises }: { exercises: ExerciseDto[] }) {
-  if (exercises.length === 0) return null
+  const [tab, setTab] = useState<'active' | 'others'>('active')
+  const active = exercises.filter((e) => e.workouts.some((w) => w.programActive))
+  const others = exercises.filter((e) => e.workouts.length > 0 && !e.workouts.some((w) => w.programActive))
+  if (active.length === 0 && others.length === 0) return null
+  const shown = others.length > 0 && tab === 'others' ? others : active
+  const tabs = [
+    ['active', fr.muscu.home.activeExercises],
+    ['others', fr.muscu.home.otherExercises],
+  ] as const
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{fr.muscu.home.myExercises}</h2>
-      <ul className={page.list}>
-        {exercises.map((e) => (
-          <ExerciseRow key={e.id} exercise={e} link />
-        ))}
-      </ul>
+      {others.length > 0 && (
+        <div className={styles.segmented}>
+          {tabs.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={tab === value ? styles.segmentActive : styles.segment}
+              aria-pressed={tab === value}
+              onClick={() => setTab(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {shown.length > 0 && (
+        <ul className={page.list}>
+          {shown.map((e) => (
+            <ExerciseRow key={e.id} exercise={e} link />
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

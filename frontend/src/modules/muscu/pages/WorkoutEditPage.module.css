@@ -142,3 +142,18 @@
 .startLink:disabled {
   color: var(--color-muted);
 }
+
+/* → Fiche exercice, at the end of a row. */
+.open {
+  width: var(--size-badge);
+  height: var(--size-touch);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+}
+
+.open:hover {
+  color: var(--color-ink);
+}

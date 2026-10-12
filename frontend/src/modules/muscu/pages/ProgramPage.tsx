@@ -1,15 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { programsGet, programsRemove, programsUpdate } from '../../../api/generated/endpoints/programs/programs'
-import type { ExerciseDto, ProgramDto } from '../../../api/generated/model'
+import type { ProgramDto } from '../../../api/generated/model'
 import { invalidateData, useDataVersion } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronLeft, Trash } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
-import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { ActivateProgramSheet, WorkoutRows } from '../components/ProgramLists'
 import { MUSCU_PATH, newWorkoutPath } from '../routes'
@@ -17,12 +15,11 @@ import home from './HomePage.module.css'
 import page from './page.module.css'
 import styles from './ProgramPage.module.css'
 
-/** Programme: its name, séances and exercises; Activer when it isn't the active one. */
+/** Programme: its name and séances; Activer when it isn't the active one. */
 export default function ProgramPage() {
   const { id = '' } = useParams()
   const version = useDataVersion()
   const program = useAsync(() => programsGet(id), `program:${id}#${version}`)
-  const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
   const loaded = program.data?.id === id
 
   if (program.status === 'error' && !loaded) {
@@ -38,11 +35,10 @@ export default function ProgramPage() {
     )
   }
   if (!loaded) return <MuscuLayout>{null}</MuscuLayout>
-  const own = (exercises.data ?? []).filter((e) => e.workouts.some((w) => w.programId === id))
-  return <Program key={id} program={program.data!} exercises={own} />
+  return <Program key={id} program={program.data!} />
 }
 
-function Program({ program, exercises }: { program: ProgramDto; exercises: ExerciseDto[] }) {
+function Program({ program }: { program: ProgramDto }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [name, setName] = useState(program.name)
@@ -137,17 +133,6 @@ function Program({ program, exercises }: { program: ProgramDto; exercises: Exerc
           {fr.muscu.home.newWorkout}
         </Link>
       </section>
-
-      {exercises.length > 0 && (
-        <section className={home.section}>
-          <h2 className={home.sectionTitle}>{fr.muscu.program.exercises}</h2>
-          <ul className={page.list}>
-            {exercises.map((e) => (
-              <ExerciseRow key={e.id} exercise={e} link />
-            ))}
-          </ul>
-        </section>
-      )}
 
       {confirmActivate && (
         <ActivateProgramSheet

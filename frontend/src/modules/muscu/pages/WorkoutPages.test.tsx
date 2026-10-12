@@ -213,6 +213,10 @@ describe('Accueil', () => {
     const links = within(section).getAllByRole('link')
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/c', '/muscu/exercices/r'])
     expect(within(section).queryByText('Tirage vertical prise large')).toBeNull()
+    expect(within(section).getByRole('button', { name: 'Programme actif' })).toHaveAttribute('aria-pressed', 'true')
+    // The other tab: exercises only in inactive programs.
+    await userEvent.setup().click(within(section).getByRole('button', { name: 'Autres programmes' }))
+    expect(within(section).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/t'])
     expect(screen.queryByRole('link', { name: 'Exercices' })).toBeNull()
     // Mobile order: next workout, my exercises, my programs.
     expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
@@ -396,6 +400,16 @@ describe('Modifier la séance', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s7'))
   })
 
+  it('opens the Fiche exercice of each exercise', async () => {
+    vi.mocked(workoutsGet).mockResolvedValue(PULL)
+    renderAt('/muscu/seances/pull')
+    expect(await screen.findByRole('link', { name: 'Voir Rowing barre' })).toHaveAttribute('href', '/muscu/exercices/r')
+    expect(screen.getByRole('link', { name: 'Voir Tirage vertical prise large' })).toHaveAttribute(
+      'href',
+      '/muscu/exercices/t',
+    )
+  })
+
   it('has no start link in an inactive program', async () => {
     vi.mocked(workoutsGet).mockResolvedValue({ ...PULL, programId: 'legs', programActive: false })
     renderAt('/muscu/seances/pull')
@@ -456,11 +470,11 @@ describe('Programme', () => {
     ])
   })
 
-  it('shows its séances and exercises; Nouvelle séance goes into it', async () => {
+  it('shows its séances (no exercises); Nouvelle séance goes into it', async () => {
     renderAt('/muscu/programmes/legs')
     expect(await screen.findByRole('link', { name: /Jambes A/ })).toHaveAttribute('href', '/muscu/seances/squat')
-    const exercises = (await screen.findByRole('heading', { name: 'Exercices' })).closest('section')!
-    expect(within(exercises).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual(['/muscu/exercices/t'])
+    expect(screen.queryByRole('heading', { name: 'Exercices' })).toBeNull()
+    expect(screen.queryByText('Tirage vertical prise large')).toBeNull()
     expect(screen.getByRole('link', { name: '+ Nouvelle séance' })).toHaveAttribute(
       'href',
       '/muscu/seances/nouvelle?programme=legs',
