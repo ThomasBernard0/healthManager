@@ -58,7 +58,7 @@ frontend/                React SPA
     core/                app-wide: access (key prompt), format (fr-FR, Europe/Paris), ui/ (Sheet, Ring, …)
     core/modules.ts      module list + last module per device (launch opens it); core/ui/ModuleSwitcher in each top bar
     modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
-    modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, supersets; specs docs/specs/musculation.md + musculation-superset.md
+    modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, supersets; spec docs/specs/musculation.md
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
