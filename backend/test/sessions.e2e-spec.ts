@@ -48,11 +48,16 @@ describe('Sessions (e2e)', () => {
     await set({ weight: null, reps: null, done: true }).expect(200);
     await set({ done: true }).expect(200);
     await set({ weight: 0, reps: 12, done: false }).expect(200);
+    // Help from an assisted machine: the service checks the exercise is a bodyweight one.
+    await set({ weight: -10, reps: 9, done: true }).expect(200);
+    expect(service.saveSet).toHaveBeenLastCalledWith(S, E, 0, { weight: -10, reps: 9, done: true });
   });
 
   it('rejects weights off the 0.5 kg grid, bad reps, unknown fields', async () => {
     await set({ weight: 57.3, reps: 10, done: true }).expect(400);
-    await set({ weight: -2.5, reps: 10, done: true }).expect(400);
+    await set({ weight: -2.3, reps: 10, done: true }).expect(400);
+    await set({ weight: -1000.5, reps: 10, done: true }).expect(400);
+    await set({ weight: 1000.5, reps: 10, done: true }).expect(400);
     await set({ weight: 50, reps: 8.5, done: true }).expect(400);
     await set({ weight: 50, reps: 10 }).expect(400);
     await set({ weight: 50, reps: 10, done: true, rpe: 8 }).expect(400);

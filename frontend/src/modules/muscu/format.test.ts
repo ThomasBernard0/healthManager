@@ -3,6 +3,7 @@ import {
   exerciseDetails,
   formatChartDate,
   formatHistoryDay,
+  formatSetCell,
   exerciseSubtitle,
   formatSessionDate,
   formatSets,
@@ -61,12 +62,31 @@ describe('formatSets', () => {
       ]),
     ).toEqual(['57,5 kg × 11 · 10', '55 kg × 10 · 9'])
   })
+
+  it('bodyweight exercises: help, the body alone, added load', () => {
+    const at = (weight: number, reps: number[]) => reps.map((r) => ({ weight, reps: r }))
+    expect(formatSets(at(-20, [9, 9, 8, 8]), true)).toEqual(['Aide 20 kg × 9 · 9 · 8 · 8'])
+    expect(formatSets(at(-4.5, [12, 12, 11, 10]), true)).toEqual(['Aide 4,5 kg × 12 · 12 · 11 · 10'])
+    expect(formatSets(at(0, [9, 8, 8, 8]), true)).toEqual(['Poids du corps × 9 · 8 · 8 · 8'])
+    expect(formatSets(at(5, [8, 8]), true)).toEqual(['5 kg × 8 · 8'])
+    // Less help on the last set: a new line.
+    expect(formatSets([...at(-9, [12, 12]), ...at(0, [6])], true)).toEqual(['Aide 9 kg × 12 · 12', 'Poids du corps × 6'])
+    // Any other equipment: 0 kg stays a weight.
+    expect(formatSets(at(0, [10]))).toEqual(['0 kg × 10'])
+  })
+
+  it('formats one set for a table cell', () => {
+    expect(formatSetCell({ weight: 57.5, reps: 10 })).toBe('57,5 × 10')
+    expect(formatSetCell({ weight: -20, reps: 9 })).toBe('Aide 20 × 9')
+    expect(formatSetCell({ weight: 0, reps: 9 })).toBe('0 × 9')
+  })
 })
 
 describe('formatTargets', () => {
   it('weight then each target, as on the desktop Accueil', () => {
     expect(formatTargets([12, 11, 11, 10].map((reps) => ({ weight: 55, reps })))).toBe('55 kg · 12 · 11 · 11 · 10')
     expect(formatTargets([{ weight: 62.5, reps: 8 }, { weight: 60, reps: 8 }])).toBe('62,5 kg · 8 / 60 kg · 8')
+    expect(formatTargets([10, 10, 9, 9].map((reps) => ({ weight: -20, reps })))).toBe('Aide 20 kg · 10 · 10 · 9 · 9')
   })
 })
 

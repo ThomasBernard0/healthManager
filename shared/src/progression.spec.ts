@@ -1,4 +1,5 @@
 import {
+  ASSIST_STEP,
   DEFAULT_STEP,
   judge,
   nextTargets,
@@ -74,6 +75,72 @@ describe('stepUp / stepDown (available weights, learned)', () => {
     expect(stepDown(12.5, [10, 12.5], DEFAULT_STEP.dumbbell)).toBe(10);
     expect(stepDown(30, [8, 30], DEFAULT_STEP.machine)).toBe(25.5);
     expect(stepDown(2, [], DEFAULT_STEP.machine)).toBe(0);
+  });
+});
+
+describe('assistance: negative weights on bodyweight exercises', () => {
+  const step = DEFAULT_STEP.bodyweight;
+  /** Tractions, 4 × 8–12. */
+  const pullUps = (last: ExerciseLog, extra: Partial<NextTargetsInput> = {}) => next(last, { step, ...extra });
+
+  it('steps by 4,5 while the weight is negative', () => {
+    expect(ASSIST_STEP).toBe(4.5);
+    expect(stepUp(-9, [-9], step)).toBe(-4.5);
+    expect(stepDown(-9, [-9], step)).toBe(-13.5);
+  });
+
+  it('stepUp from help never goes above 0', () => {
+    expect(stepUp(-2, [], step)).toBe(0);
+    expect(stepUp(-4.5, [-4.5], step)).toBe(0);
+    // A known added load within reach is not a way to skip bodyweight.
+    expect(stepUp(-2, [-2, 2.5], step)).toBe(0);
+  });
+
+  it('from 0 or more: the bodyweight step, and stepDown never proposes help', () => {
+    expect(stepUp(0, [0], step)).toBe(2.5);
+    expect(stepDown(0, [0], step)).toBe(0);
+    expect(stepDown(0, [-9, 0], step)).toBe(0);
+    expect(stepDown(2.5, [2.5], step)).toBe(0);
+  });
+
+  it('known weights work on the signed values', () => {
+    expect(stepUp(-9, [-9, -4.5], step)).toBe(-4.5);
+    expect(stepUp(-9, [-9, -5], step)).toBe(-5);
+    expect(stepDown(-9, [-12, -9], step)).toBe(-12);
+    // Too far (more than 2 steps): the default step.
+    expect(stepUp(-20, [-20, -9], step)).toBe(-15.5);
+  });
+
+  it('−9 × 12·11·11·10 (total 44) → −4,5 × 8·8·8·8', () => {
+    const t = pullUps(log(-9, [12, 11, 11, 10]));
+    expect(weights(t)).toEqual([-4.5, -4.5, -4.5, -4.5]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+  });
+
+  it('−4,5 × 12·12·11·10 → 0 × 8·8·8·8 (bodyweight)', () => {
+    const t = pullUps(log(-4.5, [12, 12, 11, 10]));
+    expect(weights(t)).toEqual([0, 0, 0, 0]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+  });
+
+  it('0 × 12·12·12·9 → 2,5 × 8·8·8·8', () => {
+    const t = pullUps(log(0, [12, 12, 12, 9]));
+    expect(weights(t)).toEqual([2.5, 2.5, 2.5, 2.5]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+  });
+
+  it('Aide 20 × 9·9·8·8 (total 34) → Aide 20 × 10·10·9·9', () => {
+    const t = pullUps(log(-20, [9, 9, 8, 8]));
+    expect(weights(t)).toEqual([-20, -20, -20, -20]);
+    expect(reps(t)).toEqual([10, 10, 9, 9]);
+  });
+
+  it('0 × 7·7·6·6 twice → stays 0 (no help proposed); under the range twice with help → more help', () => {
+    const twice = (weight: number) =>
+      pullUps(log(weight, [7, 7, 6, 6], false, { targets: [8, 8, 8, 8] }), { previous: log(weight, [7, 7, 6, 6]) });
+    expect(weights(twice(0))).toEqual([0, 0, 0, 0]);
+    expect(reps(twice(0))).toEqual([8, 8, 8, 8]);
+    expect(weights(twice(-9))).toEqual([-13.5, -13.5, -13.5, -13.5]);
   });
 });
 

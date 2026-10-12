@@ -9,6 +9,8 @@ import { PrismaService } from './../src/prisma/prisma.service.js';
 
 type Row = Record<string, unknown> & { id: string };
 
+const TRACTIONS = '00000000-0000-4000-8000-000000000004';
+
 interface Image {
   mime: string;
   data: Uint8Array;
@@ -24,11 +26,27 @@ function fakePrisma() {
   return {
     rows,
     images,
-    // Finished sessions of Rowing barre, most recent first (as the query orders them).
+    // Finished sessions of Rowing barre (and one assisted session of Tractions), most recent first (as the query orders them).
     sessionExercise: {
       findMany: ({ where }: { where: { exerciseId: string } }) =>
         Promise.resolve(
-          where.exerciseId !== '00000000-0000-4000-8000-000000000001'
+          where.exerciseId === TRACTIONS
+            ? [
+                {
+                  sessionId: 's3',
+                  session: { finishedAt: new Date('2026-10-08T18:30:00Z') },
+                  easy: false,
+                  preFatigue: 0,
+                  supersetGroup: null,
+                  sets: [
+                    { weight: -9, reps: 12 },
+                    { weight: -9, reps: 12 },
+                    { weight: -4.5, reps: 11 },
+                    { weight: -4.5, reps: 10 },
+                  ],
+                },
+              ]
+            : where.exerciseId !== '00000000-0000-4000-8000-000000000001'
             ? []
             : [
                 {
@@ -230,6 +248,8 @@ describe('Exercises (e2e)', () => {
         inSuperset: true,
         volume: 2160,
         heaviest: 60,
+        barKind: 'volume',
+        barValue: 2160,
       },
       {
         sessionId: 's1',
@@ -246,9 +266,30 @@ describe('Exercises (e2e)', () => {
         inSuperset: false,
         volume: 2252.5,
         heaviest: 57.5,
+        barKind: 'volume',
+        barValue: 2252.5,
       },
     ]);
     await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000099/history').expect(404);
+  });
+
+  it('history of a bodyweight exercise: the bar is the total reps, the heaviest weight is the least help', async () => {
+    prisma.rows.push({
+      id: TRACTIONS,
+      name: 'Tractions',
+      searchName: 'tractions',
+      equipment: 'bodyweight',
+      primaryMuscles: ['back'],
+      secondaryMuscles: ['biceps'],
+      sets: 4,
+      repMin: 8,
+      repMax: 12,
+      archived: true,
+      workoutItems: [],
+    });
+    const res = await request(app.getHttpServer()).get(`/api/exercises/${TRACTIONS}/history`).expect(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({ heaviest: -4.5, barKind: 'reps', barValue: 45, volume: -310.5 });
   });
 
   it('rejects a muscle twice, no primary muscle, or unknown values', async () => {

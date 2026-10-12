@@ -1,5 +1,5 @@
 import type { ExerciseDto, Muscle } from '../../api/generated/model'
-import { groupSets, toUtcDate, type SetResult } from '@healthmanager/shared'
+import { groupSets, loadKind, toUtcDate, type SetResult } from '@healthmanager/shared'
 import { formatDecimal, formatShortDay } from '../../core/format'
 import { fr } from '../../i18n/fr'
 
@@ -38,14 +38,42 @@ export const formatSessionDate = (date: string): string => {
 /** "57,5" */
 export const formatWeight = (kg: number): string => formatDecimal(kg)
 
-/** Compact set format, one entry per weight: ["57,5 kg × 11 · 10", "55 kg × 10 · 9"]. */
-export const formatSets = (sets: SetResult[]): string[] =>
-  groupSets(sets).map((g) => fr.muscu.session.setGroup(formatWeight(g.weight), g.reps.join(' · ')))
+/**
+ * Compact set format, one entry per weight: ["57,5 kg × 11 · 10", "55 kg × 10 · 9"]. Bodyweight exercises:
+ * "Aide 20 kg × 9 · 9" with help, "Poids du corps × 9 · 8" at 0 kg.
+ */
+export const formatSets = (sets: SetResult[], bodyweight = false): string[] =>
+  groupSets(sets).map((g) => {
+    const reps = g.reps.join(' · ')
+    switch (loadKind(g.weight, bodyweight)) {
+      case 'assist':
+        return fr.muscu.session.assistGroup(formatWeight(-g.weight), reps)
+      case 'bodyweight':
+        return fr.muscu.session.bodyweightGroup(reps)
+      case 'load':
+        return fr.muscu.session.setGroup(formatWeight(g.weight), reps)
+    }
+  })
 
-/** Targets on one line, as on the desktop Accueil: "55 kg · 12 · 11 · 11 · 10" (" / " between weights). */
+/** One set in a table cell: "60 × 10", with help "Aide 20 × 9". */
+export const formatSetCell = (set: SetResult): string =>
+  set.weight < 0
+    ? fr.muscu.history.assistSet(formatWeight(-set.weight), set.reps)
+    : `${formatWeight(set.weight)} × ${set.reps}`
+
+/**
+ * Targets on one line, as on the desktop Accueil: "55 kg · 12 · 11 · 11 · 10" (" / " between weights); with help
+ * "Aide 20 kg · 10 · 10 · 9 · 9".
+ */
 export const formatTargets = (targets: SetResult[]): string =>
   groupSets(targets)
-    .map((g) => [`${formatWeight(g.weight)} ${fr.muscu.session.kg}`, ...g.reps].join(' · '))
+    .map((g) => {
+      const weight =
+        g.weight < 0
+          ? fr.muscu.session.assistWeight(formatWeight(-g.weight))
+          : `${formatWeight(g.weight)} ${fr.muscu.session.kg}`
+      return [weight, ...g.reps].join(' · ')
+    })
     .join(' / ')
 
 const noDot = (s: string) => s.replace(/\.$/, '')

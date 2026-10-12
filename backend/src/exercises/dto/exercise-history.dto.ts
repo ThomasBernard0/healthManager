@@ -1,3 +1,4 @@
+import { BAR_KINDS, type BarKind } from '@healthmanager/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { SetResultDto } from '../../common/set-result.dto.js';
 
@@ -24,6 +25,16 @@ export class ExerciseHistoryEntryDto {
   @ApiProperty({ example: 2160, description: 'Σ weight × reps (kg)' })
   volume: number;
 
-  @ApiProperty({ example: 60, description: 'Heaviest weight (kg)' })
+  @ApiProperty({ example: 60, description: 'Heaviest weight (kg); < 0: the least help (bodyweight exercises)' })
   heaviest: number;
+
+  @ApiProperty({
+    enum: BAR_KINDS,
+    enumName: 'BarKind',
+    description: 'What the chart bar shows: volume, or total reps for a bodyweight exercise',
+  })
+  barKind: BarKind;
+
+  @ApiProperty({ example: 2160, description: 'Value of the chart bar: Σ weight × reps (kg) or Σ reps' })
+  barValue: number;
 }

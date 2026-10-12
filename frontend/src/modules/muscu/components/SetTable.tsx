@@ -6,14 +6,25 @@ import { fr } from '../../../i18n/fr'
 import { formatWeight } from '../format'
 import styles from './SetTable.module.css'
 
-/** The card of set rows, under its Objectif | kg | Reps header. `wide`: superset rows ("A1"). */
-export function SetTable({ wide = false, children }: { wide?: boolean; children: ReactNode }) {
+interface SetTableProps {
+  /** Superset rows ("A1"). */
+  wide?: boolean
+  /** Above the header, at the end: the Lest | Aide control of a bodyweight exercise. */
+  top?: ReactNode
+  /** The weights are help from an assisted machine: the column is titled "Aide kg". */
+  assist?: boolean
+  children: ReactNode
+}
+
+/** The card of set rows, under its Objectif | kg | Reps header. */
+export function SetTable({ wide = false, top, assist = false, children }: SetTableProps) {
   return (
     <div className={`${styles.sets} ${wide ? styles.wide : ''}`}>
+      {top && <div className={styles.top}>{top}</div>}
       <div className={`${styles.grid} ${styles.head}`} aria-hidden="true">
         <span />
         <span>{fr.muscu.session.target}</span>
-        <span>{fr.muscu.session.kg}</span>
+        <span>{assist ? fr.muscu.session.assistKg : fr.muscu.session.kg}</span>
         <span>{fr.muscu.session.reps}</span>
         <span />
       </div>

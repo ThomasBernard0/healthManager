@@ -12,6 +12,27 @@ const entry = (sessionId: string, date: string, easy: boolean): ExerciseHistoryE
   inSuperset: false,
   volume: 1140,
   heaviest: 60,
+  barKind: 'volume',
+  barValue: 1140,
+})
+
+describe('HistoryList (desktop table), bodyweight exercise', () => {
+  it('the volume column becomes Reps; sets done with help read "Aide"', () => {
+    const assisted: ExerciseHistoryEntryDto = {
+      ...entry('s1', '2026-10-08', false),
+      sets: [9, 9, 8, 8].map((reps) => ({ weight: -20, reps })),
+      volume: -680,
+      heaviest: -20,
+      barKind: 'reps',
+      barValue: 34,
+    }
+    render(<HistoryList variant="desktop" entries={[assisted]} />)
+
+    expect(screen.getByRole('columnheader', { name: 'Reps' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Volume' })).toBeNull()
+    const cells = within(screen.getAllByRole('row')[1]).getAllByRole('cell')
+    expect(cells.map((c) => c.textContent)).toEqual(['jeu 8 oct', 'Aide 20 × 9', 'Aide 20 × 9', 'Aide 20 × 8', 'Aide 20 × 8', '34', ''])
+  })
 })
 
 describe('HistoryList (desktop table)', () => {

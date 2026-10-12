@@ -71,6 +71,7 @@ export const tokens = {
   color: light,
   space: {
     '2': '2px',
+    '3': '3px',
     '4': '4px',
     '6': '6px',
     '8': '8px',
@@ -91,7 +92,9 @@ export const tokens = {
     xs: '2px',
     bar: '3px',
     sm: '6px',
+    segment: '8px',
     md: '9px',
+    segmented: '10px',
     lg: '12px',
     xl: '14px',
     card: '16px',
@@ -196,6 +199,8 @@ export const tokens = {
     /** One of the two stacked thumbnails of a superset card. */
     thumbStacked: '38px',
     supersetImage: '96px',
+    /** Lest | Aide control of a bodyweight exercise. */
+    loadSegment: '30px',
   },
 } as const
 

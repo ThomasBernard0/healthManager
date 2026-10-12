@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './barKind';
 export * from './barcodeLookupDto';
 export * from './barcodeLookupDtoFood';
 export * from './createFoodDto';

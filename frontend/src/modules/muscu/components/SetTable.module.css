@@ -8,6 +8,15 @@
   flex-direction: column;
 }
 
+/* Lest | Aide (design/musculation/aide-1-tractions-avec-aide.html); a superset can have one per exercise. */
+.top {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+  padding-top: var(--space-6);
+}
+
 /* Superset: room for the A / B badge before the set number. */
 .wide {
   --set-index-column: var(--size-superset-index-column);

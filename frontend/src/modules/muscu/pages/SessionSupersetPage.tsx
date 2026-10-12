@@ -15,10 +15,12 @@ import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { EasyToggle } from '../components/EasyToggle'
 import { ExerciseImage } from '../components/ExerciseImage'
+import { LoadToggle } from '../components/LoadToggle'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SetRow, SetTable } from '../components/SetTable'
 import { SupersetBadge } from '../components/SupersetBadge'
 import { formatSessionDate, formatSets } from '../format'
+import { setInMode, setsToFlip, signedWeight, useLoadMode, type LoadMode } from '../loadMode'
 import { exercisePath, MUSCU_PATH, sessionExercisePath, sessionPath } from '../routes'
 import page from './page.module.css'
 import common from './SessionExercisePage.module.css'
@@ -66,6 +68,11 @@ function Logger({ a, b, onSaved }: LoggerProps) {
   const [busy, setBusy] = useState(false)
   const [stopping, setStopping] = useState(false)
   const entries = { a, b }
+  // Bodyweight exercises: the weights typed are added load (Lest) or help (Aide, stored negative).
+  const [modeA, chooseA] = useLoadMode(a)
+  const [modeB, chooseB] = useLoadMode(b)
+  const modes = { a: modeA, b: modeB }
+  const choose = { a: chooseA, b: chooseB }
   const rows = interleaveSets(a.sets, b.sets)
   // The first set not done yet, in superset order, is the one to do now.
   const current = rows.find((r) => !r.set.done)
@@ -93,7 +100,29 @@ function Logger({ a, b, onSaved }: LoggerProps) {
   }
 
   const saveSet = (which: 'a' | 'b', index: number, weight: number | null, reps: number | null, done: boolean) =>
-    run(which, (entry) => sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done }))
+    run(which, (entry) => {
+      const mode = modes[which]
+      return sessionsSaveSet(entry.sessionId, entry.id, index, {
+        weight: weight === null || mode === null ? weight : signedWeight(weight, mode),
+        reps,
+        done,
+      })
+    })
+
+  /** Lest ↔ Aide: the sets already logged for that exercise are saved again with the other sign. */
+  async function switchMode(which: 'a' | 'b', next: LoadMode) {
+    choose[which](next)
+    const logged = setsToFlip(entries[which].sets, next)
+    if (logged.length === 0) return
+    const saved = await run(which, async (entry) => {
+      let latest = entry
+      for (const { index, weight, reps } of logged) {
+        latest = await sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done: true })
+      }
+      return latest
+    })
+    if (!saved) choose[which](null)
+  }
 
   const setEasy = (which: 'a' | 'b', easy: boolean) =>
     run(which, (entry) => sessionsUpdateExercise(entry.sessionId, entry.id, { easy }))
@@ -149,14 +178,37 @@ function Logger({ a, b, onSaved }: LoggerProps) {
         })}
       </div>
 
-      <SetTable wide>
+      <SetTable
+        wide
+        // One column for both exercises: titled "Aide kg" only when every weight in it is help.
+        assist={modeA === 'assist' && modeB === 'assist'}
+        top={
+          (modeA || modeB) &&
+          (['a', 'b'] as const).map((which) => {
+            const mode = modes[which]
+            return (
+              mode && (
+                <LoadToggle
+                  key={which}
+                  mode={mode}
+                  disabled={busy}
+                  label={fr.muscu.superset.loadTypeOf(entries[which].exercise.name)}
+                  badge={<SupersetBadge letter={LETTERS[which]} size="sm" />}
+                  onChange={(next) => switchMode(which, next)}
+                />
+              )
+            )
+          })
+        }
+      >
         {rows.map(({ exercise, index, set }) => {
           const label = fr.muscu.superset.set(LETTERS[exercise], index + 1)
+          const mode = modes[exercise]
           return (
             <SetRow
               // Fresh inputs whenever the row is validated or reopened.
               key={`${exercise}${index}-${set.done}`}
-              set={set}
+              set={mode ? setInMode(set, mode) : set}
               index={
                 <>
                   <SupersetBadge letter={LETTERS[exercise]} size="sm" />
@@ -164,7 +216,7 @@ function Logger({ a, b, onSaved }: LoggerProps) {
                 </>
               }
               labels={{
-                weight: fr.muscu.superset.weightOf(label),
+                weight: mode === 'assist' ? fr.muscu.superset.assistOf(label) : fr.muscu.superset.weightOf(label),
                 reps: fr.muscu.superset.repsOf(label),
                 validate: fr.muscu.superset.validate(label),
                 reopen: fr.muscu.superset.reopen(label),
@@ -189,7 +241,7 @@ function Logger({ a, b, onSaved }: LoggerProps) {
                     {fr.muscu.session.lastTime(formatSessionDate(lastTime.date))}
                   </span>
                   <span className={common.lastSets}>
-                    {formatSets(lastTime.sets).map((line) => (
+                    {formatSets(lastTime.sets, modes[which] !== null).map((line) => (
                       <span key={line}>{line}</span>
                     ))}
                   </span>

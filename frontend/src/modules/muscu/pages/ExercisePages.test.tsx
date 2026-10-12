@@ -12,7 +12,7 @@ import {
   exercisesHistory,
 } from '../../../api/generated/endpoints/exercises/exercises'
 import { addDays, parisToday } from '@healthmanager/shared'
-import type { ExerciseDto } from '../../../api/generated/model'
+import type { ExerciseDto, ExerciseHistoryEntryDto } from '../../../api/generated/model'
 import ExerciseEditPage from './ExerciseEditPage'
 import ExercisePage from './ExercisePage'
 import ExercisesPage from './ExercisesPage'
@@ -95,10 +95,10 @@ describe('Fiche exercice', () => {
     const today = parisToday()
     vi.mocked(exercisesGet).mockResolvedValue(ROWING)
     vi.mocked(exercisesHistory).mockResolvedValue([
-      { sessionId: 's3', date: addDays(today, -7), sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })), easy: false, preFatigue: 0, inSuperset: false, volume: 2160, heaviest: 60 },
-      { sessionId: 's2', date: addDays(today, -14), sets: [12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), easy: true, preFatigue: 3, inSuperset: true, volume: 2587.5, heaviest: 57.5 },
+      { sessionId: 's3', date: addDays(today, -7), sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })), easy: false, preFatigue: 0, inSuperset: false, volume: 2160, heaviest: 60, barKind: 'volume', barValue: 2160 },
+      { sessionId: 's2', date: addDays(today, -14), sets: [12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), easy: true, preFatigue: 3, inSuperset: true, volume: 2587.5, heaviest: 57.5, barKind: 'volume', barValue: 2587.5 },
       // Older than 12 weeks: in the history, not in the chart.
-      { sessionId: 's1', date: addDays(today, -100), sets: [{ weight: 50, reps: 10 }], easy: false, preFatigue: 0, inSuperset: false, volume: 500, heaviest: 50 },
+      { sessionId: 's1', date: addDays(today, -100), sets: [{ weight: 50, reps: 10 }], easy: false, preFatigue: 0, inSuperset: false, volume: 500, heaviest: 50, barKind: 'volume', barValue: 500 },
     ])
     const user = userEvent.setup()
     renderAt('/muscu/exercices/r1')
@@ -124,6 +124,65 @@ describe('Fiche exercice', () => {
     // "Facile" only on the session where it was tapped.
     expect(within(rows[1]).getByText('Facile')).toBeInTheDocument()
     expect(within(history).getAllByText('Facile')).toHaveLength(1)
+  })
+
+  describe('bodyweight exercise (assistance)', () => {
+    const TRACTIONS: ExerciseDto = { ...ROWING, id: 't1', name: 'Tractions', equipment: 'bodyweight' }
+    const session = (sessionId: string, daysAgo: number, weight: number, reps: number[]): ExerciseHistoryEntryDto => ({
+      sessionId,
+      date: addDays(parisToday(), -daysAgo),
+      sets: reps.map((r) => ({ weight, reps: r })),
+      easy: false,
+      preFatigue: 0,
+      inSuperset: false,
+      volume: weight * reps.reduce((a, b) => a + b, 0),
+      heaviest: weight,
+      barKind: 'reps',
+      barValue: reps.reduce((a, b) => a + b, 0),
+    })
+    const HISTORY = [
+      session('s3', 3, 0, [9, 8, 8, 8]),
+      session('s2', 7, -4.5, [12, 12, 11, 10]),
+      session('s1', 10, -9, [12, 11, 11, 10]),
+    ]
+
+    beforeEach(() => {
+      vi.mocked(exercisesGet).mockResolvedValue(TRACTIONS)
+      vi.mocked(exercisesHistory).mockResolvedValue(HISTORY)
+    })
+
+    it('chart: bars = total reps, a 0 kg session is not a zero bar, dashed line "Poids du corps"', async () => {
+      const user = userEvent.setup()
+      renderAt('/muscu/exercices/t1')
+      const chart = await screen.findByRole('group', { name: 'Charge et total de reps par séance' })
+      expect(screen.queryByRole('group', { name: 'Charge et volume par séance' })).toBeNull()
+      // Legend: Reps instead of Volume.
+      const card = chart.closest('section')!
+      expect(within(card).getByText('Reps')).toBeInTheDocument()
+      expect(within(card).queryByText('Volume')).toBeNull()
+      expect(within(chart).getByText('Poids du corps')).toBeInTheDocument()
+
+      const bars = within(chart).getAllByRole('button')
+      expect(bars.map((b) => b.getAttribute('aria-label')!.replace(/^.* : /, ''))).toEqual(['44 reps', '45 reps', '33 reps'])
+      // Oldest first; the tallest bar is the 45 reps session, and the 0 kg one is 33 / 45 of it.
+      const height = (bar: HTMLElement) => parseFloat((bar.firstElementChild as HTMLElement).style.height)
+      expect(height(bars[1])).toBe(72)
+      expect(height(bars[2])).toBeCloseTo((33 / 45) * 72)
+
+      await user.click(bars[1])
+      const callout = within(chart).getByRole('status')
+      expect(callout).toHaveTextContent('Aide 4,5 kg × 12 · 12 · 11 · 10')
+      expect(callout).toHaveTextContent('45 reps')
+    })
+
+    it('history: help, then the body alone', async () => {
+      renderAt('/muscu/exercices/t1')
+      const history = (await screen.findByRole('heading', { name: 'Historique' })).closest('section')!
+      const rows = within(history).getAllByRole('listitem')
+      expect(rows[0]).toHaveTextContent('Poids du corps × 9 · 8 · 8 · 8')
+      expect(rows[1]).toHaveTextContent('Aide 4,5 kg × 12 · 12 · 11 · 10')
+      expect(rows[2]).toHaveTextContent('Aide 9 kg × 12 · 11 · 11 · 10')
+    })
   })
 
   it('shows the name, equipment, workouts and sets × rep range, and muscles as pills', async () => {

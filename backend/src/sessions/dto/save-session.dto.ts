@@ -13,7 +13,14 @@ export class StartSessionDto {
  * done = false reopens it.
  */
 export class SaveSetDto {
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 60, description: 'kg, 0.5 kg steps' })
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    example: 60,
+    minimum: -1000,
+    maximum: 1000,
+    description: 'kg, 0.5 kg steps; < 0: help from an assisted machine (bodyweight exercises only)',
+  })
   @IsOptional()
   @IsWeight()
   weight?: number | null;

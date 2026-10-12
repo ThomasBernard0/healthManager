@@ -1,0 +1,31 @@
+/* Transcribed from design/musculation/aide-1-tractions-avec-aide.html */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.group {
+  display: flex;
+  padding: var(--space-3);
+  border-radius: var(--radius-segmented);
+  background: var(--color-ground);
+  border: 1px solid var(--color-border);
+}
+
+.option {
+  height: var(--size-load-segment);
+  padding: 0 var(--space-14);
+  border: none;
+  border-radius: var(--radius-segment);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+}
+
+.on {
+  background: var(--color-border);
+  color: var(--color-ink);
+}

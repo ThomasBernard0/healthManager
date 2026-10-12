@@ -144,9 +144,14 @@ export class SessionsService {
   /** ✓ on a set row (in order): empty values record the target; done = false reopens any row. */
   async saveSet(sessionId: string, id: string, index: number, dto: SaveSetDto): Promise<SessionExerciseDto> {
     let entry = await this.openEntry(sessionId, id);
-    if (!entry.sets.some((s) => s.index === index)) throw new NotFoundException('Set not found');
-    // New sets are validated in order; any done set can still be reopened.
-    if (dto.done && entry.sets.some((s) => s.index < index && !s.done)) {
+    const row = entry.sets.find((s) => s.index === index);
+    if (!row) throw new NotFoundException('Set not found');
+    // Help from an assisted machine (a negative weight) only exists on bodyweight exercises.
+    if (typeof dto.weight === 'number' && dto.weight < 0 && entry.exercise.equipment !== 'bodyweight') {
+      throw new BadRequestException('weight must not be negative (bodyweight exercises only)');
+    }
+    // New sets are validated in order; any done set can still be reopened, or saved again (Lest ↔ Aide).
+    if (dto.done && !row.done && entry.sets.some((s) => s.index < index && !s.done)) {
       throw new BadRequestException('Validate the sets in order');
     }
     if (entry.preFatigue === null) entry = await this.freeze(sessionId, id);
@@ -157,7 +162,9 @@ export class SessionsService {
       const weight = dto.weight ?? (set.targetWeight === null ? null : num(set.targetWeight));
       const reps = dto.reps ?? set.targetReps;
       if (weight === null || reps === null) throw new BadRequestException('weight and reps are required (no target)');
-      await this.prisma.sessionSet.update({ where: { id: set.id }, data: { weight, reps, done: true, doneAt: now } });
+      // A set already done keeps its time: the order of the exercises doesn't change when it is corrected.
+      const doneAt = set.done && set.doneAt ? set.doneAt : now;
+      await this.prisma.sessionSet.update({ where: { id: set.id }, data: { weight, reps, done: true, doneAt } });
     } else {
       await this.prisma.sessionSet.update({
         where: { id: set.id },
@@ -272,7 +279,7 @@ export class SessionsService {
   private async openEntry(sessionId: string, id: string) {
     const entry = await this.prisma.sessionExercise.findFirst({
       where: { id, sessionId },
-      include: { session: true, ...SETS },
+      include: { session: true, exercise: { select: { equipment: true } }, ...SETS },
     });
     if (!entry) throw new NotFoundException('Session exercise not found');
     if (entry.session.finishedAt) throw new ConflictException('Session already finished');

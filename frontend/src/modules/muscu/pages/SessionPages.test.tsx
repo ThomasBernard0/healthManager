@@ -301,6 +301,142 @@ describe('Exercice en cours', () => {
   })
 })
 
+describe('Exercice en cours — assistance (bodyweight exercises)', () => {
+  const TRACTIONS = { ...ex('x9', 'Tractions'), equipment: 'bodyweight' as const }
+  const at = (weight: number, reps: number[]) => reps.map((r) => ({ weight, reps: r }))
+  // Aide 20 × 9·9·8·8 last time → targets Aide 20 × 10·10·9·9, stored −20.
+  const ASSISTED: SessionExerciseDto = {
+    ...ENTRY,
+    exercise: TRACTIONS,
+    sets: [10, 10, 9, 9].map((targetReps, i) => set(i, { targetWeight: -20, targetReps })),
+    lastTime: { date: '2026-10-08', sets: at(-20, [9, 9, 8, 8]) },
+  }
+  const withDone = (entry: SessionExerciseDto, done: Record<number, Partial<SessionSetDto>>): SessionExerciseDto => ({
+    ...entry,
+    sets: entry.sets.map((s) => (done[s.index] ? { ...s, ...done[s.index], done: true } : s)),
+  })
+  const toggle = () => screen.getByRole('group', { name: 'Type de charge' })
+  const pressed = (name: string) => within(toggle()).getByRole('button', { name }).getAttribute('aria-pressed')
+
+  beforeEach(() => vi.resetAllMocks())
+
+  it('shows the Lest | Aide control only for bodyweight exercises', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ENTRY)
+    const view = renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Rowing barre' })
+    expect(screen.queryByRole('group', { name: 'Type de charge' })).toBeNull()
+    expect(screen.getByText('kg')).toBeInTheDocument()
+    view.unmount()
+
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ASSISTED)
+    renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Tractions' })
+    expect(within(toggle()).getAllByRole('button').map((b) => b.textContent)).toEqual(['Lest', 'Aide'])
+  })
+
+  it('negative targets open in Aide: every number is shown positive, under "Aide kg"', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(withDone(ASSISTED, { 0: { weight: -20, reps: 10 } }))
+    renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Tractions' })
+    expect(pressed('Aide')).toBe('true')
+    expect(pressed('Lest')).toBe('false')
+    expect(screen.getByText('Aide kg')).toBeInTheDocument()
+    expect(screen.queryByText('kg')).toBeNull()
+    expect(screen.getAllByText('20 × 10')).toHaveLength(2)
+    expect(screen.getAllByText('20 × 9')).toHaveLength(2)
+    // Done set, placeholder and locked rows: 20, never −20.
+    expect(screen.getByRole('textbox', { name: 'Aide série 2' })).toHaveAttribute('placeholder', '20')
+    expect(screen.queryByRole('textbox', { name: 'Charge série 2' })).toBeNull()
+    expect(document.body).not.toHaveTextContent(/-20|−20/)
+    expect(screen.getByText('Aide 20 kg × 9 · 9 · 8 · 8')).toBeInTheDocument()
+  })
+
+  it('Aide stores negatives: a typed 15 is saved as −15, ✓ on an empty row records the target', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ASSISTED)
+    vi.mocked(sessionsSaveSet).mockResolvedValue(withDone(ASSISTED, { 0: { weight: -15, reps: 10 } }))
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+    await user.type(await screen.findByRole('textbox', { name: 'Aide série 1' }), '15')
+    await user.click(screen.getByRole('button', { name: 'Valider la série 1' }))
+    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'e2', 0, { weight: -15, reps: null, done: true })
+    // Shown positive once done.
+    expect(await screen.findByRole('button', { name: 'Série 1 faite, modifier' })).toBeInTheDocument()
+    expect(screen.getByText('15')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Valider la série 2' }))
+    expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 1, { weight: null, reps: null, done: true })
+
+    // Reopening sends the stored (negative) value back.
+    await user.click(screen.getByRole('button', { name: 'Série 1 faite, modifier' }))
+    expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 0, { weight: -15, reps: 10, done: false })
+  })
+
+  it('selecting Aide mid-session flips the sets already logged: 10 → −10', async () => {
+    const first = { ...ASSISTED, sets: [0, 1, 2, 3].map((i) => set(i, { targetWeight: null, targetReps: null })), lastTime: null }
+    const logged = withDone(first, { 0: { weight: 10, reps: 8 }, 1: { weight: 10, reps: 7 } })
+    const flipped = withDone(first, { 0: { weight: -10, reps: 8 }, 1: { weight: -10, reps: 7 } })
+    vi.mocked(sessionsGetExercise).mockResolvedValue(logged)
+    vi.mocked(sessionsSaveSet).mockResolvedValue(flipped)
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Tractions' })
+    // Logged with added load: Lest.
+    expect(pressed('Lest')).toBe('true')
+
+    await user.click(within(toggle()).getByRole('button', { name: 'Aide' }))
+    await waitFor(() => expect(sessionsSaveSet).toHaveBeenCalledTimes(2))
+    expect(sessionsSaveSet).toHaveBeenNthCalledWith(1, 's1', 'e2', 0, { weight: -10, reps: 8, done: true })
+    expect(sessionsSaveSet).toHaveBeenNthCalledWith(2, 's1', 'e2', 1, { weight: -10, reps: 7, done: true })
+    await waitFor(() => expect(pressed('Aide')).toBe('true'))
+    expect(screen.getByText('Aide kg')).toBeInTheDocument()
+
+    // Back to Lest: positive again; the next set is saved as typed.
+    vi.mocked(sessionsSaveSet).mockResolvedValue(logged)
+    await user.click(within(toggle()).getByRole('button', { name: 'Lest' }))
+    await waitFor(() => expect(sessionsSaveSet).toHaveBeenCalledTimes(4))
+    expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 1, { weight: 10, reps: 7, done: true })
+    await user.type(await screen.findByRole('textbox', { name: 'Charge série 3' }), '10')
+    await user.type(screen.getByRole('textbox', { name: 'Répétitions série 3' }), '6')
+    await user.click(screen.getByRole('button', { name: 'Valider la série 3' }))
+    expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'e2', 2, { weight: 10, reps: 6, done: true })
+  })
+
+  it('switching before any set is logged saves nothing; targets of the other mode are not targets', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ASSISTED)
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Tractions' })
+    await user.click(within(toggle()).getByRole('button', { name: 'Lest' }))
+    expect(pressed('Lest')).toBe('true')
+    expect(sessionsSaveSet).not.toHaveBeenCalled()
+    // Help of 20 kg is not a target of 20 kg of added load.
+    expect(screen.queryByText('20 × 10')).toBeNull()
+    expect(screen.getByRole('textbox', { name: 'Charge série 1' })).not.toHaveAttribute('placeholder')
+    expect(screen.getByRole('button', { name: 'Valider la série 1' })).toBeDisabled()
+  })
+
+  it('opens in Lest at 0 kg once the help has reached 0', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue({
+      ...ASSISTED,
+      sets: [0, 1, 2, 3].map((i) => set(i, { targetWeight: 0, targetReps: 8 })),
+      lastTime: { date: '2026-10-08', sets: at(-4.5, [12, 12, 11, 10]) },
+    })
+    vi.mocked(sessionsSaveSet).mockResolvedValue(ASSISTED)
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/e2')
+    await screen.findByRole('heading', { name: 'Tractions' })
+    expect(pressed('Lest')).toBe('true')
+    expect(screen.getByText('kg')).toBeInTheDocument()
+    expect(screen.getAllByText('0 × 8')).toHaveLength(4)
+    expect(screen.getByRole('textbox', { name: 'Charge série 1' })).toHaveAttribute('placeholder', '0')
+    expect(screen.getByText('Aide 4,5 kg × 12 · 12 · 11 · 10')).toBeInTheDocument()
+    // A typed load is stored as typed.
+    await user.type(screen.getByRole('textbox', { name: 'Charge série 1' }), '2,5')
+    await user.click(screen.getByRole('button', { name: 'Valider la série 1' }))
+    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'e2', 0, { weight: 2.5, reps: null, done: true })
+  })
+})
+
 describe('Superset en cours', () => {
   const done = { weight: 10, reps: 14, done: true }
   // A: 4 sets (A1 done), B: 3 sets (none done) → A1 B1 A2 B2 A3 B3 A4, B1 is next.
@@ -412,6 +548,41 @@ describe('Superset en cours', () => {
     expect(sessionsUpdateExercise).toHaveBeenCalledTimes(1)
     expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'ea', { completed: true })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+
+  it('a bodyweight exercise of the pair has its own Lest | Aide control; its help is stored negative', async () => {
+    const pullUps: SessionExerciseDto = {
+      ...A,
+      exercise: { ...ex('xa', 'Tractions'), equipment: 'bodyweight' },
+      sets: [0, 1, 2, 3].map((i) => set(i, { targetWeight: -20, targetReps: 9 })),
+      lastTime: { date: '2026-09-28', sets: [9, 9, 8, 8].map((reps) => ({ weight: -20, reps })) },
+    }
+    vi.mocked(sessionsGetExercise).mockImplementation(byId(pullUps, B))
+    vi.mocked(sessionsSaveSet).mockResolvedValue({
+      ...pullUps,
+      sets: pullUps.sets.map((s) => (s.index === 0 ? { ...s, weight: -15, reps: 9, done: true } : s)),
+    })
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/superset/ea')
+
+    const group = await screen.findByRole('group', { name: 'Type de charge Tractions' })
+    expect(within(group).getByRole('button', { name: 'Aide' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('group', { name: 'Type de charge Extension triceps poulie' })).toBeNull()
+    // One column for both exercises: "kg" while one of them is not help.
+    expect(screen.getByText('kg')).toBeInTheDocument()
+    expect(screen.getByText('Aide 20 kg × 9 · 9 · 8 · 8')).toBeInTheDocument()
+
+    const help = screen.getByRole('textbox', { name: 'Aide A1' })
+    expect(help).toHaveAttribute('placeholder', '20')
+    await user.type(help, '15')
+    await user.click(screen.getByRole('button', { name: 'Valider A1' }))
+    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'ea', 0, { weight: -15, reps: null, done: true })
+    // The other exercise is untouched: its weight is sent as typed.
+    expect(await screen.findByRole('textbox', { name: 'Charge B1' })).toHaveAttribute('placeholder', '25')
+
+    // Switching to Lest flips the set logged for Tractions only.
+    await user.click(within(screen.getByRole('group', { name: 'Type de charge Tractions' })).getByRole('button', { name: 'Lest' }))
+    await waitFor(() => expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'ea', 0, { weight: 15, reps: 9, done: true }))
   })
 
   it('opens the usual screen for an exercise that is not in a superset', async () => {
