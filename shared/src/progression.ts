@@ -2,11 +2,14 @@ import type { Equipment, Muscle } from './muscu.js';
 
 /** Musculation progression (double progression), spec §3. Pure functions, used by the API. */
 
-/** Default weight step by equipment (kg); bodyweight = added load. */
+/**
+ * Default weight step by equipment (kg); bodyweight = added load. Machine stacks are 10 lb ≈ 4.5 kg,
+ * cable stacks 5 lb ≈ 2.5 kg.
+ */
 export const DEFAULT_STEP: Record<Equipment, number> = {
-  barbell: 2.5,
+  barbell: 5,
   dumbbell: 2,
-  machine: 5,
+  machine: 4.5,
   cable: 2.5,
   bodyweight: 2.5,
 };
