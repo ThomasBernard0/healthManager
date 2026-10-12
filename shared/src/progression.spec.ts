@@ -6,15 +6,14 @@ import {
   stepDown,
   stepUp,
   type ExerciseLog,
-  type Feeling,
   type NextTargetsInput,
 } from './progression.js';
 
-/** A past session: weight (one for all sets, or one per set), reps done, feeling, targets. */
+/** A past session: weight (one for all sets, or one per set), reps done, Facile tapped, targets. */
 function log(
   weight: number | number[],
   reps: number[],
-  feeling: Feeling | null = 'ok',
+  easy = false,
   options: { targets?: number[]; preFatigue?: number; complete?: boolean; inSuperset?: boolean } = {},
 ): ExerciseLog {
   return {
@@ -22,7 +21,7 @@ function log(
       const w = Array.isArray(weight) ? weight[i] : weight;
       return { weight: w, reps: r, targetWeight: options.targets ? w : null, targetReps: options.targets?.[i] ?? null };
     }),
-    feeling,
+    easy,
     preFatigue: options.preFatigue ?? 0,
     complete: options.complete ?? true,
     inSuperset: options.inSuperset ?? false,
@@ -121,69 +120,73 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     expect(reps(t)).toEqual([8, 8, 8, 8]);
   });
 
-  it('done 11·11·11·10 (total 43) "OK" → 50 × 12·12·12·11; done as targeted (47) → step up the time after', () => {
+  it('done 11·11·11·10 (total 43) → 50 × 12·12·12·11; done as targeted (47) → step up the time after', () => {
     const t = next(log(50, [11, 11, 11, 10]));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([12, 12, 12, 11]);
-    expect(judge(log(50, [12, 12, 12, 11], 'ok', { targets: [12, 12, 12, 11] }), null, 8, 12)).toBe('up');
+    expect(judge(log(50, [12, 12, 12, 11], false, { targets: [12, 12, 12, 11] }), null, 8, 12)).toBe('up');
   });
 
-  it('done 12·12·12·7 (total 43) "OK" → 50 × 12·12·12·8; never counts toward a drop', () => {
+  it('done 12·12·12·7 (total 43) → 50 × 12·12·12·8; never counts toward a drop', () => {
     const last = log(50, [12, 12, 12, 7]);
     expect(reps(next(last))).toEqual([12, 12, 12, 8]);
     expect(judge(last, log(50, [7, 7, 6, 6]), 8, 12)).toBe('progress');
   });
 
-  it('target 50 × 10·10·10·10, done 10·10·10·8 "OK" → 50 × 11·11·11·9; "Dur" → 50 × 10·10·10·10', () => {
-    const targets = [10, 10, 10, 10];
-    expect(reps(next(log(50, [10, 10, 10, 8], 'ok', { targets })))).toEqual([11, 11, 11, 9]);
-    const hard = next(log(50, [10, 10, 10, 8], 'hard', { targets }));
-    expect(weights(hard)).toEqual([50, 50, 50, 50]);
-    expect(reps(hard)).toEqual([10, 10, 10, 10]);
+  it('target 50 × 10·10·10·10, done 10·10·10·8 → 50 × 11·11·11·9', () => {
+    const t = next(log(50, [10, 10, 10, 8], false, { targets: [10, 10, 10, 10] }));
+    expect(weights(t)).toEqual([50, 50, 50, 50]);
+    expect(reps(t)).toEqual([11, 11, 11, 9]);
   });
 
   it('reps rebalance: 10·10·10·8 → 11·11·11·9 → 12·12·12·10 (total 46) → next weight', () => {
     const second = next(log(50, [10, 10, 10, 8]))!;
     expect(reps(second)).toEqual([11, 11, 11, 9]);
-    const third = next(log(50, reps(second), 'ok', { targets: reps(second) }))!;
+    const third = next(log(50, reps(second), false, { targets: reps(second) }))!;
     expect(reps(third)).toEqual([12, 12, 12, 10]);
-    const fourth = next(log(50, reps(third), 'ok', { targets: reps(third) }));
+    const fourth = next(log(50, reps(third), false, { targets: reps(third) }));
     expect(weights(fourth)).toEqual([52.5, 52.5, 52.5, 52.5]);
     expect(reps(fourth)).toEqual([8, 8, 8, 8]);
   });
 
-  it('57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, whatever the feeling', () => {
-    for (const feeling of ['easy', 'ok', 'hard', null] as const) {
-      const t = next(log(57.5, [12, 12, 11, 10], feeling));
+  it('57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, with or without Facile', () => {
+    for (const easy of [true, false]) {
+      const t = next(log(57.5, [12, 12, 11, 10], easy));
       expect(weights(t)).toEqual([60, 60, 60, 60]);
       expect(reps(t)).toEqual([8, 8, 8, 8]);
     }
   });
 
   it('done 9·9·8·7 (total 33, ≥ 32) "Facile" → step up', () => {
-    expect(judge(log(50, [9, 9, 8, 7], 'easy'), null, 8, 12)).toBe('up');
-    expect(weights(next(log(50, [9, 9, 8, 7], 'easy')))).toEqual([52.5, 52.5, 52.5, 52.5]);
+    expect(judge(log(50, [9, 9, 8, 7], true), null, 8, 12)).toBe('up');
+    expect(weights(next(log(50, [9, 9, 8, 7], true)))).toEqual([52.5, 52.5, 52.5, 52.5]);
+    // Without Facile: the usual +1.
+    expect(judge(log(50, [9, 9, 8, 7]), null, 8, 12)).toBe('progress');
+  });
+
+  it('"Facile" under the range (total 26 < 32): no step up, targets retried', () => {
+    expect(judge(log(50, [7, 7, 6, 6], true, { targets: [8, 8, 8, 8] }), null, 8, 12)).toBe('retry');
   });
 
   it('done 7·7·6·6 (total 26) twice in a row, same pre-fatigue → every weight one step down, targets × 8', () => {
-    const previous = log(50, [7, 7, 6, 6], 'ok', { preFatigue: 2 });
-    const last = log(50, [7, 7, 6, 6], 'ok', { preFatigue: 2, targets: [8, 8, 8, 8] });
+    const previous = log(50, [7, 7, 6, 6], false, { preFatigue: 2 });
+    const last = log(50, [7, 7, 6, 6], false, { preFatigue: 2, targets: [8, 8, 8, 8] });
     const t = next(last, { previous });
     expect(weights(t)).toEqual([47.5, 47.5, 47.5, 47.5]);
     expect(reps(t)).toEqual([8, 8, 8, 8]);
   });
 
   it('…the second time with more pre-fatigue → no drop (weights unchanged, target retried)', () => {
-    const previous = log(50, [7, 7, 6, 6], 'ok', { preFatigue: 0 });
-    const last = log(50, [7, 7, 6, 6], 'ok', { preFatigue: 3, targets: [8, 8, 8, 8] });
+    const previous = log(50, [7, 7, 6, 6], false, { preFatigue: 0 });
+    const last = log(50, [7, 7, 6, 6], false, { preFatigue: 3, targets: [8, 8, 8, 8] });
     expect(judge(last, previous, 8, 12)).toBe('retry');
     const t = next(last, { previous });
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([8, 8, 8, 8]);
   });
 
-  it('under the range the first time: same weights, last time’s target (never lowered to what was done)', () => {
-    const t = next(log(50, [7, 7, 6, 6], 'ok', { targets: [9, 9, 9, 8] }));
+  it('done 7·7·6·6 (total 26, < 32) the first time: same weights, last time’s target (never lowered to what was done)', () => {
+    const t = next(log(50, [7, 7, 6, 6], false, { targets: [9, 9, 9, 8] }));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([9, 9, 9, 8]);
   });
@@ -193,7 +196,7 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
   });
 
   it('more pre-fatigue and a result as good or better counts normally (step up)', () => {
-    expect(judge(log(50, [12, 12, 11, 10], 'ok', { preFatigue: 4 }), log(50, [7, 7, 6, 6]), 8, 12)).toBe('up');
+    expect(judge(log(50, [12, 12, 11, 10], false, { preFatigue: 4 }), log(50, [7, 7, 6, 6]), 8, 12)).toBe('up');
   });
 
   it('drop set 60×12 · 57,5×12 · 55×12 → 62,5 · 60 · 57,5 (the shape is kept)', () => {
@@ -203,7 +206,7 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
   });
 
   it('stopped early: retried, never a step up (2 sets of 12 out of 4)', () => {
-    const last = log(50, [12, 12], 'easy', { targets: [10, 10], complete: false });
+    const last = log(50, [12, 12], true, { targets: [10, 10], complete: false });
     expect(judge(last, null, 8, 12)).toBe('retry');
     const t = next(last);
     expect(weights(t)).toEqual([50, 50, 50, 50]);
@@ -211,8 +214,8 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
   });
 
   it('stopped early under the range: no step down, and it never counts as one of the two in a row', () => {
-    const early = log(50, [6, 5], 'ok', { targets: [8, 8], complete: false });
-    const bad = log(50, [7, 7, 6, 6], 'ok', { targets: [8, 8, 8, 8] });
+    const early = log(50, [6, 5], false, { targets: [8, 8], complete: false });
+    const bad = log(50, [7, 7, 6, 6], false, { targets: [8, 8, 8, 8] });
     expect(judge(early, bad, 8, 12)).toBe('retry');
     expect(judge(bad, early, 8, 12)).toBe('retry');
   });
@@ -221,7 +224,7 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     const range = { repMin: 10, repMax: 12 };
     const solo = log(25, [11, 10, 10, 9]);
     const targets = [11, 10, 10, 9];
-    const inSuperset = (done: number[]) => log(25, done, 'ok', { targets, inSuperset: true });
+    const inSuperset = (done: number[]) => log(25, done, false, { targets, inSuperset: true });
 
     it('done solo last time 25 × 11·10·10·9, in a superset today: targets 25 × 11·10·10·9 (no +1)', () => {
       const t = next(solo, { ...range, todayInSuperset: true });
@@ -249,10 +252,10 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
     });
 
     it('under the range solo, then in a superset: not a failure either', () => {
-      const badSolo = log(25, [9, 9, 9, 8], 'ok', { targets });
+      const badSolo = log(25, [9, 9, 9, 8], false, { targets });
       expect(judge(inSuperset([9, 9, 8, 8]), badSolo, 10, 12)).toBe('retry');
       // Both solo: the usual drop.
-      expect(judge(log(25, [9, 9, 8, 8], 'ok', { targets }), badSolo, 10, 12)).toBe('down');
+      expect(judge(log(25, [9, 9, 8, 8], false, { targets }), badSolo, 10, 12)).toBe('down');
     });
 
     it('a success in a superset counts normally', () => {
@@ -266,7 +269,7 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
       const last = inSuperset([11, 10, 10, 9]);
       expect(reps(next(last, range))).toEqual([12, 11, 11, 10]);
       const bad = inSuperset([9, 9, 8, 8]);
-      expect(judge(log(25, [9, 9, 8, 8], 'ok', { targets }), bad, 10, 12, bad)).toBe('down');
+      expect(judge(log(25, [9, 9, 8, 8], false, { targets }), bad, 10, 12, bad)).toBe('down');
     });
   });
 

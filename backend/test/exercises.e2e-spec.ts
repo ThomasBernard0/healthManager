@@ -34,7 +34,7 @@ function fakePrisma() {
                 {
                   sessionId: 's2',
                   session: { finishedAt: new Date('2026-09-28T18:30:00Z') },
-                  feeling: 'ok',
+                  easy: true,
                   preFatigue: 3,
                   supersetGroup: 'g1',
                   sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
@@ -42,7 +42,7 @@ function fakePrisma() {
                 {
                   sessionId: 's1',
                   session: { finishedAt: new Date('2026-09-14T22:30:00Z') },
-                  feeling: null,
+                  easy: false,
                   preFatigue: null,
                   supersetGroup: null,
                   sets: [
@@ -218,14 +218,14 @@ describe('Exercises (e2e)', () => {
     await request(app.getHttpServer()).get(url).expect(404);
   });
 
-  it('returns the history: Paris date, sets, feeling, pre-fatigue, volume, heaviest weight', async () => {
+  it('returns the history: Paris date, sets, Facile, pre-fatigue, volume, heaviest weight', async () => {
     const res = await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000001/history').expect(200);
     expect(res.body).toEqual([
       {
         sessionId: 's2',
         date: '2026-09-28',
         sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
-        feeling: 'ok',
+        easy: true,
         preFatigue: 3,
         inSuperset: true,
         volume: 2160,
@@ -241,7 +241,7 @@ describe('Exercises (e2e)', () => {
           { weight: 55, reps: 10 },
           { weight: 55, reps: 9 },
         ],
-        feeling: null,
+        easy: false,
         preFatigue: 0,
         inSuperset: false,
         volume: 2252.5,

@@ -103,7 +103,7 @@ export class ExercisesService {
         sessionId: e.sessionId,
         date: parisToday(e.session.finishedAt!),
         sets,
-        feeling: e.feeling,
+        easy: e.easy,
         preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
         inSuperset: e.supersetGroup !== null,
         volume: volume(sets),

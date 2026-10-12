@@ -5,7 +5,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { ExerciseDto } from './exerciseDto';
-import type { SessionExerciseDtoFeeling } from './sessionExerciseDtoFeeling';
 import type { SessionSetDto } from './sessionSetDto';
 import type { Muscle } from './muscle';
 import type { SessionExerciseDtoLastTime } from './sessionExerciseDtoLastTime';
@@ -17,8 +16,8 @@ export interface SessionExerciseDto {
   exercise: ExerciseDto;
   repMin: number;
   repMax: number;
-  /** @nullable */
-  feeling: SessionExerciseDtoFeeling;
+  /** Facile tapped */
+  easy: boolean;
   /** Terminé tapped */
   completed: boolean;
   /** Targets: live until the first set is validated, then frozen */

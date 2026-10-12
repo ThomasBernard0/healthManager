@@ -127,7 +127,7 @@ export class SessionsService {
       exercise: toExerciseDto(entry.exercise),
       repMin: entry.repMin,
       repMax: entry.repMax,
-      feeling: entry.feeling,
+      easy: entry.easy,
       completed: entry.completed,
       sets: entry.sets.map((s, i) => ({
         ...toSetDto(s),
@@ -180,7 +180,7 @@ export class SessionsService {
     return this.getExercise(sessionId, id);
   }
 
-  /** Ressenti and/or Terminé. */
+  /** Facile and/or Terminé. */
   async updateExercise(sessionId: string, id: string, dto: UpdateSessionExerciseDto): Promise<SessionExerciseDto> {
     const entry = await this.openEntry(sessionId, id);
     if (dto.completed && !entry.sets.some((s) => s.done)) {
@@ -189,7 +189,7 @@ export class SessionsService {
     await this.prisma.sessionExercise.update({
       where: { id },
       data: {
-        ...(dto.feeling !== undefined ? { feeling: dto.feeling } : {}),
+        ...(dto.easy !== undefined ? { easy: dto.easy } : {}),
         ...(dto.completed !== undefined ? { completed: dto.completed } : {}),
       },
     });

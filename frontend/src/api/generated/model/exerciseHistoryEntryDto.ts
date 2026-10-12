@@ -5,7 +5,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { SetResultDto } from './setResultDto';
-import type { ExerciseHistoryEntryDtoFeeling } from './exerciseHistoryEntryDtoFeeling';
 
 export interface ExerciseHistoryEntryDto {
   sessionId: string;
@@ -13,8 +12,8 @@ export interface ExerciseHistoryEntryDto {
   date: string;
   /** Validated sets, in order */
   sets: SetResultDto[];
-  /** @nullable */
-  feeling: ExerciseHistoryEntryDtoFeeling;
+  /** Facile tapped */
+  easy: boolean;
   /** Sets already done on its primary muscles (> 0: battery icon) */
   preFatigue: number;
   /** Done in a superset (link icon) */

@@ -60,11 +60,12 @@ describe('Sessions (e2e)', () => {
     expect(service.saveSet).not.toHaveBeenCalled();
   });
 
-  it('sets the feeling (or clears it) and Terminé', async () => {
-    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ feeling: 'hard' }).expect(200);
-    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ feeling: null, completed: true }).expect(200);
-    expect(service.updateExercise).toHaveBeenLastCalledWith(S, E, { feeling: null, completed: true });
-    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ feeling: 'facile' }).expect(400);
+  it('sets Facile (or clears it) and Terminé', async () => {
+    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ easy: true }).expect(200);
+    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ easy: false, completed: true }).expect(200);
+    expect(service.updateExercise).toHaveBeenLastCalledWith(S, E, { easy: false, completed: true });
+    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ easy: 'easy' }).expect(400);
+    await http().patch(`/api/sessions/${S}/exercises/${E}`).send({ feeling: 'easy' }).expect(400);
   });
 
   it('finishes a session', async () => {

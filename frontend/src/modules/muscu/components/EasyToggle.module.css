@@ -1,16 +1,20 @@
 /* Transcribed from design/musculation/muscu-3-exercice-en-cours.html */
 
-.button {
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
   height: var(--size-input);
+  padding: 0 var(--space-18);
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border);
   background: var(--color-card);
   color: var(--color-ink);
   font-weight: var(--font-weight-semibold);
 }
 
-.selected {
+.on {
   border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-soft-ink);
 }

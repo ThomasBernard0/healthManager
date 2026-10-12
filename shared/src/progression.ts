@@ -2,8 +2,6 @@ import type { Equipment, Muscle } from './muscu.js';
 
 /** Musculation progression (double progression), spec §3. Pure functions, used by the API. */
 
-export type Feeling = 'easy' | 'ok' | 'hard';
-
 /** Default weight step by equipment (kg); bodyweight = added load. */
 export const DEFAULT_STEP: Record<Equipment, number> = {
   barbell: 2.5,
@@ -71,7 +69,8 @@ export interface LoggedSet {
 /** The done sets of one past session of an exercise. */
 export interface ExerciseLog {
   sets: LoggedSet[];
-  feeling: Feeling | null;
+  /** "Facile" tapped: a clear margin. */
+  easy: boolean;
   preFatigue: number;
   /** Every planned set was done (false: the exercise was stopped early). */
   complete: boolean;
@@ -113,7 +112,7 @@ export function judge(
   if (!last.complete) return 'retry';
   const n = last.sets.length;
   const sum = total(last);
-  if (sum >= n * (repMax - 1) || (last.feeling === 'easy' && sum >= n * repMin)) return 'up';
+  if (sum >= n * (repMax - 1) || (last.easy && sum >= n * repMin)) return 'up';
   // Two sessions in a row under the range, the second not explained by more pre-fatigue.
   // A previous session stopped early never counts as one of the two, nor does a session done in a
   // superset right after a solo one.
@@ -127,7 +126,7 @@ export function judge(
   ) {
     return 'down';
   }
-  if (last.feeling === 'hard' || belowMin(last, repMin)) return 'retry';
+  if (belowMin(last, repMin)) return 'retry';
   return 'progress';
 }
 

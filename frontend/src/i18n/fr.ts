@@ -131,6 +131,8 @@ export const fr = {
       reopen: (set: string) => `${set} faite, modifier`,
       stopEarly: 'Terminer le superset plus tôt',
       inHistory: 'En superset',
+      /** Facile toggle of one exercise: "Élévations latérales facile" */
+      easyOf: (exercise: string) => `${exercise} facile`,
     },
     history: {
       progression: 'Progression',
@@ -140,7 +142,6 @@ export const fr = {
       chart: 'Charge et volume par séance',
       date: 'Date',
       set: (n: number) => `Série ${n}`,
-      feeling: 'Ressenti',
       /** "2 588 kg" */
       kg: (value: string) => `${value} kg`,
       /** Bar label: "lun 21 sept : 2 588 kg" */
@@ -165,8 +166,8 @@ export const fr = {
       validate: (n: number) => `Valider la série ${n}`,
       reopen: (n: number) => `Série ${n} faite, modifier`,
       lastTime: (date: string) => `Dernière fois · ${date}`,
-      feeling: 'Ressenti',
-      feelings: { easy: 'Facile', ok: 'OK', hard: 'Dur' },
+      easy: 'Facile',
+      easyLabel: 'Facile, monter la charge la prochaine fois',
       completed: 'Terminé',
       stopEarly: 'Terminer l’exercice plus tôt',
       confirmStopEarly: (done: number, total: number) => `Terminer avec ${done} / ${total} séries ?`,

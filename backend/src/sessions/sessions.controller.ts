@@ -54,7 +54,7 @@ export class SessionsController {
     return this.sessions.get(id);
   }
 
-  /** Exercice en cours: sets with targets, last time, feeling. */
+  /** Exercice en cours: sets with targets, last time, Facile. */
   @Get(':id/exercises/:exerciseId')
   @ApiOkResponse({ type: SessionExerciseDto })
   @ApiNotFoundResponse()
@@ -80,7 +80,7 @@ export class SessionsController {
     return this.sessions.saveSet(id, exerciseId, index, dto);
   }
 
-  /** Ressenti and/or Terminé. */
+  /** Facile and/or Terminé. */
   @Patch(':id/exercises/:exerciseId')
   @ApiOkResponse({ type: SessionExerciseDto })
   @ApiNotFoundResponse()

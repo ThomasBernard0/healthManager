@@ -4,11 +4,10 @@
  * healthManager API
  * OpenAPI spec version: 1.0
  */
-import type { UpdateSessionExerciseDtoFeeling } from './updateSessionExerciseDtoFeeling';
 
 export interface UpdateSessionExerciseDto {
-  /** @nullable */
-  feeling?: UpdateSessionExerciseDtoFeeling;
+  /** Facile tapped */
+  easy?: boolean;
   /** Terminé (needs at least one validated set) */
   completed?: boolean;
 }

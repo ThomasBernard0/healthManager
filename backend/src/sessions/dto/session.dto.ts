@@ -3,9 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { SetResultDto } from '../../common/set-result.dto.js';
 import { ExerciseDto } from '../../exercises/dto/exercise.dto.js';
 
-export const FEELINGS = ['easy', 'ok', 'hard'] as const;
-export type Feeling = (typeof FEELINGS)[number];
-
 export const EXERCISE_STATUSES = ['todo', 'inProgress', 'done'] as const;
 export type ExerciseStatus = (typeof EXERCISE_STATUSES)[number];
 
@@ -111,8 +108,8 @@ export class SessionExerciseDto {
   @ApiProperty({ example: 12 })
   repMax: number;
 
-  @ApiProperty({ enum: FEELINGS, enumName: 'Feeling', nullable: true })
-  feeling: Feeling | null;
+  @ApiProperty({ description: 'Facile tapped' })
+  easy: boolean;
 
   @ApiProperty({ description: 'Terminé tapped' })
   completed: boolean;
