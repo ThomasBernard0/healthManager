@@ -1,6 +1,8 @@
 # Musculation module — spec
 
-Second module of healthManager, next to Alimentation. Same stack, same conventions (CLAUDE.md), same theme tokens, French UI, no helper text. Mockups: `design/musculation/` (dark theme, as the app renders on the user's devices).
+Second module of healthManager, next to Alimentation. Same stack, same conventions (CLAUDE.md), same theme tokens, French UI, no helper text. Mockups: `design/musculation/` (`muscu-*`, `bureau-muscu-*`, `superset-*`; dark theme, as the app renders on the user's devices).
+
+Supersets (§5) and sets/rep range on the exercise are part of this spec; it replaces `musculation-superset.md`.
 
 **Context:** one user, about 15 exercises, 3 fixed sessions in rotation of ~5 exercises × 4 sets (Push A → Pull → Push B → …), machines and free weights, rep ranges mostly 8–12. Sessions are grouped in **programs** (e.g. a summer program and a winter one); only one is active at a time and its sessions are the rotation. No rest timer. Sport never changes food targets.
 
@@ -15,6 +17,7 @@ Second module of healthManager, next to Alimentation. Same stack, same conventio
 // Exercise — my exercises (created in the app, editable)
 Exercise { id, name, equipment: "barbell" | "dumbbell" | "machine" | "cable" | "bodyweight",
            primaryMuscles: Muscle[], secondaryMuscles: Muscle[],
+           sets /* default 4 */, repMin /* default 8 */, repMax /* default 12 */,
            image? /* uploaded picture, stored in the database */, archived }
 
 // Program — a group of workouts; exactly one is active
@@ -22,12 +25,15 @@ Program { id, name, position /* order in Mes programmes */, active, activatedAt 
 
 // Workout — a session template ("Push A"), in one program
 Workout { id, programId, name, position /* order in its program's rotation */,
-          items: { exerciseId, sets /* default 4 */, repMin /* 8 */, repMax /* 12 */, order }[] }
+          items: { exerciseId, order, supersetGroup? /* shared by exactly two adjacent items */ }[] }
 
 // Session — one performed workout
 Session { id, workoutId, startedAt, finishedAt? }
-SessionExercise { id, sessionId, exerciseId, order, feeling?: "easy" | "ok" | "hard",
-                  sets: { targetWeight?, targetReps?, weight /* kg, 0.5 step */, reps, done }[] }
+SessionExercise { id, sessionId, exerciseId, order, repMin, repMax /* snapshot of the exercise at start */,
+                  firstSetAt?, preFatigue?, completed, supersetGroup? /* snapshot of the workout item */,
+                  feeling?: "easy" | "ok" | "hard",
+                  sets: { index, targetWeight?, targetReps?, weight /* kg, 0.5 step */, reps, done, doneAt? }[] }
+// The number of SessionSet rows created at start = the exercise's `sets` at that time.
 
 // Next targets are computed from the last SessionExercise of the exercise (no stored table).
 // A manual override is just editing the numbers during the session.
@@ -37,6 +43,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 ```
 
 - No seeded exercise bank: exercises are created in the app. An exercise can have one image, uploaded from Créer / Modifier l'exercice and stored in the database (served by the API, not with the app). Never Basic-Fit images.
+- **Sets and rep range belong to the exercise**, not to the workout: the same exercise has the same scheme in every workout, so its history, chart and progression stay comparable. Each session snapshots the scheme when it starts (set rows + `repMin`/`repMax`), so changing the exercise later never rewrites past sessions.
 - **Programs**: there is always exactly one active program (the existing workouts went into "Mon programme", active). A new program is created inactive. **Activer** makes it the only active one and its rotation **restarts at its first workout** (also when re-activating a program used before). The active program can't be deleted; deleting another one deletes its workouts (the history of their sessions is kept).
 - **Next workout** = in the active program, the workout after the last session finished since its activation, in `position` order (wraps around); none yet → its first workout. The user can start any other workout of the active program ("Démarrer cette séance", a link at the bottom of Modifier la séance); the rotation then continues after the one finished. Workouts of an inactive program can't be started (no link, and the API refuses).
 
@@ -55,7 +62,8 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 
 - The +1 per set capped at `repMax` rebalances reps by itself: strong sets stop at the top while weaker ones catch up, until the total reaches the Up threshold.
 - **Drop sets / different weights per set**: each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
-- The number of sets is fixed by the workout (Modifier la séance); the exercise screen has no "+ Série". If the set count of a workout item changes, new sets copy the last set's target.
+- The number of sets is fixed by the exercise (Modifier l'exercice); the exercise screen has no "+ Série". If the set count changes, added sets copy the last set's target and removed sets are dropped from the next targets.
+- Changing the rep range: thresholds and targets use the new range from the next session on; weights are kept.
 - Exercises skipped in a session don't change their next target.
 - An exercise **stopped early** (not every set done) doesn't move it either: next time its targets are retried (never up, never down), and it never counts as one of the two sessions in a row for a drop.
 - No 1RM formula: increments must match real plates and machine stacks.
@@ -80,6 +88,8 @@ Exercises can be done in any order and some can be skipped, so the same exercise
   - less pre-fatigue and a success → counts normally (a later harder session simply keeps the weight).
 - When an exercise is opened with more pre-fatigue than last time, today's target reps = last reps (no +1).
 - No fatigue percentage or coefficient.
+- In a superset, `doneAt` of each set tells which sets of the partner came earlier; partners on independent muscles add 0.
+- **Superset context** (asymmetric, same idea): last time done **solo**, this time **in a superset** (shorter rest) and the result is worse → not a failure (weights unchanged, not counted toward the drop); successes count normally. Opened in a superset after a solo session → today's target reps = last reps (no +1). Superset back to solo needs no special case.
 - Not displayed: pre-fatigue only feeds the rules above (no battery icon, no "{muscle} déjà travaillé" tag).
 
 ### Showing target vs done
@@ -112,10 +122,10 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Terminé** (once every set is done) → back to the list. Not the usual flow: a small "Terminer l'exercice plus tôt" link (after at least one set) asks "Terminer avec 2 / 4 séries ?" first.
 
 ### Fiche exercice (mobile `muscu-4-fiche-exercice`, desktop `bureau-muscu-exercice`)
-- Name, equipment · workout · sets × rep range, pencil → Modifier l'exercice.
+- Name, equipment · workout · sets × rep range (from the exercise), pencil → Modifier l'exercice.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
-- **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume).
+- **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume). A session done in a superset gets a small link icon next to the date (`aria-label="En superset"`).
 
 ### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
 - Séances only (no exercises; they are on Accueil and in Modifier la séance). Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
@@ -124,7 +134,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Séances**: its workouts in rotation order ("Actif" tag if it is the active one), tap → Modifier la séance; "+ Nouvelle séance" adds one to this program.
 
 ### Modifier la séance (mobile `muscu-5-modifier-seance`)
-- Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit) and a chevron → its Fiche exercice, swipe to remove, "+ Ajouter un exercice" → my exercises in picking mode. Delete workout in the header.
+- Name, ordered exercise list (drag handle), each showing its "sets × min–max" as **muted read-only text** (set in Modifier l'exercice) and a chevron → its Fiche exercice, swipe to remove, "+ Ajouter un exercice" → my exercises in picking mode. Delete workout in the header.
 - "Démarrer cette séance" link at the bottom: only in the active program, when no session is in progress.
 
 ### Exercices (mobile `muscu-6-exercices`)
@@ -134,9 +144,33 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A weight change starts a new line (mobile) or group: "57,5 kg × 11 · 10" / "55 kg × 10 · 9". Keeps 4–5 sets readable on a phone.
 
 ### Modifier l'exercice (mobile `muscu-7-modifier-exercice`)
-- Name; muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
+- Name; **Séries et répétitions**: three number inputs Séries × Min – Max (defaults 4 × 8–12; API rejects `sets < 1`, `repMin < 1`, `repMin > repMax`); muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
 
-## 5. Build order
+## 5. Supersets
+
+Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2…), usually on independent muscle groups. Planned in the workout, never created during a session.
+
+- Exactly **2 adjacent** items of a workout share a `supersetGroup` (opaque id). Unlinking clears it on both. The API rejects a group of ≠ 2 items or non-adjacent items (400).
+- Each exercise keeps its own sets and rep range (from the exercise), e.g. A 4 × 12–15, B 4 × 10–12.
+- **Order**: `interleaveSets(a, b)` alternates while both have sets left, then the rest of the longer one (A1 B1 A2 B2 A3 A4). Pure function in `shared/`.
+- **Progression** unchanged: each exercise is judged on its own sets; superset context and pre-fatigue as in §3.
+- The session snapshots the group on each `SessionExercise`; if the partner is skipped, the exercise counts as solo.
+
+### Modifier la séance (`superset-1-modifier-seance`)
+- Between two consecutive exercises that are not in a superset, a small round **link** button (icon only, `aria-label="Relier en superset"`) overlaps the divider.
+- A superset is one block: accent vertical bar, "SUPERSET" label, **Délier** (link-off icon + text), then the two rows with badges **A** (accent) and **B** (protein colour), each with its "sets × min–max" as muted read-only text.
+- Dragging moves the whole block. No exercise can be inserted inside a superset (unlink first).
+
+### Séance — liste (`superset-2-seance-liste`)
+- A superset is **one card**: stacked double thumbnail, "SUPERSET" label, both names with their A/B badges, one status for the pair (to do / En cours / ✓ when both are done). It counts as one item in "x / y faits".
+
+### Superset en cours (`superset-3-superset-en-cours`)
+- Header: back to list, "{workout} · Superset". Top: the two exercises side by side (image with badge, name, "sets × range"), tap → Fiche exercice.
+- One set table in interleaved order: badge + set number ("A1", "B1"…), then Objectif | kg | Reps | ✓, same behaviour as Exercice en cours (sets in order, placeholder = target, ✓ on empty records the target, under-target reps in orange).
+- "Dernière fois" and **Ressenti** once per exercise, prefixed by its badge.
+- **Terminé** once every set is done; "Terminer le superset plus tôt" otherwise (same rule as stopping an exercise early, per exercise).
+
+## 6. Build order
 
 1. Module switcher + empty Musculation module and routes.
 2. Exercises: schema, Exercices screen, Fiche exercice without chart.
@@ -145,8 +179,10 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 5. Progression rules in `shared/` + targets.
 6. Combined chart, history, desktop layouts.
 7. Programs: group workouts, one active (rotation restarts on activation), Programme page.
+8. Supersets: schema, link/unlink, list card, Superset en cours, superset context.
+9. Sets and rep range on the exercise (see the README of this handoff).
 
-## 6. Acceptance checks
+## 7. Acceptance checks
 
 - After finishing Push A, Accueil proposes Pull; after Push B, it proposes Push A.
 - Exercises can be done in any order from the list; skipped ones keep their target.
@@ -169,4 +205,11 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 - Every exercise row of Modifier la séance opens its Fiche exercice.
 - A workout of an inactive program has no "Démarrer cette séance" link, and starting it through the API is refused (400).
 - The active program can't be deleted (409); deleting another one removes its workouts.
+- Linking two 4-set exercises gives A1 B1 A2 B2 A3 B3 A4 B4; 4 + 3 sets → A1 B1 A2 B2 A3 B3 A4.
+- Unlinking keeps both exercises, their targets and their order; the API rejects a group of 3 items or two non-adjacent items.
+- The list shows one card for a superset; it gets ✓ only when both exercises are done.
+- Exercise done solo last time at 25 kg × 11·10·10·9: in a superset today its targets are 25 × 11·10·10·9; done 10·9·9·8 → weight stays 25 kg, no drop strike.
+- The same exercise in two workouts shows the same "sets × range" in both.
+- Changing Rowing from 4 × 8–12 to 3 × 8–12: the next session has 3 sets; past sessions still show 4 sets in history and chart volume.
+- Changing a range to 6–10 with 3 sets: Up threshold 27 reps, Down threshold 18; weights unchanged.
 - Food pages are unchanged except the switcher in the top bar.
