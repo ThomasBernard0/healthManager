@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import {
@@ -11,7 +11,7 @@ import {
 import type { ExerciseDto, WorkoutDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
-import { ChevronLeft, Grip, Play, Plus, Trash } from '../../../core/ui/icons'
+import { ChevronLeft, ChevronRight, Grip, Play, Plus, Trash } from '../../../core/ui/icons'
 import { Sheet } from '../../../core/ui/Sheet'
 import { useToast } from '../../../core/ui/toastContext'
 import form from '../../../core/ui/form.module.css'
@@ -25,7 +25,7 @@ import { MuscuLayout } from '../components/MuscuLayout'
 import { WorkoutItemSheet, type ItemSettings } from '../components/WorkoutItemSheet'
 import { primarySubtitle } from '../format'
 import { moveItem } from '../reorder'
-import { MUSCU_PATH } from '../routes'
+import { exercisePath, MUSCU_PATH } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
 import styles from './WorkoutEditPage.module.css'
@@ -361,6 +361,15 @@ function ItemRow({ item, onMove, onEdit, onRemove }: ItemRowProps) {
         >
           {fr.muscu.setsReps(item.sets, item.repMin, item.repMax)}
         </button>
+        {/* Fiche exercice (progression, history). Not part of the swipe. */}
+        <Link
+          to={exercisePath(item.exercise.id)}
+          className={styles.open}
+          aria-label={fr.muscu.workout.open(item.exercise.name)}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <ChevronRight size={18} />
+        </Link>
       </div>
     </li>
   )

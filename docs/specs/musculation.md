@@ -95,7 +95,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
   - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then "+ Nouvelle séance" (added to the active program);
   - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (asks "Activer « X » ?" first);
   - "+ Nouveau programme": a sheet asking for the name, then the new program's page.
-- **Mes exercices** (mobile: between Prochaine séance and Mes programmes; desktop: right column, Prochaine séance and Mes programmes stacked on the left): every exercise used in the **active program**, once, by name → its Fiche exercice. Exercises only in other programs are on their Programme page. No link to the bank on Accueil (it is reached from Modifier la séance).
+- **Mes exercices** (mobile: between Prochaine séance and Mes programmes; desktop: right column, Prochaine séance and Mes programmes stacked on the left): each exercise once, by name → its Fiche exercice, in two tabs (segmented control, shown only when the second one has exercises): **Programme actif** (default: the exercises of the active program) and **Autres programmes** (exercises used only in inactive programs). No link to the bank on Accueil (it is reached from Modifier la séance).
 - No session history on this page (progress lives in each exercise page).
 
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)
@@ -118,14 +118,13 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume).
 
 ### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
-- Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
+- Séances only (no exercises; they are on Accueil and in Modifier la séance). Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
 - Name field; Enregistrer appears once it is changed.
 - **Activer ce programme** (inactive programs only; asks "Activer « X » ?" first) → back to Accueil, which proposes its first workout.
 - **Séances**: its workouts in rotation order ("Actif" tag if it is the active one), tap → Modifier la séance; "+ Nouvelle séance" adds one to this program.
-- **Exercices**: every exercise of its workouts, once → Fiche exercice.
 
 ### Modifier la séance (mobile `muscu-5-modifier-seance`)
-- Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit), swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.
+- Name, ordered exercise list (drag handle), each with its "sets × min–max" chip (tap to edit) and a chevron → its Fiche exercice, swipe to remove, "+ Ajouter un exercice" → bank in picking mode. Delete workout in the header.
 - "Démarrer cette séance" link at the bottom: only in the active program, when no session is in progress.
 
 ### Exercices (mobile `muscu-6-exercices`)
@@ -166,7 +165,8 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A
 - Reloading the page in the middle of a session keeps every validated set.
 - Existing workouts end up in one active program, "Mon programme", and the next workout doesn't change.
 - Activating program B proposes B's first workout; after finishing it, B's second. Re-activating A proposes A's first workout, whatever was done last in A.
-- Mes exercices lists only the active program's exercises; another program's are on its Programme page.
+- Mes exercices shows the active program's exercises; the "Autres programmes" tab shows those only in inactive programs. The Programme page lists no exercises.
+- Every exercise row of Modifier la séance opens its Fiche exercice.
 - A workout of an inactive program has no "Démarrer cette séance" link, and starting it through the API is refused (400).
 - The active program can't be deleted (409); deleting another one removes its workouts.
 - Food pages are unchanged except the switcher in the top bar.
