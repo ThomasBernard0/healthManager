@@ -11,6 +11,5 @@ export type FoodSource = typeof FoodSource[keyof typeof FoodSource];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const FoodSource = {
   custom: 'custom',
-  ciqual: 'ciqual',
   off: 'off',
 } as const;

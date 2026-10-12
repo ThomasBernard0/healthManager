@@ -17,7 +17,6 @@ datasource db {
 
 enum FoodSource {
   custom
-  ciqual
   off
 }
 
@@ -138,7 +137,6 @@ model Food {
   searchName String
   brand      String?
   source     FoodSource
-  ciqualCode String?    @unique
   barcode    String?    @unique
   kcal       Int
   protein    Decimal    @db.Decimal(7, 1)

@@ -30,7 +30,7 @@ const food = (id: string, name: string, kcal: number, protein: number, carbs: nu
   id,
   name,
   brand: null,
-  source: 'ciqual',
+  source: 'custom',
   per100g: { kcal, protein, carbs, fat },
   units,
 })

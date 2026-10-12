@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString, Length, Max, Min } from 'class-validator';
 import { NutrientsDto } from '../../common/nutrients.dto.js';
 
-export const FOOD_SOURCES = ['custom', 'ciqual', 'off'] as const;
+export const FOOD_SOURCES = ['custom', 'off'] as const;
 export type FoodSourceValue = (typeof FOOD_SOURCES)[number];
 
 /** A household unit of a food, e.g. { label: "c. à s.", grams: 10 }. */
