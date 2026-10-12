@@ -119,6 +119,15 @@ export const fr = {
       unlink: 'Délier',
       unlinkLabel: 'Délier le superset',
       move: 'Déplacer le superset',
+      /** Header of Superset en cours: "Push B · Superset" */
+      header: (workout: string) => `${workout} · Superset`,
+      /** "A2" */
+      set: (letter: string, n: number) => `${letter}${n}`,
+      weightOf: (set: string) => `Charge ${set}`,
+      repsOf: (set: string) => `Répétitions ${set}`,
+      validate: (set: string) => `Valider ${set}`,
+      reopen: (set: string) => `${set} faite, modifier`,
+      stopEarly: 'Terminer le superset plus tôt',
     },
     history: {
       progression: 'Progression',
@@ -138,6 +147,7 @@ export const fr = {
       resume: 'Reprendre la séance',
       progress: (done: number, total: number) => `${done} / ${total} faits`,
       quit: 'Quitter la séance',
+      edit: 'Modifier la séance',
       confirmQuit: 'Abandonner la séance ?',
       quitAction: 'Abandonner',
       finish: 'Terminer la séance',

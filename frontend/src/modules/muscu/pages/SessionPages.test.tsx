@@ -13,6 +13,7 @@ import type { ExerciseDto, SessionDto, SessionExerciseDto, SessionSetDto } from 
 import { ToastProvider } from '../../../core/ui/Toast'
 import SessionExercisePage from './SessionExercisePage'
 import SessionPage from './SessionPage'
+import SessionSupersetPage from './SessionSupersetPage'
 
 vi.mock('../../../api/generated/endpoints/sessions/sessions', () => ({
   sessionsGet: vi.fn(),
@@ -85,6 +86,7 @@ function renderAt(path: string) {
           <Route path="/muscu" element={<Where />} />
           <Route path="/muscu/seance/:sessionId" element={<><SessionPage /><Where /></>} />
           <Route path="/muscu/seance/:sessionId/:entryId" element={<SessionExercisePage />} />
+          <Route path="/muscu/seance/:sessionId/superset/:entryId" element={<SessionSupersetPage />} />
         </Routes>
       </MemoryRouter>
     </ToastProvider>,
@@ -99,12 +101,44 @@ describe('Séance — liste', () => {
     renderAt('/muscu/seance/s1')
     expect(await screen.findByRole('heading', { name: 'Pull' })).toBeInTheDocument()
     expect(screen.getByText('1 / 3 faits')).toBeInTheDocument()
-    const links = screen.getAllByRole('link')
+    const links = within(screen.getByRole('list')).getAllByRole('link')
     expect(within(links[0]).getByRole('img', { name: 'Fait' })).toBeInTheDocument()
     expect(within(links[1]).getByText('En cours')).toBeInTheDocument()
     expect(links[2]).toHaveAttribute('href', '/muscu/seance/s1/e3')
     // Pre-fatigue feeds the rules only: nothing shown.
     expect(screen.queryByRole('img', { name: 'Muscles déjà travaillés' })).toBeNull()
+  })
+
+  it('shows a superset as one card, counted once, done only when both exercises are', async () => {
+    const pair = (a: 'todo' | 'inProgress' | 'done', b: 'todo' | 'inProgress' | 'done'): SessionDto => ({
+      ...SESSION,
+      exercises: [
+        SESSION.exercises[0],
+        { id: 'e2', exercise: ex('x2', 'Élévations latérales'), status: a, preFatigue: 0, supersetGroup: 'g' },
+        { id: 'e3', exercise: ex('x3', 'Extension triceps poulie'), status: b, preFatigue: 0, supersetGroup: 'g' },
+        { id: 'e4', exercise: ex('x4', 'Développé épaules'), status: 'todo', preFatigue: 0, supersetGroup: null },
+      ],
+    })
+    vi.mocked(sessionsGet).mockResolvedValue(pair('done', 'inProgress'))
+    const view = renderAt('/muscu/seance/s1')
+    expect(await screen.findByText('1 / 3 faits')).toBeInTheDocument()
+    const cards = within(screen.getByRole('list')).getAllByRole('link')
+    expect(cards).toHaveLength(3)
+    expect(cards[1]).toHaveAttribute('href', '/muscu/seance/s1/superset/e2')
+    expect(cards[1]).toHaveTextContent('Superset')
+    expect(within(cards[1]).getByText('A').parentElement).toHaveTextContent('Élévations latérales')
+    expect(within(cards[1]).getByText('B').parentElement).toHaveTextContent('Extension triceps poulie')
+    // One of the two is not done yet: En cours, no ✓.
+    expect(within(cards[1]).getByText('En cours')).toBeInTheDocument()
+    expect(within(cards[1]).queryByRole('img', { name: 'Fait' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Modifier la séance' })).toHaveAttribute('href', '/muscu/seances/w1')
+    view.unmount()
+
+    vi.mocked(sessionsGet).mockResolvedValue(pair('done', 'done'))
+    renderAt('/muscu/seance/s1')
+    expect(await screen.findByText('2 / 3 faits')).toBeInTheDocument()
+    const done = within(screen.getByRole('list')).getAllByRole('link')[1]
+    expect(within(done).getByRole('img', { name: 'Fait' })).toBeInTheDocument()
   })
 
   it('Terminer la séance saves it and goes back to Accueil', async () => {
@@ -250,5 +284,124 @@ describe('Exercice en cours', () => {
     renderAt('/muscu/seance/s1/e2')
     expect(await screen.findByRole('button', { name: 'Terminé' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Terminer l’exercice plus tôt' })).toBeNull()
+  })
+})
+
+describe('Superset en cours', () => {
+  const done = { weight: 10, reps: 14, done: true }
+  // A: 4 sets (A1 done), B: 3 sets (none done) → A1 B1 A2 B2 A3 B3 A4, B1 is next.
+  const A: SessionExerciseDto = {
+    ...ENTRY,
+    id: 'ea',
+    workoutName: 'Push B',
+    exercise: ex('xa', 'Élévations latérales'),
+    repMin: 12,
+    repMax: 15,
+    sets: [set(0, { targetWeight: 10, targetReps: 14, ...done }), ...[1, 2, 3].map((i) => set(i, { targetWeight: 10, targetReps: 13 }))],
+    supersetGroup: 'g',
+    partnerId: 'eb',
+    lastTime: { date: '2026-09-28', sets: [13, 13, 12, 11].map((reps) => ({ weight: 10, reps })) },
+  }
+  const B: SessionExerciseDto = {
+    ...ENTRY,
+    id: 'eb',
+    workoutName: 'Push B',
+    exercise: ex('xb', 'Extension triceps poulie'),
+    repMin: 10,
+    repMax: 12,
+    sets: [0, 1, 2].map((i) => set(i, { targetWeight: 25, targetReps: 11 })),
+    supersetGroup: 'g',
+    partnerId: 'ea',
+    lastTime: { date: '2026-09-21', sets: [11, 10, 10].map((reps) => ({ weight: 25, reps })) },
+  }
+  const byId = (a: SessionExerciseDto, b: SessionExerciseDto) => (_s: string, id: string) => Promise.resolve(id === 'ea' ? a : b)
+  const allDone = (e: SessionExerciseDto) => ({ ...e, sets: e.sets.map((s) => ({ ...s, weight: 10, reps: 12, done: true })) })
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(sessionsGetExercise).mockImplementation(byId(A, B))
+  })
+
+  it('shows both exercises and their sets alternately, the rest of the longer one last', async () => {
+    renderAt('/muscu/seance/s1/superset/ea')
+    expect(await screen.findByRole('heading', { name: 'Push B · Superset' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Élévations latérales/ })).toHaveAttribute('href', '/muscu/exercices/xa')
+    expect(screen.getByRole('link', { name: /Extension triceps poulie/ })).toHaveTextContent('3 × 10–12')
+
+    const order = screen
+      .getAllByRole('button', { name: /^(Valider [AB]\d|[AB]\d faite, modifier)$/ })
+      .map((b) => b.getAttribute('aria-label')!.replace(/Valider | faite, modifier/g, ''))
+    expect(order).toEqual(['A1', 'B1', 'A2', 'B2', 'A3', 'B3', 'A4'])
+
+    // Only the next set of the superset has inputs, with its target as placeholder.
+    expect(screen.getAllByRole('textbox')).toHaveLength(2)
+    expect(screen.getByRole('textbox', { name: 'Charge B1' })).toHaveAttribute('placeholder', '25')
+    expect(screen.getByRole('textbox', { name: 'Répétitions B1' })).toHaveAttribute('placeholder', '11')
+    expect(screen.getByRole('button', { name: 'Valider A2' })).toBeDisabled()
+
+    expect(screen.getByText('Dernière fois · lun 28 sept')).toBeInTheDocument()
+    expect(screen.getByText('10 kg × 13 · 13 · 12 · 11')).toBeInTheDocument()
+    expect(screen.getByText('25 kg × 11 · 10 · 10')).toBeInTheDocument()
+  })
+
+  it('✓ saves the set of its own exercise and reads the other again while it is not started', async () => {
+    const savedB = { ...B, sets: B.sets.map((s) => (s.index === 0 ? { ...s, weight: 25, reps: 11, done: true } : s)) }
+    vi.mocked(sessionsSaveSet).mockResolvedValue(savedB)
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/superset/ea')
+
+    await user.click(await screen.findByRole('button', { name: 'Valider B1' }))
+    expect(sessionsSaveSet).toHaveBeenCalledWith('s1', 'eb', 0, { weight: null, reps: null, done: true })
+    // A already has a validated set: its targets are frozen, no need to read it again.
+    expect(sessionsGetExercise).toHaveBeenCalledTimes(2)
+    expect(await screen.findByRole('textbox', { name: 'Charge A2' })).toHaveAttribute('placeholder', '10')
+
+    vi.mocked(sessionsSaveSet).mockResolvedValue({ ...A, sets: A.sets.map((s) => (s.index === 0 ? set(0) : s)) })
+    await user.click(screen.getByRole('button', { name: 'A1 faite, modifier' }))
+    expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'ea', 0, { weight: 10, reps: 14, done: false })
+  })
+
+  it('has one Ressenti per exercise', async () => {
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...B, feeling: 'hard' })
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/superset/ea')
+
+    const row = await screen.findByRole('group', { name: 'Extension triceps poulie' })
+    await user.click(within(row).getByRole('button', { name: 'Dur' }))
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'eb', { feeling: 'hard' })
+    expect(await within(row).findByRole('button', { name: 'Dur', pressed: true })).toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'Élévations latérales' })).getByRole('button', { name: 'Dur', pressed: false })).toBeInTheDocument()
+  })
+
+  it('Terminé completes both exercises once every set is done', async () => {
+    vi.mocked(sessionsGetExercise).mockImplementation(byId(allDone(A), allDone(B)))
+    vi.mocked(sessionsUpdateExercise).mockImplementation((_s, id) => Promise.resolve({ ...allDone(id === 'ea' ? A : B), completed: true }))
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/superset/ea')
+
+    await user.click(await screen.findByRole('button', { name: 'Terminé' }))
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'ea', { completed: true })
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'eb', { completed: true })
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+
+  it('stops early after a confirmation: only the exercise with a validated set is completed', async () => {
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...A, completed: true })
+    const user = userEvent.setup()
+    renderAt('/muscu/seance/s1/superset/ea')
+    expect(await screen.findByRole('button', { name: 'Terminé' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Terminer le superset plus tôt' }))
+    const confirm = screen.getByRole('dialog', { name: 'Terminer avec 1 / 7 séries ?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Terminer' }))
+    expect(sessionsUpdateExercise).toHaveBeenCalledTimes(1)
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'ea', { completed: true })
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu'))
+  })
+
+  it('opens the usual screen for an exercise that is not in a superset', async () => {
+    vi.mocked(sessionsGetExercise).mockResolvedValue(ENTRY)
+    renderAt('/muscu/seance/s1/superset/e2')
+    expect(await screen.findByRole('heading', { name: 'Rowing barre' })).toBeInTheDocument()
   })
 })

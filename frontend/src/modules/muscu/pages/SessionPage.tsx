@@ -1,18 +1,27 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { sessionsFinish, sessionsGet, sessionsRemove } from '../../../api/generated/endpoints/sessions/sessions'
-import type { SessionDto } from '../../../api/generated/model'
+import type { SessionDto, SessionExerciseStatus } from '../../../api/generated/model'
 import { invalidateData, useDataVersion } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
-import { Check, ChevronRight, Close } from '../../../core/ui/icons'
+import { Check, ChevronRight, Close, Pencil } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
+import { ExerciseDrawing } from '../components/ExerciseDrawing'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
-import { MUSCU_PATH, sessionExercisePath } from '../routes'
+import { SupersetBadge } from '../components/SupersetBadge'
+import { toBlocks } from '../reorder'
+import { MUSCU_PATH, sessionExercisePath, sessionSupersetPath, workoutPath } from '../routes'
 import page from './page.module.css'
 import styles from './SessionPage.module.css'
+
+/** One status for a card: a superset is done only when both exercises are, and in progress once one is started. */
+function blockStatus(block: { status: SessionExerciseStatus }[]): SessionExerciseStatus {
+  if (block.every((e) => e.status === 'done')) return 'done'
+  return block.every((e) => e.status === 'todo') ? 'todo' : 'inProgress'
+}
 
 /** Séance — liste: the exercises of the session in progress, done in any order. */
 export default function SessionPage() {
@@ -41,7 +50,9 @@ function SessionList({ session }: { session: SessionDto }) {
   const navigate = useNavigate()
   const [quit, setQuit] = useState<'closed' | 'open' | 'busy' | 'error'>('closed')
   const [finishing, setFinishing] = useState<'idle' | 'busy' | 'error'>('idle')
-  const done = session.exercises.filter((e) => e.status === 'done').length
+  // A superset is one card, and counts as one.
+  const blocks = toBlocks(session.exercises.map((e) => ({ ...e, group: e.supersetGroup })))
+  const done = blocks.filter((block) => blockStatus(block) === 'done').length
   const logged = session.exercises.some((e) => e.status !== 'todo')
 
   async function discard() {
@@ -82,32 +93,67 @@ function SessionList({ session }: { session: SessionDto }) {
         </button>
         <div className={styles.titleBlock}>
           <h1 className={page.title}>{session.workoutName}</h1>
-          <div className={styles.progress}>{fr.muscu.session.progress(done, session.exercises.length)}</div>
+          <div className={styles.progress}>{fr.muscu.session.progress(done, blocks.length)}</div>
         </div>
-        <span className={page.spacer} />
+        {session.workoutId ? (
+          // Changes apply to the next sessions, not to this one.
+          <Link
+            to={workoutPath(session.workoutId)}
+            className={`${page.iconButton} ${styles.edit}`}
+            aria-label={fr.muscu.session.edit}
+          >
+            <Pencil size={18} />
+          </Link>
+        ) : (
+          <span className={page.spacer} />
+        )}
       </header>
 
       <ul className={styles.cards}>
-        {session.exercises.map((entry) => (
-          <li key={entry.id}>
-            <Link
-              to={sessionExercisePath(session.id, entry.id)}
-              className={`${styles.card} ${entry.status === 'inProgress' ? styles.current : ''}`}
-            >
-              <ExerciseThumb imageUrl={entry.exercise.imageUrl} />
-              <span className={`${styles.name} ${entry.status === 'done' ? styles.doneName : ''}`}>
-                {entry.exercise.name}
-              </span>
-              {entry.status === 'done' && (
-                <span className={styles.doneIcon} role="img" aria-label={fr.muscu.session.done}>
-                  <Check size={16} />
-                </span>
-              )}
-              {entry.status === 'inProgress' && <span className={styles.tag}>{fr.muscu.session.inProgress}</span>}
-              {entry.status === 'todo' && <ChevronRight size={18} className={styles.chevron} />}
-            </Link>
-          </li>
-        ))}
+        {blocks.map((block) => {
+          const [entry, second] = block
+          const status = blockStatus(block)
+          return (
+            <li key={entry.id}>
+              <Link
+                to={second ? sessionSupersetPath(session.id, entry.id) : sessionExercisePath(session.id, entry.id)}
+                className={`${styles.card} ${status === 'inProgress' ? styles.current : ''}`}
+              >
+                {second ? (
+                  <>
+                    <span className={styles.stack}>
+                      <ExerciseDrawing imageUrl={entry.exercise.imageUrl} className={styles.stacked} />
+                      <ExerciseDrawing imageUrl={second.exercise.imageUrl} className={styles.stacked} />
+                    </span>
+                    <span className={styles.pair}>
+                      <span className={styles.supersetLabel}>{fr.muscu.superset.label}</span>
+                      {block.map((e, k) => (
+                        <span key={e.id} className={`${styles.name} ${status === 'done' ? styles.doneName : ''}`}>
+                          <SupersetBadge letter={k === 0 ? 'A' : 'B'} size="sm" />
+                          {e.exercise.name}
+                        </span>
+                      ))}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ExerciseThumb imageUrl={entry.exercise.imageUrl} />
+                    <span className={`${styles.name} ${status === 'done' ? styles.doneName : ''}`}>
+                      {entry.exercise.name}
+                    </span>
+                  </>
+                )}
+                {status === 'done' && (
+                  <span className={styles.doneIcon} role="img" aria-label={fr.muscu.session.done}>
+                    <Check size={16} />
+                  </span>
+                )}
+                {status === 'inProgress' && <span className={styles.tag}>{fr.muscu.session.inProgress}</span>}
+                {status === 'todo' && <ChevronRight size={18} className={styles.chevron} />}
+              </Link>
+            </li>
+          )
+        })}
       </ul>
 
       {finishing === 'error' && (
