@@ -11,4 +11,9 @@ export interface WorkoutItemDto {
   sets: number;
   repMin: number;
   repMax: number;
+  /**
+   * Superset: shared with the item next to it (null: solo)
+   * @nullable
+   */
+  group: string | null;
 }

@@ -23,4 +23,11 @@ export interface SaveWorkoutItemDto {
    * @maximum 100
    */
   repMax: number;
+  /**
+   * Superset: any id shared by exactly two adjacent items (replaced by the server)
+   * @minLength 1
+   * @maxLength 36
+   * @nullable
+   */
+  group?: string | null;
 }

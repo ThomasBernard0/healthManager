@@ -1,4 +1,4 @@
-import { groupSets, nextWorkout, volume } from './muscu.js';
+import { groupSets, interleaveSets, nextWorkout, validSupersetGroups, volume } from './muscu.js';
 
 describe('nextWorkout', () => {
   const pushA = { id: 'a', position: 1 };
@@ -43,5 +43,50 @@ describe('groupSets', () => {
 
   it('sums the volume', () => {
     expect(volume([{ weight: 57.5, reps: 12 }, { weight: 57.5, reps: 12 }, { weight: 57.5, reps: 11 }, { weight: 57.5, reps: 10 }])).toBe(2587.5);
+  });
+});
+
+describe('interleaveSets', () => {
+  const sets = (n: number) => Array.from({ length: n }, (_, i) => i);
+  const labels = (a: number, b: number) =>
+    interleaveSets(sets(a), sets(b))
+      .map((s) => `${s.exercise.toUpperCase()}${s.index + 1}`)
+      .join(' ');
+
+  it('alternates the sets of two exercises with the same set count', () => {
+    expect(labels(4, 4)).toBe('A1 B1 A2 B2 A3 B3 A4 B4');
+  });
+
+  it('ends with the remaining sets of the longer exercise', () => {
+    expect(labels(4, 3)).toBe('A1 B1 A2 B2 A3 B3 A4');
+    expect(labels(4, 2)).toBe('A1 B1 A2 B2 A3 A4');
+    expect(labels(2, 4)).toBe('A1 B1 A2 B2 B3 B4');
+  });
+
+  it('keeps each set with its index', () => {
+    expect(interleaveSets(['x'], ['y'])).toEqual([
+      { exercise: 'a', index: 0, set: 'x' },
+      { exercise: 'b', index: 0, set: 'y' },
+    ]);
+  });
+});
+
+describe('validSupersetGroups', () => {
+  it('accepts solo items and pairs of adjacent items', () => {
+    expect(validSupersetGroups([])).toBe(true);
+    expect(validSupersetGroups([null, null])).toBe(true);
+    expect(validSupersetGroups([null, 'g', 'g', null])).toBe(true);
+    expect(validSupersetGroups(['g', 'g', 'h', 'h'])).toBe(true);
+  });
+
+  it('rejects a group of 1 or 3 items', () => {
+    expect(validSupersetGroups(['g', null])).toBe(false);
+    expect(validSupersetGroups([null, 'g'])).toBe(false);
+    expect(validSupersetGroups(['g', 'g', 'g'])).toBe(false);
+  });
+
+  it('rejects two items that are not adjacent', () => {
+    expect(validSupersetGroups(['g', null, 'g'])).toBe(false);
+    expect(validSupersetGroups(['g', 'h', 'g', 'h'])).toBe(false);
   });
 });

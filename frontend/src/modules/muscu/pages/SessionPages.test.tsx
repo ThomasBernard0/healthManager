@@ -40,9 +40,9 @@ const SESSION: SessionDto = {
   startedAt: '2026-10-10T08:00:00.000Z',
   finishedAt: null,
   exercises: [
-    { id: 'e1', exercise: ex('x1', 'Tirage vertical prise large'), status: 'done', preFatigue: 0 },
-    { id: 'e2', exercise: ex('x2', 'Rowing barre'), status: 'inProgress', preFatigue: 4 },
-    { id: 'e3', exercise: ex('x3', 'Curl haltères'), status: 'todo', preFatigue: 0 },
+    { id: 'e1', exercise: ex('x1', 'Tirage vertical prise large'), status: 'done', preFatigue: 0, supersetGroup: null },
+    { id: 'e2', exercise: ex('x2', 'Rowing barre'), status: 'inProgress', preFatigue: 4, supersetGroup: null },
+    { id: 'e3', exercise: ex('x3', 'Curl haltères'), status: 'todo', preFatigue: 0, supersetGroup: null },
   ],
 }
 
@@ -68,6 +68,8 @@ const ENTRY: SessionExerciseDto = {
   sets: [set(0, { weight: 60, reps: 12, done: true }), set(1, { weight: 60, reps: 9, done: true }), set(2), set(3)],
   preFatigue: 0,
   fatiguedMuscles: [],
+  supersetGroup: null,
+  partnerId: null,
   lastTime: { date: '2026-09-28', sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })) },
 }
 

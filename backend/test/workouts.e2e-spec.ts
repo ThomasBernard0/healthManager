@@ -97,6 +97,44 @@ describe('Workouts (e2e)', () => {
     await http().get(`/api/workouts/${uuid(999)}`).expect(404);
   });
 
+  it('links two adjacent exercises in a superset (own uuid per pair) and unlinks them', async () => {
+    const linked = [{ ...item(BENCH), group: 'x' }, { ...item(CURL, 3, 10, 12), group: 'x' }, item(ROWING)];
+    const created = await http().post('/api/workouts').send({ name: 'Superset', items: linked }).expect(201);
+    const [a, b, solo] = created.body.items;
+    expect(a.group).toMatch(/^[0-9a-f-]{36}$/);
+    expect(b.group).toBe(a.group);
+    expect(solo.group).toBeNull();
+
+    // Unlinking keeps both exercises, their targets and their order.
+    const unlinked = linked.map(({ exerciseId, sets, repMin, repMax }) => ({ exerciseId, sets, repMin, repMax }));
+    const res = await http().put(`/api/workouts/${created.body.id}`).send({ name: 'Superset', items: unlinked }).expect(200);
+    expect(
+      res.body.items.map((i: { exercise: { id: string }; sets: number; repMin: number; repMax: number; group: string | null }) => [
+        i.exercise.id,
+        i.sets,
+        i.repMin,
+        i.repMax,
+        i.group,
+      ]),
+    ).toEqual([
+      [BENCH, 4, 8, 12, null],
+      [CURL, 3, 10, 12, null],
+      [ROWING, 4, 8, 12, null],
+    ]);
+    await http().delete(`/api/workouts/${created.body.id}`).expect(204);
+  });
+
+  it('rejects a superset of 3 exercises, of 1, or of two exercises that are not adjacent', async () => {
+    const post = (groups: (string | null)[]) =>
+      http()
+        .post('/api/workouts')
+        .send({ name: 'X', items: [BENCH, CURL, ROWING].map((id, k) => ({ ...item(id), group: groups[k] })) });
+    await post(['x', 'x', 'x']).expect(400);
+    await post(['x', null, null]).expect(400);
+    await post(['x', null, 'x']).expect(400);
+    await post(['', '', null]).expect(400);
+  });
+
   it('deletes a workout and moves the next ones up', async () => {
     const [pushA] = (await http().get('/api/workouts').expect(200)).body;
     await http().delete(`/api/workouts/${pushA.id}`).expect(204);

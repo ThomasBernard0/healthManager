@@ -106,8 +106,8 @@ const PULL: WorkoutDto = {
   programId: 'pp',
   programActive: true,
   items: [
-    { exercise: TIRAGE, sets: 4, repMin: 8, repMax: 12 },
-    { exercise: ROWING, sets: 4, repMin: 8, repMax: 12 },
+    { exercise: TIRAGE, sets: 4, repMin: 8, repMax: 12, group: null },
+    { exercise: ROWING, sets: 4, repMin: 8, repMax: 12, group: null },
   ],
 }
 
@@ -188,7 +188,7 @@ describe('Accueil', () => {
         workoutName: 'Push A',
         startedAt: '2026-10-10T08:00:00.000Z',
         finishedAt: null,
-        exercises: [{ id: 'e1', exercise: TIRAGE, status: 'todo', preFatigue: 0 }],
+        exercises: [{ id: 'e1', exercise: TIRAGE, status: 'todo', preFatigue: 0, supersetGroup: null }],
       },
     })
     const user = userEvent.setup()

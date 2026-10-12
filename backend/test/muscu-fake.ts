@@ -23,6 +23,7 @@ interface Item {
   repMin: number;
   repMax: number;
   position: number;
+  supersetGroup: string | null;
 }
 interface Workout {
   id: string;

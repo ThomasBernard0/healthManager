@@ -34,6 +34,17 @@ function status(e: { completed: boolean; sets: { done: boolean }[] }): ExerciseS
   return e.sets.some((s) => s.done) ? 'inProgress' : 'todo';
 }
 
+interface Grouped {
+  id: string;
+  supersetGroup: string | null;
+}
+
+/** The other exercise of its superset. */
+export function partnerOf<E extends Grouped>(entry: Grouped, entries: E[]): E | null {
+  if (entry.supersetGroup === null) return null;
+  return entries.find((e) => e.id !== entry.id && e.supersetGroup === entry.supersetGroup) ?? null;
+}
+
 @Injectable()
 export class SessionsService {
   constructor(
@@ -70,6 +81,7 @@ export class SessionsService {
             position: item.position,
             repMin: item.repMin,
             repMax: item.repMax,
+            supersetGroup: item.supersetGroup,
             sets: { create: Array.from({ length: item.sets }, (_, index) => ({ index })) },
           })),
         },
@@ -92,6 +104,7 @@ export class SessionsService {
         exercise: toExerciseDto(e.exercise),
         status: status(e),
         preFatigue: e.preFatigue === null ? entryPreFatigue(e, session.exercises).value : num(e.preFatigue),
+        supersetGroup: e.supersetGroup,
       })),
     };
   }
@@ -123,6 +136,8 @@ export class SessionsService {
       preFatigue: frozen ? num(entry.preFatigue!) : fatigue.value,
       fatiguedMuscles: fatigue.muscles,
       lastTime: await this.lastTime(entry.exerciseId, entry.sessionId),
+      supersetGroup: entry.supersetGroup,
+      partnerId: partnerOf(entry, session.exercises)?.id ?? null,
     };
   }
 
@@ -181,15 +196,28 @@ export class SessionsService {
     return this.getExercise(sessionId, id);
   }
 
-  /** Terminer la séance: exercises with no validated set are dropped (a session with none is discarded). */
+  /**
+   * Terminer la séance: exercises with no validated set are dropped (a session with none is discarded).
+   * An exercise whose superset partner was dropped was done solo.
+   */
   async finish(id: string): Promise<void> {
     const session = await this.prisma.session.findUnique({ where: { id } });
     if (!session) throw new NotFoundException('Session not found');
     if (session.finishedAt) throw new ConflictException('Session already finished');
     await this.prisma.sessionExercise.deleteMany({ where: { sessionId: id, sets: { none: { done: true } } } });
-    const left = await this.prisma.sessionExercise.count({ where: { sessionId: id } });
-    if (left === 0) await this.prisma.session.delete({ where: { id } });
-    else await this.prisma.session.update({ where: { id }, data: { finishedAt: new Date() } });
+    const left = await this.prisma.sessionExercise.findMany({
+      where: { sessionId: id },
+      select: { id: true, supersetGroup: true },
+    });
+    if (left.length === 0) {
+      await this.prisma.session.delete({ where: { id } });
+      return;
+    }
+    const alone = left.filter((e) => e.supersetGroup !== null && !partnerOf(e, left)).map((e) => e.id);
+    await this.prisma.$transaction([
+      this.prisma.sessionExercise.updateMany({ where: { id: { in: alone } }, data: { supersetGroup: null } }),
+      this.prisma.session.update({ where: { id }, data: { finishedAt: new Date() } }),
+    ]);
   }
 
   /** Quitter la séance: discards it. */

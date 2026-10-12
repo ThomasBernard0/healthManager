@@ -27,6 +27,7 @@ function fakePrisma() {
                   session: { finishedAt: new Date('2026-09-28T18:30:00Z') },
                   feeling: 'ok',
                   preFatigue: 3,
+                  supersetGroup: 'g1',
                   sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
                 },
                 {
@@ -34,6 +35,7 @@ function fakePrisma() {
                   session: { finishedAt: new Date('2026-09-14T22:30:00Z') },
                   feeling: null,
                   preFatigue: null,
+                  supersetGroup: null,
                   sets: [
                     { weight: 57.5, reps: 11 },
                     { weight: 57.5, reps: 10 },
@@ -152,6 +154,7 @@ describe('Exercises (e2e)', () => {
         sets: [10, 9, 9, 8].map((reps) => ({ weight: 60, reps })),
         feeling: 'ok',
         preFatigue: 3,
+        inSuperset: true,
         volume: 2160,
         heaviest: 60,
       },
@@ -167,6 +170,7 @@ describe('Exercises (e2e)', () => {
         ],
         feeling: null,
         preFatigue: 0,
+        inSuperset: false,
         volume: 2252.5,
         heaviest: 57.5,
       },
