@@ -239,7 +239,13 @@ describe('Accueil', () => {
     // Only the other programs can be activated.
     expect(within(section).getAllByRole('button', { name: /^Activer/ })).toHaveLength(1)
     await user.click(within(section).getByRole('button', { name: 'Activer Jambes' }))
+    // Asked first; Annuler changes nothing.
+    await user.click(within(screen.getByRole('dialog', { name: 'Activer « Jambes » ?' })).getByRole('button', { name: 'Annuler' }))
+    expect(programsActivate).not.toHaveBeenCalled()
+    await user.click(within(section).getByRole('button', { name: 'Activer Jambes' }))
+    await user.click(within(screen.getByRole('dialog', { name: 'Activer « Jambes » ?' })).getByRole('button', { name: 'Activer' }))
     expect(programsActivate).toHaveBeenCalledWith('legs')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     await waitFor(() => expect(programsList).toHaveBeenCalledTimes(2))
   })
 
@@ -461,11 +467,13 @@ describe('Programme', () => {
     )
   })
 
-  it('activates it and goes back to Accueil', async () => {
+  it('activates it after confirmation and goes back to Accueil', async () => {
     vi.mocked(programsActivate).mockResolvedValue({ ...legs, active: true })
     const user = userEvent.setup()
     renderAt('/muscu/programmes/legs')
     await user.click(await screen.findByRole('button', { name: 'Activer ce programme' }))
+    expect(programsActivate).not.toHaveBeenCalled()
+    await user.click(within(screen.getByRole('dialog', { name: 'Activer « Jambes » ?' })).getByRole('button', { name: 'Activer' }))
     expect(programsActivate).toHaveBeenCalledWith('legs')
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/muscu$/))
   })

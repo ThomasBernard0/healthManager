@@ -20,3 +20,9 @@
 .confirm:disabled {
   background: var(--color-border-strong);
 }
+
+/* Not destructive (e.g. Activer a program). */
+.accent {
+  composes: confirm;
+  background: var(--color-accent);
+}

@@ -93,7 +93,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
 - **Mes programmes** (where Mes séances was):
   - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then "+ Nouvelle séance" (added to the active program);
-  - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (one tap, no confirmation);
+  - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (asks "Activer « X » ?" first);
   - "+ Nouveau programme": a sheet asking for the name, then the new program's page.
 - **Mes exercices** (mobile: between Prochaine séance and Mes programmes; desktop: right column, Prochaine séance and Mes programmes stacked on the left): every exercise used in the **active program**, once, by name → its Fiche exercice. Exercises only in other programs are on their Programme page. No link to the bank on Accueil (it is reached from Modifier la séance).
 - No session history on this page (progress lives in each exercise page).
@@ -120,7 +120,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 ### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
 - Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
 - Name field; Enregistrer appears once it is changed.
-- **Activer ce programme** (inactive programs only) → back to Accueil, which proposes its first workout.
+- **Activer ce programme** (inactive programs only; asks "Activer « X » ?" first) → back to Accueil, which proposes its first workout.
 - **Séances**: its workouts in rotation order ("Actif" tag if it is the active one), tap → Modifier la séance; "+ Nouvelle séance" adds one to this program.
 - **Exercices**: every exercise of its workouts, once → Fiche exercice.
 
