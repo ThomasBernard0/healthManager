@@ -28,7 +28,7 @@ function log(
   };
 }
 
-/** 4 × 8–12 barbell, nothing else known. */
+/** 4 × 8–12 on a cable (2.5 kg step), nothing else known. */
 const next = (last: ExerciseLog | null, extra: Partial<NextTargetsInput> = {}) =>
   nextTargets({
     last,
@@ -37,7 +37,7 @@ const next = (last: ExerciseLog | null, extra: Partial<NextTargetsInput> = {}) =
     repMin: 8,
     repMax: 12,
     known: last ? last.sets.map((s) => s.weight) : [],
-    step: DEFAULT_STEP.barbell,
+    step: DEFAULT_STEP.cable,
     todayPreFatigue: 0,
     ...extra,
   });
@@ -47,16 +47,17 @@ const reps = (t: ReturnType<typeof nextTargets>) => t!.map((x) => x.reps);
 
 describe('stepUp / stepDown (available weights, learned)', () => {
   it('default step by equipment', () => {
-    expect(DEFAULT_STEP).toEqual({ barbell: 2.5, dumbbell: 2, machine: 5, cable: 2.5, bodyweight: 2.5 });
+    expect(DEFAULT_STEP).toEqual({ barbell: 5, dumbbell: 2, machine: 4.5, cable: 2.5, bodyweight: 2.5 });
   });
 
   it('no known weight above: current + step', () => {
-    expect(stepUp(8, [8], DEFAULT_STEP.machine)).toBe(13);
+    expect(stepUp(8, [8], DEFAULT_STEP.machine)).toBe(12.5);
     expect(stepUp(10, [10], DEFAULT_STEP.dumbbell)).toBe(12);
+    expect(stepUp(60, [60], DEFAULT_STEP.barbell)).toBe(65);
   });
 
-  it('known {8, 30}: stepping up from 8 (machine) gives 13, not 30 (too far)', () => {
-    expect(stepUp(8, [8, 30], DEFAULT_STEP.machine)).toBe(13);
+  it('known {8, 30}: stepping up from 8 (machine) gives 12,5, not 30 (too far)', () => {
+    expect(stepUp(8, [8, 30], DEFAULT_STEP.machine)).toBe(12.5);
   });
 
   it('dumbbells 10 kg "Facile", user logged 12,5: a step up from 10 gives 12,5', () => {
@@ -69,9 +70,9 @@ describe('stepUp / stepDown (available weights, learned)', () => {
   });
 
   it('stepDown mirrors it and never goes below 0', () => {
-    expect(stepDown(13, [8, 13], DEFAULT_STEP.machine)).toBe(8);
+    expect(stepDown(12.5, [8, 12.5], DEFAULT_STEP.machine)).toBe(8);
     expect(stepDown(12.5, [10, 12.5], DEFAULT_STEP.dumbbell)).toBe(10);
-    expect(stepDown(30, [8, 30], DEFAULT_STEP.machine)).toBe(25);
+    expect(stepDown(30, [8, 30], DEFAULT_STEP.machine)).toBe(25.5);
     expect(stepDown(2, [], DEFAULT_STEP.machine)).toBe(0);
   });
 });
@@ -117,6 +118,12 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
   it('50 kg, done 12·12·12·8 (total 44) → one step up, targets × 8·8·8·8', () => {
     const t = next(log(50, [12, 12, 12, 8]));
     expect(weights(t)).toEqual([52.5, 52.5, 52.5, 52.5]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+  });
+
+  it('barbell 60 kg, done 12·12·12·8, no known weight above → 65 × 8·8·8·8', () => {
+    const t = next(log(60, [12, 12, 12, 8]), { step: DEFAULT_STEP.barbell });
+    expect(weights(t)).toEqual([65, 65, 65, 65]);
     expect(reps(t)).toEqual([8, 8, 8, 8]);
   });
 

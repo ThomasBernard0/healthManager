@@ -71,11 +71,11 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 
 ### Available weights (learned, no setting)
 - **Known weights** of an exercise = the distinct weights already logged for it (derived from history, no table). Fixing a typo in a past set removes the wrong weight automatically.
-- Default step by equipment: barbell 2.5, dumbbell 2, machine 5, cable 2.5, bodyweight 2.5 (added load).
+- Default step by equipment: barbell 5, dumbbell 2, machine 4.5 (10 lb stacks), cable 2.5 (5 lb stacks), bodyweight 2.5 (added load).
 - `stepUp(current, known, step)`: the first known weight above `current` if it is ≤ `current + 2 × step`, else `current + step`. `stepDown` mirrors it (never below 0).
 - "+1 step" / "−1 step" in the rules always call `stepUp` / `stepDown` (only used to compute targets; no stepper in the UI).
 - The app never needs to know *why* a different weight was typed: whatever was done is recorded, becomes a known weight, and the next targets start from it.
-- Example: machine, 8 kg Facile → 13 (8 + 5). Dumbbells 10 kg Facile → 12; user types 12,5 because 12 doesn't exist; next time from 10 → 12,5 directly.
+- Example: machine, 8 kg Facile → 12,5 (8 + 4,5). Dumbbells 10 kg Facile → 12; user types 12,5 because 12 doesn't exist; next time from 10 → 12,5 directly.
 - Pure functions in `shared/` with tests (no known weight above, known weight too far, typo removed).
 
 ### Order and skipped exercises (fatigue)
@@ -196,7 +196,8 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - Done 9·9·8·7 (total 33, ≥ 32) "Facile" → step up.
 - Done 7·7·6·6 (total 26) twice in a row, same pre-fatigue → every weight one step down, targets × 8; the second time with more pre-fatigue → no drop.
 - Dumbbells 10 kg "Facile", user logs 12,5 → next time a step up from 10 kg gives 12,5.
-- Known weights {8, 30}: stepping up from 8 (machine) gives 13, not 30.
+- Known weights {8, 30}: stepping up from 8 (machine) gives 12,5, not 30.
+- Barbell 60 kg × 12·12·12·8, no known weight above → 65 × 8·8·8·8.
 - Drop set 60×12 · 57,5×12 · 55×12 → 62,5 · 60 · 57,5.
 - ✓ on an empty row records the target; a set done under target shows its reps in orange.
 - Reloading the page in the middle of a session keeps every validated set.
