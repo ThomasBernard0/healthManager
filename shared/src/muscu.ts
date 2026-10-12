@@ -61,3 +61,40 @@ export function groupSets(sets: SetResult[]): SetGroup[] {
 
 /** Σ weight × reps (kg). */
 export const volume = (sets: SetResult[]): number => sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+
+export interface InterleavedSet<T> {
+  /** 'a': first exercise of the superset, 'b': second. */
+  exercise: 'a' | 'b';
+  /** Index of the set in its own exercise, from 0. */
+  index: number;
+  set: T;
+}
+
+/**
+ * Order of the sets of a superset: alternately while both exercises have sets left, then the rest of
+ * the longer one. 4 + 3 sets → A1 B1 A2 B2 A3 B3 A4.
+ */
+export function interleaveSets<T>(a: T[], b: T[]): InterleavedSet<T>[] {
+  const order: InterleavedSet<T>[] = [];
+  for (let index = 0; index < Math.max(a.length, b.length); index++) {
+    if (index < a.length) order.push({ exercise: 'a', index, set: a[index] });
+    if (index < b.length) order.push({ exercise: 'b', index, set: b[index] });
+  }
+  return order;
+}
+
+/**
+ * Superset groups of a workout, given the group of each item in list order (null: solo): every group
+ * has exactly two items, next to each other.
+ */
+export function validSupersetGroups(groups: (string | null)[]): boolean {
+  const seen = new Set<string>();
+  for (let i = 0; i < groups.length; i++) {
+    const group = groups[i];
+    if (group === null) continue;
+    if (seen.has(group) || groups[i + 1] !== group) return false;
+    seen.add(group);
+    i++;
+  }
+  return true;
+}

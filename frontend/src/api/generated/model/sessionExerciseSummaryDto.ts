@@ -14,4 +14,9 @@ export interface SessionExerciseSummaryDto {
   status: SessionExerciseStatus;
   /** Sets already done on its primary muscles (> 0: battery icon) */
   preFatigue: number;
+  /**
+   * Superset: shared with the exercise next to it (null: solo)
+   * @nullable
+   */
+  supersetGroup: string | null;
 }

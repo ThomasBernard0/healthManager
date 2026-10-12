@@ -1,4 +1,5 @@
-import { nextWorkout, parisToday } from '@healthmanager/shared';
+import { randomUUID } from 'node:crypto';
+import { nextWorkout, parisToday, validSupersetGroups } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
 import type { Program } from '../generated/prisma/client.js';
@@ -93,6 +94,7 @@ export class WorkoutsService {
         sets: i.sets,
         repMin: i.repMin,
         repMax: i.repMax,
+        group: i.supersetGroup,
       })),
     };
   }
@@ -150,6 +152,12 @@ export class WorkoutsService {
     if (dto.items.some((i) => i.repMax < i.repMin)) throw new BadRequestException('repMax must be ≥ repMin');
     const known = await this.prisma.exercise.count({ where: { id: { in: ids } } });
     if (known !== ids.length) throw new BadRequestException('Unknown exercise');
+    if (!validSupersetGroups(dto.items.map((i) => i.group ?? null))) {
+      throw new BadRequestException('A superset is two adjacent exercises');
+    }
+    // The ids sent are only labels: each pair gets its own uuid.
+    const groups = new Map<string, string>();
+    for (const i of dto.items) if (i.group && !groups.has(i.group)) groups.set(i.group, randomUUID());
     return {
       name,
       items: dto.items.map((i, position) => ({
@@ -158,6 +166,7 @@ export class WorkoutsService {
         repMin: i.repMin,
         repMax: i.repMax,
         position,
+        supersetGroup: i.group ? groups.get(i.group)! : null,
       })),
     };
   }

@@ -29,4 +29,14 @@ export interface SessionExerciseDto {
   fatiguedMuscles: Muscle[];
   /** @nullable */
   lastTime: SessionExerciseDtoLastTime;
+  /**
+   * Superset group (null: solo)
+   * @nullable
+   */
+  supersetGroup: string | null;
+  /**
+   * Superset: the session exercise it alternates with (null: solo)
+   * @nullable
+   */
+  partnerId: string | null;
 }

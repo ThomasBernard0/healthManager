@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import type { ProgressionService } from './progression.service.js';
-import { SessionsService } from './sessions.service.js';
+import { partnerOf, SessionsService } from './sessions.service.js';
 
 /** Past the checks, the fake stops with this error (the rest is covered against Postgres). */
 const PASSED = new Error('passed the checks');
@@ -38,6 +38,47 @@ describe('SessionsService.saveSet: sets in order', () => {
     await expect(service([true, true, false]).saveSet('s1', 'e1', 0, { weight: 50, reps: 10, done: false })).rejects.toBe(
       PASSED,
     );
+  });
+});
+
+describe('partnerOf', () => {
+  const entries = [
+    { id: 'a', supersetGroup: 'g' },
+    { id: 'b', supersetGroup: 'g' },
+    { id: 'c', supersetGroup: null },
+    { id: 'd', supersetGroup: null },
+  ];
+
+  it('finds the other exercise of the superset', () => {
+    expect(partnerOf(entries[0], entries)).toBe(entries[1]);
+    expect(partnerOf(entries[1], entries)).toBe(entries[0]);
+  });
+
+  it('has no partner for a solo exercise', () => {
+    expect(partnerOf(entries[2], entries)).toBeNull();
+  });
+});
+
+describe('SessionsService.finish: superset partner skipped', () => {
+  it('makes solo the exercise whose partner was dropped, keeps a full pair', async () => {
+    const updateMany = vi.fn();
+    const prisma = {
+      session: { findUnique: () => Promise.resolve({ id: 's1', finishedAt: null }), update: vi.fn() },
+      sessionExercise: {
+        deleteMany: () => Promise.resolve(),
+        findMany: () =>
+          Promise.resolve([
+            { id: 'a', supersetGroup: 'g' },
+            { id: 'c', supersetGroup: 'h' },
+            { id: 'd', supersetGroup: 'h' },
+          ]),
+        updateMany,
+      },
+      $transaction: (ops: unknown[]) => Promise.all(ops),
+    };
+    await new SessionsService(prisma as unknown as PrismaService, {} as ProgressionService).finish('s1');
+    expect(updateMany).toHaveBeenCalledWith({ where: { id: { in: ['a'] } }, data: { supersetGroup: null } });
+    expect(prisma.session.update).toHaveBeenCalled();
   });
 });
 

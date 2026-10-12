@@ -54,6 +54,14 @@ export class WorkoutItemDto {
 
   @ApiProperty({ example: 12 })
   repMax: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'Superset: shared with the item next to it (null: solo)',
+  })
+  group: string | null;
 }
 
 export class WorkoutDto {

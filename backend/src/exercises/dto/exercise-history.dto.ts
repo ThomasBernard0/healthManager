@@ -20,6 +20,9 @@ export class ExerciseHistoryEntryDto {
   @ApiProperty({ example: 0, description: 'Sets already done on its primary muscles (> 0: battery icon)' })
   preFatigue: number;
 
+  @ApiProperty({ description: 'Done in a superset (link icon)' })
+  inSuperset: boolean;
+
   @ApiProperty({ example: 2160, description: 'Σ weight × reps (kg)' })
   volume: number;
 

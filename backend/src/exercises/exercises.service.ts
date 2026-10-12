@@ -97,6 +97,7 @@ export class ExercisesService {
         sets,
         feeling: e.feeling,
         preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
+        inSuperset: e.supersetGroup !== null,
         volume: volume(sets),
         heaviest: Math.max(...sets.map((s) => s.weight)),
       };

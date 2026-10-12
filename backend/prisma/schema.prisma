@@ -114,15 +114,17 @@ model Workout {
 
 /// An exercise of a workout, in list order, with its sets and rep range.
 model WorkoutItem {
-  id         String   @id @default(uuid())
-  workoutId  String
-  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  exerciseId String
-  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  sets       Int      @default(4)
-  repMin     Int      @default(8)
-  repMax     Int      @default(12)
-  position   Int
+  id            String   @id @default(uuid())
+  workoutId     String
+  workout       Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId    String
+  exercise      Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sets          Int      @default(4)
+  repMin        Int      @default(8)
+  repMax        Int      @default(12)
+  position      Int
+  /// Superset: shared by exactly two adjacent items of the workout (null: solo).
+  supersetGroup String?
 
   @@unique([workoutId, exerciseId])
   @@index([exerciseId])
@@ -236,24 +238,26 @@ model Session {
 
 /// An exercise of a session. Exercises with no done set are dropped when the session is finished.
 model SessionExercise {
-  id         String       @id @default(uuid())
-  sessionId  String
-  session    Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  exerciseId String
-  exercise   Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  id            String       @id @default(uuid())
+  sessionId     String
+  session       Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId    String
+  exercise      Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   /// Order in the workout (list order); the real order is firstSetAt.
-  position   Int
+  position      Int
   /// Snapshot of the workout item, so editing the template doesn't rewrite history.
-  repMin     Int
-  repMax     Int
+  repMin        Int
+  repMax        Int
   /// Time of the first validated set (the real order of the exercises).
-  firstSetAt DateTime?    @db.Timestamptz
+  firstSetAt    DateTime?    @db.Timestamptz
   /// Frozen with the first validated set (progression step).
-  preFatigue Decimal?     @db.Decimal(4, 1)
-  feeling    Feeling?
+  preFatigue    Decimal?     @db.Decimal(4, 1)
+  feeling       Feeling?
   /// Terminé tapped (with at least one set done).
-  completed  Boolean      @default(false)
-  sets       SessionSet[]
+  completed     Boolean      @default(false)
+  /// Snapshot of the workout item's group (null: solo, or its partner was skipped).
+  supersetGroup String?
+  sets          SessionSet[]
 
   @@unique([sessionId, exerciseId])
   @@index([exerciseId])

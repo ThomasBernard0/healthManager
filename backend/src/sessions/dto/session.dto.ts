@@ -46,6 +46,14 @@ export class SessionExerciseSummaryDto {
 
   @ApiProperty({ example: 3, description: 'Sets already done on its primary muscles (> 0: battery icon)' })
   preFatigue: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'Superset: shared with the exercise next to it (null: solo)',
+  })
+  supersetGroup: string | null;
 }
 
 export class SessionDto {
@@ -120,4 +128,15 @@ export class SessionExerciseDto {
 
   @ApiProperty({ type: LastTimeDto, nullable: true })
   lastTime: LastTimeDto | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, description: 'Superset group (null: solo)' })
+  supersetGroup: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'Superset: the session exercise it alternates with (null: solo)',
+  })
+  partnerId: string | null;
 }

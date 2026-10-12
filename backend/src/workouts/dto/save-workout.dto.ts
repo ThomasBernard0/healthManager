@@ -38,6 +38,18 @@ export class SaveWorkoutItemDto {
   @Min(1)
   @Max(MAX_REPS)
   repMax: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    minLength: 1,
+    maxLength: 36,
+    description: 'Superset: any id shared by exactly two adjacent items (replaced by the server)',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 36)
+  group?: string | null;
 }
 
 /** Nouvelle séance / Modifier la séance: name and exercises in list order (each exercise once). */

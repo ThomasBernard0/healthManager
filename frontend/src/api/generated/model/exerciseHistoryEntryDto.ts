@@ -17,6 +17,8 @@ export interface ExerciseHistoryEntryDto {
   feeling: ExerciseHistoryEntryDtoFeeling;
   /** Sets already done on its primary muscles (> 0: battery icon) */
   preFatigue: number;
+  /** Done in a superset (link icon) */
+  inSuperset: boolean;
   /** Σ weight × reps (kg) */
   volume: number;
   /** Heaviest weight (kg) */
