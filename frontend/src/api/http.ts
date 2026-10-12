@@ -18,6 +18,11 @@ http.interceptors.response.use(undefined, (error: unknown) => {
   return Promise.reject(error)
 })
 
+/** The body of a 409 answer (the API says why it refused), else null. */
+export function conflictBody<T>(error: unknown): T | null {
+  return axios.isAxiosError<T>(error) && error.response?.status === 409 ? error.response.data : null
+}
+
 /** Orval mutator: every generated endpoint goes through this instance. */
 export const apiClient = <T>(
   config: AxiosRequestConfig,

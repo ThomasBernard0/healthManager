@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import {
   ApiBadGatewayResponse,
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiQuery,
@@ -13,6 +14,8 @@ import { parseBarcodeParam } from '../common/validators.js';
 import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
 import { FoodDto } from './dto/food.dto.js';
+import { FoodInUseDto } from './dto/food-in-use.dto.js';
+import { UpdateFoodDto } from './dto/update-food.dto.js';
 import { FoodsService } from './foods.service.js';
 
 @ApiTags('foods')
@@ -25,6 +28,13 @@ export class FoodsController {
   @ApiOkResponse({ type: [FoodDto] })
   search(@Query('q') q?: string): Promise<FoodDto[]> {
     return this.foods.search(q ?? '');
+  }
+
+  /** Every food, by name (Mes repas → Ingrédients). */
+  @Get('all')
+  @ApiOkResponse({ type: [FoodDto] })
+  listAll(): Promise<FoodDto[]> {
+    return this.foods.listAll();
   }
 
   @Get('barcode/:code')
@@ -47,5 +57,21 @@ export class FoodsController {
   @ApiConflictResponse({ description: 'A food already has this barcode' })
   create(@Body() dto: CreateFoodDto): Promise<FoodDto> {
     return this.foods.create(dto);
+  }
+
+  @Put(':id')
+  @ApiOkResponse({ type: FoodDto })
+  @ApiNotFoundResponse()
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateFoodDto): Promise<FoodDto> {
+    return this.foods.update(id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse()
+  @ApiConflictResponse({ type: FoodInUseDto, description: 'A saved meal uses this food' })
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.foods.remove(id);
   }
 }

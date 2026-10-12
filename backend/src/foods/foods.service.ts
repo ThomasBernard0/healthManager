@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
 import { FoodDto, FoodUnitDto } from './dto/food.dto.js';
+import type { FoodInUseDto } from './dto/food-in-use.dto.js';
+import { UpdateFoodDto } from './dto/update-food.dto.js';
 import { OpenFoodFactsClient } from './open-food-facts.client.js';
 
 /** Household unit added to scanned products that declare a serving size. */
@@ -33,6 +35,18 @@ export function toFoodDto(food: Food): FoodDto {
     brand: food.brand,
     per100g: toNutrients(food),
     units: parseUnits(food.units),
+  };
+}
+
+/** The editable columns of a food, as stored. */
+function toData(dto: UpdateFoodDto) {
+  const name = dto.name.trim();
+  return {
+    name,
+    searchName: searchKey(name),
+    brand: dto.brand?.trim() || null,
+    ...normalizeNutrients(dto.per100g),
+    units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),
   };
 }
 
@@ -75,6 +89,12 @@ export class FoodsService {
     return rankFoods(candidates, query).slice(0, FOOD_SEARCH_LIMIT).map(toFoodDto);
   }
 
+  /** Every food, by name (Mes repas → Ingrédients). */
+  async listAll(): Promise<FoodDto[]> {
+    const foods = await this.prisma.food.findMany({ orderBy: { searchName: 'asc' } });
+    return foods.map(toFoodDto);
+  }
+
   async get(id: string): Promise<FoodDto> {
     const food = await this.prisma.food.findUnique({ where: { id } });
     if (!food) throw new NotFoundException('Food not found');
@@ -114,22 +134,33 @@ export class FoodsService {
   }
 
   async create(dto: CreateFoodDto): Promise<FoodDto> {
-    const name = dto.name.trim();
     try {
-      const food = await this.prisma.food.create({
-        data: {
-          name,
-          searchName: searchKey(name),
-          brand: dto.brand?.trim() || null,
-          barcode: dto.barcode ?? null,
-          ...normalizeNutrients(dto.per100g),
-          units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),
-        },
-      });
+      const food = await this.prisma.food.create({ data: { ...toData(dto), barcode: dto.barcode ?? null } });
       return toFoodDto(food);
     } catch (error) {
       if (isUniqueViolation(error)) throw new ConflictException('A food already has this barcode');
       throw error;
     }
+  }
+
+  /** Saved meals using the food follow its new values; logged entries keep their snapshot. */
+  async update(id: string, dto: UpdateFoodDto): Promise<FoodDto> {
+    await this.get(id);
+    return toFoodDto(await this.prisma.food.update({ where: { id }, data: toData(dto) }));
+  }
+
+  /** Refused while a saved meal uses the food: the answer names one of them. */
+  async remove(id: string): Promise<void> {
+    await this.get(id);
+    const used = await this.prisma.mealItem.findFirst({
+      where: { foodId: id },
+      include: { meal: true },
+      orderBy: { meal: { name: 'asc' } },
+    });
+    if (used) {
+      const body: FoodInUseDto = { statusCode: 409, message: 'A meal uses this food', mealName: used.meal.name };
+      throw new ConflictException(body);
+    }
+    await this.prisma.food.delete({ where: { id } });
   }
 }

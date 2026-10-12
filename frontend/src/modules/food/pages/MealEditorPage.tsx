@@ -460,7 +460,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
           name={overlay.name}
           barcode={overlay.barcode}
           onClose={() => setOverlay({ kind: overlay.barcode ? 'scan' : 'pick' })}
-          onCreated={(food) => setOverlay({ kind: 'amount', food, index: null })}
+          onSaved={(food) => setOverlay({ kind: 'amount', food, index: null })}
         />
       )}
       {overlay?.kind === 'amount' && (

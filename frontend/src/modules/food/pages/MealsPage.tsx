@@ -7,18 +7,27 @@ import { formatInt, formatLastEaten, formatMacros } from '../../../core/format'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronLeft, Search, Star, StarOutline, Trash } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
-import { invalidateData } from '../../../core/dataVersion'
+import { invalidateData, useDataVersion } from '../../../core/dataVersion'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
+import { FoodsList } from '../components/FoodsList'
 import { dayPath, editMealPath } from '../routes'
 import styles from './MealsPage.module.css'
 
-/** Gérer: every saved meal — edit, favourite, delete (after confirmation). */
+const TABS = [
+  ['meals', fr.add.tabMeals],
+  ['foods', fr.add.tabFoods],
+] as const
+
+/** Gérer: every saved meal — edit, favourite, delete (after confirmation) — and, in its own tab, every ingredient. */
 export default function MealsPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [tab, setTab] = useState<(typeof TABS)[number][0]>('meals')
   const [query, setQuery] = useState('')
-  const meals = useAsync(() => mealsList(), 'meals')
+  // Reloaded after a change in the other tab: a meal's totals follow its ingredients.
+  const version = useDataVersion()
+  const meals = useAsync(() => mealsList(), `meals#${version}`)
   const [favorites, setFavorites] = useState<Record<string, boolean>>({})
   const [toDelete, setToDelete] = useState<MealSummaryDto | null>(null)
   const [deleting, setDeleting] = useState<'idle' | 'busy' | 'error'>('idle')
@@ -56,7 +65,6 @@ export default function MealsPage() {
     }
     setToDelete(null)
     setDeleting('idle')
-    meals.reload()
   }
 
   return (
@@ -69,24 +77,43 @@ export default function MealsPage() {
         <span className={styles.spacer} />
       </header>
 
+      <div className={styles.segmented}>
+        {TABS.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={tab === value ? styles.segmentActive : styles.segment}
+            aria-pressed={tab === value}
+            onClick={() => {
+              setTab(value)
+              setQuery('')
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <label className={styles.search}>
         <Search size={18} />
         <input
           type="search"
-          placeholder={fr.add.search}
-          aria-label={fr.add.searchLabel}
+          placeholder={tab === 'meals' ? fr.add.search : fr.food.search}
+          aria-label={tab === 'meals' ? fr.add.searchLabel : fr.food.search}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </label>
 
-      {meals.status === 'error' && (
+      {tab === 'foods' && <FoodsList query={query} />}
+
+      {tab === 'meals' && meals.status === 'error' && (
         <div className={form.error} role="alert">
           {fr.common.loadError}
         </div>
       )}
 
-      {visible.length > 0 && (
+      {tab === 'meals' && visible.length > 0 && (
         <ul className={styles.list}>
           {visible.map((meal) => {
             const favorite = favorites[meal.id] ?? meal.isFavorite
