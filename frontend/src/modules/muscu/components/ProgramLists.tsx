@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { programsCreate } from '../../../api/generated/endpoints/programs/programs'
 import type { ProgramSummaryDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
+import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronRight } from '../../../core/ui/icons'
 import { Sheet } from '../../../core/ui/Sheet'
 import form from '../../../core/ui/form.module.css'
@@ -37,15 +38,42 @@ export function WorkoutRows({ workouts }: { workouts: WorkoutSummaryDto[] }) {
   )
 }
 
-/** The inactive programs: name, séance count (→ its page) and Activer. */
-export function ProgramRows({ programs }: { programs: ProgramSummaryDto[] }) {
+interface ActivateProgramSheetProps {
+  program: { id: string; name: string }
+  /** Activated (the data is reloaded). */
+  onActivated: () => void
+  onCancel: () => void
+}
+
+/** "Activer « X » ?": the only active program from now on, its rotation restarting at its first séance. */
+export function ActivateProgramSheet({ program, onActivated, onCancel }: ActivateProgramSheetProps) {
   const { activate, busy, error } = useActivateProgram()
   return (
+    <ConfirmSheet
+      title={fr.muscu.program.confirmActivate(program.name)}
+      confirmLabel={fr.muscu.program.activate}
+      tone="accent"
+      busy={busy !== null}
+      error={error ? fr.common.saveError : null}
+      onConfirm={async () => {
+        if (await activate(program.id)) onActivated()
+      }}
+      onCancel={onCancel}
+    />
+  )
+}
+
+/** The inactive programs: name, séance count (→ its page) and Activer (after confirmation). */
+export function ProgramRows({ programs }: { programs: ProgramSummaryDto[] }) {
+  const [confirming, setConfirming] = useState<ProgramSummaryDto | null>(null)
+  return (
     <>
-      {error && (
-        <div className={form.error} role="alert">
-          {fr.common.saveError}
-        </div>
+      {confirming && (
+        <ActivateProgramSheet
+          program={confirming}
+          onActivated={() => setConfirming(null)}
+          onCancel={() => setConfirming(null)}
+        />
       )}
       <ul className={styles.rows}>
         {programs.map((p) => (
@@ -60,8 +88,7 @@ export function ProgramRows({ programs }: { programs: ProgramSummaryDto[] }) {
               type="button"
               className={styles.activate}
               aria-label={fr.muscu.program.activateNamed(p.name)}
-              disabled={busy !== null}
-              onClick={() => activate(p.id)}
+              onClick={() => setConfirming(p)}
             >
               {fr.muscu.program.activate}
             </button>

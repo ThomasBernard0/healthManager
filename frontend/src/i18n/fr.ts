@@ -82,6 +82,7 @@ export const fr = {
       activate: 'Activer',
       activateNamed: (name: string) => `Activer ${name}`,
       activateThis: 'Activer ce programme',
+      confirmActivate: (name: string) => `Activer « ${name} » ?`,
       workoutCount: (n: number) => `${n} séance${n > 1 ? 's' : ''}`,
       workouts: 'Séances',
       exercises: 'Exercices',

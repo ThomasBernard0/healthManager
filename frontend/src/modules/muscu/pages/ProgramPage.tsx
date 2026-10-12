@@ -11,9 +11,8 @@ import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
-import { WorkoutRows } from '../components/ProgramLists'
+import { ActivateProgramSheet, WorkoutRows } from '../components/ProgramLists'
 import { MUSCU_PATH, newWorkoutPath } from '../routes'
-import { useActivateProgram } from '../useActivateProgram'
 import home from './HomePage.module.css'
 import page from './page.module.css'
 import styles from './ProgramPage.module.css'
@@ -49,7 +48,7 @@ function Program({ program, exercises }: { program: ProgramDto; exercises: Exerc
   const [name, setName] = useState(program.name)
   const [status, setStatus] = useState<'idle' | 'busy' | 'error'>('idle')
   const [confirmDelete, setConfirmDelete] = useState<'closed' | 'open' | 'busy' | 'error'>('closed')
-  const activation = useActivateProgram()
+  const [confirmActivate, setConfirmActivate] = useState(false)
 
   const back = () => (location.key !== 'default' ? navigate(-1) : navigate(MUSCU_PATH))
   const valid = name.trim() !== ''
@@ -66,10 +65,6 @@ function Program({ program, exercises }: { program: ProgramDto; exercises: Exerc
     }
     setStatus('idle')
     invalidateData()
-  }
-
-  async function activate() {
-    if (await activation.activate(program.id)) navigate(MUSCU_PATH)
   }
 
   async function deleteProgram() {
@@ -123,16 +118,9 @@ function Program({ program, exercises }: { program: ProgramDto; exercises: Exerc
       </form>
 
       {!program.active && (
-        <>
-          {activation.error && (
-            <div className={form.error} role="alert">
-              {fr.common.saveError}
-            </div>
-          )}
-          <button type="button" className={home.start} disabled={activation.busy !== null} onClick={activate}>
-            {fr.muscu.program.activateThis}
-          </button>
-        </>
+        <button type="button" className={home.start} onClick={() => setConfirmActivate(true)}>
+          {fr.muscu.program.activateThis}
+        </button>
       )}
 
       <section className={home.section}>
@@ -159,6 +147,14 @@ function Program({ program, exercises }: { program: ProgramDto; exercises: Exerc
             ))}
           </ul>
         </section>
+      )}
+
+      {confirmActivate && (
+        <ActivateProgramSheet
+          program={program}
+          onActivated={() => navigate(MUSCU_PATH)}
+          onCancel={() => setConfirmActivate(false)}
+        />
       )}
 
       {confirmDelete !== 'closed' && (
