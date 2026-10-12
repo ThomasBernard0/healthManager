@@ -43,17 +43,8 @@ export class WorkoutSummaryDto {
 }
 
 export class WorkoutItemDto {
-  @ApiProperty({ type: ExerciseDto })
+  @ApiProperty({ type: ExerciseDto, description: 'With its sets and rep range' })
   exercise: ExerciseDto;
-
-  @ApiProperty({ example: 4 })
-  sets: number;
-
-  @ApiProperty({ example: 8 })
-  repMin: number;
-
-  @ApiProperty({ example: 12 })
-  repMax: number;
 
   @ApiProperty({
     type: String,

@@ -56,9 +56,9 @@ export class WorkoutsService {
             this.progression.targets({
               exerciseId: i.exerciseId,
               equipment: i.exercise.equipment,
-              setCount: i.sets,
-              repMin: i.repMin,
-              repMax: i.repMax,
+              setCount: i.exercise.sets,
+              repMin: i.exercise.repMin,
+              repMax: i.exercise.repMax,
               todayPreFatigue: 0,
               todayInSuperset: i.supersetGroup !== null,
             }),
@@ -92,9 +92,6 @@ export class WorkoutsService {
       programActive: workout.program.active,
       items: workout.items.map((i) => ({
         exercise: toExerciseDto(i.exercise),
-        sets: i.sets,
-        repMin: i.repMin,
-        repMax: i.repMax,
         group: i.supersetGroup,
       })),
     };
@@ -150,7 +147,6 @@ export class WorkoutsService {
     if (!name) throw new BadRequestException('name must not be blank');
     const ids = dto.items.map((i) => i.exerciseId);
     if (new Set(ids).size !== ids.length) throw new BadRequestException('An exercise appears twice');
-    if (dto.items.some((i) => i.repMax < i.repMin)) throw new BadRequestException('repMax must be ≥ repMin');
     const known = await this.prisma.exercise.count({ where: { id: { in: ids } } });
     if (known !== ids.length) throw new BadRequestException('Unknown exercise');
     if (!validSupersetGroups(dto.items.map((i) => i.group ?? null))) {
@@ -163,9 +159,6 @@ export class WorkoutsService {
       name,
       items: dto.items.map((i, position) => ({
         exerciseId: i.exerciseId,
-        sets: i.sets,
-        repMin: i.repMin,
-        repMax: i.repMax,
         position,
         supersetGroup: i.group ? groups.get(i.group)! : null,
       })),

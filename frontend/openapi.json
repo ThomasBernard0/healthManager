@@ -2776,18 +2776,6 @@
             "type": "string",
             "example": "Pull"
           },
-          "sets": {
-            "type": "number",
-            "example": 4
-          },
-          "repMin": {
-            "type": "number",
-            "example": 8
-          },
-          "repMax": {
-            "type": "number",
-            "example": 12
-          },
           "programId": {
             "type": "string",
             "format": "uuid"
@@ -2800,9 +2788,6 @@
         "required": [
           "id",
           "name",
-          "sets",
-          "repMin",
-          "repMax",
           "programId",
           "programActive"
         ]
@@ -2837,6 +2822,19 @@
               "$ref": "#/components/schemas/Muscle"
             }
           },
+          "sets": {
+            "type": "number",
+            "example": 4,
+            "description": "Sets, in every workout"
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12
+          },
           "imageVersion": {
             "type": "string",
             "nullable": true,
@@ -2857,6 +2855,9 @@
           "equipment",
           "primaryMuscles",
           "secondaryMuscles",
+          "sets",
+          "repMin",
+          "repMax",
           "imageVersion",
           "workouts"
         ]
@@ -2973,13 +2974,35 @@
             "items": {
               "$ref": "#/components/schemas/Muscle"
             }
+          },
+          "sets": {
+            "type": "number",
+            "example": 4,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "repMin": {
+            "type": "number",
+            "example": 8,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "repMax": {
+            "type": "number",
+            "example": 12,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "≥ repMin"
           }
         },
         "required": [
           "name",
           "equipment",
           "primaryMuscles",
-          "secondaryMuscles"
+          "secondaryMuscles",
+          "sets",
+          "repMin",
+          "repMax"
         ]
       },
       "ExerciseImageUploadDto": {
@@ -3144,19 +3167,12 @@
         "type": "object",
         "properties": {
           "exercise": {
-            "$ref": "#/components/schemas/ExerciseDto"
-          },
-          "sets": {
-            "type": "number",
-            "example": 4
-          },
-          "repMin": {
-            "type": "number",
-            "example": 8
-          },
-          "repMax": {
-            "type": "number",
-            "example": 12
+            "description": "With its sets and rep range",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExerciseDto"
+              }
+            ]
           },
           "group": {
             "type": "string",
@@ -3167,9 +3183,6 @@
         },
         "required": [
           "exercise",
-          "sets",
-          "repMin",
-          "repMax",
           "group"
         ]
       },
@@ -3220,25 +3233,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "sets": {
-            "type": "number",
-            "example": 4,
-            "minimum": 1,
-            "maximum": 10
-          },
-          "repMin": {
-            "type": "number",
-            "example": 8,
-            "minimum": 1,
-            "maximum": 100
-          },
-          "repMax": {
-            "type": "number",
-            "example": 12,
-            "minimum": 1,
-            "maximum": 100,
-            "description": "≥ repMin"
-          },
           "group": {
             "type": "string",
             "nullable": true,
@@ -3248,10 +3242,7 @@
           }
         },
         "required": [
-          "exerciseId",
-          "sets",
-          "repMin",
-          "repMax"
+          "exerciseId"
         ]
       },
       "SaveWorkoutDto": {

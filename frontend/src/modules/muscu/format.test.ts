@@ -21,6 +21,9 @@ const ex = (
   equipment: 'barbell',
   primaryMuscles: p,
   secondaryMuscles: s,
+  sets: 4,
+  repMin: 8,
+  repMax: 12,
   imageVersion: null,
   workouts,
 })
@@ -32,11 +35,13 @@ describe('muscu format', () => {
     expect(primarySubtitle(ex(['back'], ['biceps']))).toBe('Dos · Barre')
   })
 
-  it('shows the workouts of an exercise with their sets and rep range', () => {
-    expect(exerciseDetails(ex(['back'], [], [{ id: 'p', name: 'Pull', sets: 4, repMin: 8, repMax: 12, programId: 'pp', programActive: true }]))).toBe(
-      'Barre · Pull · 4 × 8–12',
+  it('shows the workouts of an exercise, then its sets and rep range (once)', () => {
+    const pull = { id: 'p', name: 'Pull', programId: 'pp', programActive: true }
+    expect(exerciseDetails(ex(['back'], [], [pull]))).toBe('Barre · Pull · 4 × 8–12')
+    expect(exerciseDetails({ ...ex(['back'], [], [pull, { ...pull, id: 'b', name: 'Push B' }]), sets: 3, repMin: 6, repMax: 10 })).toBe(
+      'Barre · Pull · Push B · 3 × 6–10',
     )
-    expect(exerciseDetails(ex(['back'], []))).toBe('Barre')
+    expect(exerciseDetails(ex(['back'], []))).toBe('Barre · 4 × 8–12')
   })
 
   it('formats a session date', () => {

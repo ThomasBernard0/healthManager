@@ -36,15 +36,15 @@ export function toExerciseDto(exercise: ExerciseRow): ExerciseDto {
     equipment: exercise.equipment,
     primaryMuscles: exercise.primaryMuscles,
     secondaryMuscles: exercise.secondaryMuscles,
+    sets: exercise.sets,
+    repMin: exercise.repMin,
+    repMax: exercise.repMax,
     imageVersion: exercise.image ? String(exercise.image.updatedAt.getTime()) : null,
     workouts: [...exercise.workoutItems]
       .sort((a, b) => workoutOrder(a.workout, b.workout))
       .map((item) => ({
         id: item.workout.id,
         name: item.workout.name,
-        sets: item.sets,
-        repMin: item.repMin,
-        repMax: item.repMax,
         programId: item.workout.programId,
         programActive: item.workout.program.active,
       })),
@@ -57,12 +57,16 @@ function toData(dto: SaveExerciseDto) {
   if (dto.secondaryMuscles.some((m) => dto.primaryMuscles.includes(m))) {
     throw new BadRequestException('A muscle cannot be both primary and secondary');
   }
+  if (dto.repMax < dto.repMin) throw new BadRequestException('repMax must be ≥ repMin');
   return {
     name,
     searchName: searchKey(name),
     equipment: dto.equipment,
     primaryMuscles: dto.primaryMuscles,
     secondaryMuscles: dto.secondaryMuscles,
+    sets: dto.sets,
+    repMin: dto.repMin,
+    repMax: dto.repMax,
   };
 }
 

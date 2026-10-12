@@ -17,4 +17,20 @@ export interface SaveExerciseDto {
   /** @minItems 1 */
   primaryMuscles: Muscle[];
   secondaryMuscles: Muscle[];
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  sets: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  repMin: number;
+  /**
+   * ≥ repMin
+   * @minimum 1
+   * @maximum 100
+   */
+  repMax: number;
 }

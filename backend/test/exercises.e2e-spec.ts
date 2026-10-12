@@ -95,6 +95,9 @@ describe('Exercises (e2e)', () => {
         equipment: 'barbell',
         primaryMuscles: ['back'],
         secondaryMuscles: ['biceps', 'shoulders_rear'],
+        sets: 4,
+        repMin: 8,
+        repMax: 12,
         archived: false,
         workoutItems: [],
       },
@@ -105,6 +108,9 @@ describe('Exercises (e2e)', () => {
         equipment: 'cable',
         primaryMuscles: ['chest'],
         secondaryMuscles: [],
+        sets: 3,
+        repMin: 12,
+        repMax: 15,
         archived: false,
         workoutItems: [],
       },
@@ -115,6 +121,9 @@ describe('Exercises (e2e)', () => {
         equipment: 'machine',
         primaryMuscles: ['chest'],
         secondaryMuscles: [],
+        sets: 4,
+        repMin: 8,
+        repMax: 12,
         archived: true,
         workoutItems: [],
       },
@@ -134,15 +143,19 @@ describe('Exercises (e2e)', () => {
   });
   afterAll(() => app.close());
 
-  it('lists the exercises by name, without archived ones, with the image version', async () => {
+  it('lists the exercises by name, without archived ones, with their scheme and the image version', async () => {
     const res = await request(app.getHttpServer()).get('/api/exercises').expect(200);
     expect(res.body.map((e: { name: string }) => e.name)).toEqual(['Écarté poulie vis-à-vis', 'Rowing barre']);
+    expect(res.body[0]).toMatchObject({ sets: 3, repMin: 12, repMax: 15 });
     expect(res.body[1]).toEqual({
       id: '00000000-0000-4000-8000-000000000001',
       name: 'Rowing barre',
       equipment: 'barbell',
       primaryMuscles: ['back'],
       secondaryMuscles: ['biceps', 'shoulders_rear'],
+      sets: 4,
+      repMin: 8,
+      repMax: 12,
       imageVersion: String(Date.UTC(2026, 9, 1)),
       workouts: [],
     });
@@ -153,18 +166,25 @@ describe('Exercises (e2e)', () => {
     expect(res.body.map((e: { name: string }) => e.name)).toEqual(['Écarté poulie vis-à-vis']);
   });
 
-  it('creates and edits an exercise (no image)', async () => {
+  it('creates and edits an exercise with its sets and rep range (no image)', async () => {
     const created = await request(app.getHttpServer())
       .post('/api/exercises')
-      .send({ name: ' Pull-over ', equipment: 'dumbbell', primaryMuscles: ['back'], secondaryMuscles: ['chest'] })
+      .send({ name: ' Pull-over ', equipment: 'dumbbell', primaryMuscles: ['back'], secondaryMuscles: ['chest'], sets: 4, repMin: 8, repMax: 12 })
       .expect(201);
-    expect(created.body).toMatchObject({ name: 'Pull-over', imageVersion: null });
+    expect(created.body).toMatchObject({ name: 'Pull-over', sets: 4, repMin: 8, repMax: 12, imageVersion: null });
 
     const updated = await request(app.getHttpServer())
       .put(`/api/exercises/${created.body.id}`)
-      .send({ name: 'Pull-over haltère', equipment: 'dumbbell', primaryMuscles: ['chest'], secondaryMuscles: [] })
+      .send({ name: 'Pull-over haltère', equipment: 'dumbbell', primaryMuscles: ['chest'], secondaryMuscles: [], sets: 3, repMin: 10, repMax: 10 })
       .expect(200);
-    expect(updated.body).toMatchObject({ name: 'Pull-over haltère', primaryMuscles: ['chest'], secondaryMuscles: [] });
+    expect(updated.body).toMatchObject({
+      name: 'Pull-over haltère',
+      primaryMuscles: ['chest'],
+      secondaryMuscles: [],
+      sets: 3,
+      repMin: 10,
+      repMax: 10,
+    });
   });
 
   it('serves, replaces and removes the image', async () => {
@@ -232,7 +252,7 @@ describe('Exercises (e2e)', () => {
   });
 
   it('rejects a muscle twice, no primary muscle, or unknown values', async () => {
-    const base = { name: 'X', equipment: 'machine', primaryMuscles: ['chest'], secondaryMuscles: [] };
+    const base = { name: 'X', equipment: 'machine', primaryMuscles: ['chest'], secondaryMuscles: [], sets: 4, repMin: 8, repMax: 12 };
     const post = (body: object) => request(app.getHttpServer()).post('/api/exercises').send({ ...base, ...body });
     await post({ secondaryMuscles: ['chest'] }).expect(400);
     await post({ primaryMuscles: [] }).expect(400);
@@ -240,5 +260,24 @@ describe('Exercises (e2e)', () => {
     await post({ equipment: 'kettlebell' }).expect(400);
     await post({ name: '   ' }).expect(400);
     await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000099').expect(404);
+  });
+
+  it('rejects a set count or a rep range out of bounds, missing, or with min above max', async () => {
+    const base = { name: 'X', equipment: 'machine', primaryMuscles: ['chest'], secondaryMuscles: [], sets: 4, repMin: 8, repMax: 12 };
+    const post = (body: object) => request(app.getHttpServer()).post('/api/exercises').send({ ...base, ...body });
+    await post({ sets: 0 }).expect(400);
+    await post({ sets: 11 }).expect(400);
+    await post({ sets: 2.5 }).expect(400);
+    await post({ repMin: 0 }).expect(400);
+    await post({ repMax: 101 }).expect(400);
+    await post({ repMin: 12, repMax: 8 }).expect(400);
+    await post({ sets: undefined }).expect(400);
+    await post({ repMin: undefined }).expect(400);
+    await request(app.getHttpServer())
+      .put('/api/exercises/00000000-0000-4000-8000-000000000002')
+      .send({ ...base, repMin: 13, repMax: 12 })
+      .expect(400);
+    await post({ sets: 1, repMin: 1, repMax: 100 }).expect(201);
+    await post({ sets: 10, repMin: 6, repMax: 6 }).expect(201);
   });
 });

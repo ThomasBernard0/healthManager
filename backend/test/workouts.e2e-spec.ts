@@ -32,7 +32,7 @@ describe('Workouts (e2e)', () => {
   it('adds workouts at the end of the active program rotation; the first one is next until a session is done', async () => {
     const pushA = await http().post('/api/workouts').send({ name: ' Push A ', items: [item(BENCH)] }).expect(201);
     expect(pushA.body).toMatchObject({ name: 'Push A', position: 1 });
-    await http().post('/api/workouts').send({ name: 'Pull', items: [item(ROWING), item(CURL, 3, 10, 15)] }).expect(201);
+    await http().post('/api/workouts').send({ name: 'Pull', items: [item(ROWING), item(CURL)] }).expect(201);
     await http().post('/api/workouts').send({ name: 'Push B', items: [] }).expect(201);
 
     const list = await http().get('/api/workouts').expect(200);
@@ -58,17 +58,18 @@ describe('Workouts (e2e)', () => {
     ]);
   });
 
-  it('returns a workout with its exercises in order, and the exercise knows its workouts', async () => {
+  it('returns a workout with its exercises in order (each with its own scheme), and the exercise knows its workouts', async () => {
     const pull = (await http().get('/api/workouts').expect(200)).body[1];
     const res = await http().get(`/api/workouts/${pull.id}`).expect(200);
-    expect(res.body.items.map((i: { exercise: { name: string }; sets: number }) => [i.exercise.name, i.sets])).toEqual([
+    expect(res.body.items.map((i: { exercise: { name: string; sets: number } }) => [i.exercise.name, i.exercise.sets])).toEqual([
       ['Rowing barre', 4],
       ['Curl haltères', 3],
     ]);
     expect(res.body).toMatchObject({ programId: FIRST_PROGRAM, programActive: true });
-    expect(res.body.items[1]).toMatchObject({ repMin: 10, repMax: 15 });
+    expect(res.body.items[1].exercise).toMatchObject({ repMin: 10, repMax: 15 });
+    expect(res.body.items[1]).not.toHaveProperty('sets');
     expect(res.body.items[0].exercise.workouts).toEqual([
-      { id: pull.id, name: 'Pull', sets: 4, repMin: 8, repMax: 12, programId: FIRST_PROGRAM, programActive: true },
+      { id: pull.id, name: 'Pull', programId: FIRST_PROGRAM, programActive: true },
     ]);
   });
 
@@ -76,49 +77,51 @@ describe('Workouts (e2e)', () => {
     const pull = (await http().get('/api/workouts').expect(200)).body[1];
     const res = await http()
       .put(`/api/workouts/${pull.id}`)
-      .send({ name: 'Tirage', items: [item(CURL, 4, 8, 12), item(ROWING, 5, 6, 8)] })
+      .send({ name: 'Tirage', items: [item(CURL), item(ROWING)] })
       .expect(200);
     expect(res.body.name).toBe('Tirage');
-    expect(res.body.items.map((i: { exercise: { id: string }; sets: number }) => [i.exercise.id, i.sets])).toEqual([
-      [CURL, 4],
-      [ROWING, 5],
-    ]);
+    expect(res.body.items.map((i: { exercise: { id: string } }) => i.exercise.id)).toEqual([CURL, ROWING]);
   });
 
-  it('rejects a duplicate or unknown exercise, a bad rep range or set count', async () => {
+  it('rejects a duplicate or unknown exercise, and sets or a rep range on an item (they belong to the exercise)', async () => {
     const post = (items: object[]) => http().post('/api/workouts').send({ name: 'X', items });
     await post([item(ROWING), item(ROWING)]).expect(400);
     await post([item(uuid(999))]).expect(400);
-    await post([item(ROWING, 4, 12, 8)]).expect(400);
-    await post([item(ROWING, 0)]).expect(400);
-    await post([item(ROWING, 11)]).expect(400);
+    await post([{ ...item(ROWING), sets: 4 }]).expect(400);
+    await post([{ ...item(ROWING), repMin: 8, repMax: 12 }]).expect(400);
     await http().post('/api/workouts').send({ name: '  ', items: [] }).expect(400);
     await http().post('/api/workouts').send({ name: 'X', programId: uuid(999), items: [] }).expect(400);
     await http().get(`/api/workouts/${uuid(999)}`).expect(404);
   });
 
   it('links two adjacent exercises in a superset (own uuid per pair) and unlinks them', async () => {
-    const linked = [{ ...item(BENCH), group: 'x' }, { ...item(CURL, 3, 10, 12), group: 'x' }, item(ROWING)];
+    const linked = [{ ...item(BENCH), group: 'x' }, { ...item(CURL), group: 'x' }, item(ROWING)];
     const created = await http().post('/api/workouts').send({ name: 'Superset', items: linked }).expect(201);
     const [a, b, solo] = created.body.items;
     expect(a.group).toMatch(/^[0-9a-f-]{36}$/);
     expect(b.group).toBe(a.group);
     expect(solo.group).toBeNull();
 
-    // Unlinking keeps both exercises, their targets and their order.
-    const unlinked = linked.map(({ exerciseId, sets, repMin, repMax }) => ({ exerciseId, sets, repMin, repMax }));
+    // The same exercise has the same scheme in every workout.
+    expect([b.exercise.sets, b.exercise.repMin, b.exercise.repMax]).toEqual([3, 10, 15]);
+    expect(b.exercise.workouts.map((w: { name: string }) => w.name)).toContain('Superset');
+
+    // Unlinking keeps both exercises, their scheme and their order.
+    const unlinked = linked.map(({ exerciseId }) => ({ exerciseId }));
     const res = await http().put(`/api/workouts/${created.body.id}`).send({ name: 'Superset', items: unlinked }).expect(200);
     expect(
-      res.body.items.map((i: { exercise: { id: string }; sets: number; repMin: number; repMax: number; group: string | null }) => [
-        i.exercise.id,
-        i.sets,
-        i.repMin,
-        i.repMax,
-        i.group,
-      ]),
+      res.body.items.map(
+        (i: { exercise: { id: string; sets: number; repMin: number; repMax: number }; group: string | null }) => [
+          i.exercise.id,
+          i.exercise.sets,
+          i.exercise.repMin,
+          i.exercise.repMax,
+          i.group,
+        ],
+      ),
     ).toEqual([
       [BENCH, 4, 8, 12, null],
-      [CURL, 3, 10, 12, null],
+      [CURL, 3, 10, 15, null],
       [ROWING, 4, 8, 12, null],
     ]);
     await http().delete(`/api/workouts/${created.body.id}`).expect(204);

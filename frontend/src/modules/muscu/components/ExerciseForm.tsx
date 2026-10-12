@@ -1,5 +1,5 @@
 import { EQUIPMENTS, MUSCLES } from '@healthmanager/shared'
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { Fragment, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import {
   exercisesCreate,
   exercisesRemoveImage,
@@ -17,6 +17,13 @@ import styles from './ExerciseForm.module.css'
 
 type Role = 'none' | 'secondary' | 'primary'
 
+/** Same bounds as the API (SaveExerciseDto). */
+const MAX_SETS = 10
+const MAX_REPS = 100
+
+/** A typed whole number, or null. */
+const toInt = (text: string): number | null => (/^\d+$/.test(text) ? Number(text) : null)
+
 /** Tap cycle of a muscle pill. */
 const NEXT_ROLE: Record<Role, Role> = { none: 'secondary', secondary: 'primary', primary: 'none' }
 
@@ -24,6 +31,10 @@ interface Draft {
   name: string
   equipment: Equipment | null
   roles: Partial<Record<Muscle, Role>>
+  /** As typed. */
+  sets: string
+  repMin: string
+  repMax: string
 }
 
 /** The picture as it will be saved: the stored one, a newly picked one, or none. */
@@ -36,7 +47,13 @@ const toDraft = (e: ExerciseDto): Draft => ({
     ...e.primaryMuscles.map((m) => [m, 'primary']),
     ...e.secondaryMuscles.map((m) => [m, 'secondary']),
   ]),
+  sets: String(e.sets),
+  repMin: String(e.repMin),
+  repMax: String(e.repMax),
 })
+
+/** A new exercise: 4 × 8–12. */
+const NEW_DRAFT: Draft = { name: '', equipment: null, roles: {}, sets: '4', repMin: '8', repMax: '12' }
 
 interface ExerciseFormProps {
   /** null: a new exercise. */
@@ -46,11 +63,12 @@ interface ExerciseFormProps {
   onSaved: (exercise: ExerciseDto) => void
 }
 
-/** Créer / Modifier l'exercice: name, image, equipment, muscles (none → secondary → primary), Enregistrer. */
+/**
+ * Créer / Modifier l'exercice: name, sets × rep range, image, equipment, muscles (none → secondary → primary),
+ * Enregistrer.
+ */
 export function ExerciseForm({ exercise, header, onSaved }: ExerciseFormProps) {
-  const [draft, setDraft] = useState<Draft>(() =>
-    exercise ? toDraft(exercise) : { name: '', equipment: null, roles: {} },
-  )
+  const [draft, setDraft] = useState<Draft>(() => (exercise ? toDraft(exercise) : NEW_DRAFT))
   const [picture, setPicture] = useState<Picture>({ kind: 'keep' })
   const [imageError, setImageError] = useState(false)
   const [status, setStatus] = useState<'idle' | 'busy' | 'error'>('idle')
@@ -62,7 +80,14 @@ export function ExerciseForm({ exercise, header, onSaved }: ExerciseFormProps) {
 
   const primary = MUSCLES.filter((m) => draft.roles[m] === 'primary')
   const secondary = MUSCLES.filter((m) => draft.roles[m] === 'secondary')
-  const valid = draft.name.trim() !== '' && draft.equipment !== null && primary.length > 0
+  const sets = toInt(draft.sets)
+  const repMin = toInt(draft.repMin)
+  const repMax = toInt(draft.repMax)
+  const scheme =
+    sets !== null && repMin !== null && repMax !== null && sets >= 1 && sets <= MAX_SETS && repMin >= 1 && repMin <= repMax && repMax <= MAX_REPS
+      ? { sets, repMin, repMax }
+      : null
+  const valid = draft.name.trim() !== '' && draft.equipment !== null && primary.length > 0 && scheme !== null
 
   async function pick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -79,9 +104,15 @@ export function ExerciseForm({ exercise, header, onSaved }: ExerciseFormProps) {
 
   async function save(e: FormEvent) {
     e.preventDefault()
-    if (!valid || !draft.equipment) return
+    if (!valid || !draft.equipment || !scheme) return
     setStatus('busy')
-    const body = { name: draft.name.trim(), equipment: draft.equipment, primaryMuscles: primary, secondaryMuscles: secondary }
+    const body = {
+      name: draft.name.trim(),
+      equipment: draft.equipment,
+      primaryMuscles: primary,
+      secondaryMuscles: secondary,
+      ...scheme,
+    }
     try {
       let saved = exercise ? await exercisesUpdate(exercise.id, body) : await exercisesCreate(body)
       if (picture.kind === 'new') saved = await exercisesSetImage(saved.id, { file: picture.blob })
@@ -106,6 +137,38 @@ export function ExerciseForm({ exercise, header, onSaved }: ExerciseFormProps) {
           onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
         />
       </label>
+
+      <fieldset className={styles.group}>
+        <legend className={styles.legend}>{fr.muscu.schemeLabel}</legend>
+        <div className={styles.scheme}>
+          {(
+            [
+              ['sets', fr.muscu.sets, fr.muscu.setsInput, '×'],
+              ['repMin', fr.muscu.repMin, fr.muscu.repMinInput, '–'],
+              ['repMax', fr.muscu.repMax, fr.muscu.repMaxInput, null],
+            ] as const
+          ).map(([key, label, ariaLabel, separator]) => (
+            <Fragment key={key}>
+              <label className={styles.schemeField}>
+                {label}
+                <input
+                  className={`${form.input} ${styles.schemeInput}`}
+                  inputMode="numeric"
+                  aria-label={ariaLabel}
+                  value={draft[key]}
+                  maxLength={3}
+                  onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value.replace(/\D/g, '') }))}
+                />
+              </label>
+              {separator && (
+                <span className={styles.schemeSeparator} aria-hidden="true">
+                  {separator}
+                </span>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      </fieldset>
 
       <fieldset className={styles.group}>
         <legend className={styles.legend}>{fr.muscu.imageLabel}</legend>

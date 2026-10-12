@@ -21,11 +21,12 @@ export const exerciseSubtitle = (exercise: ExerciseDto): string =>
 export const primarySubtitle = (exercise: ExerciseDto): string =>
   `${sentence(exercise.primaryMuscles.map(shortLabel))} · ${fr.muscu.equipment[exercise.equipment]}`
 
-/** "Barre · Pull · 4 × 8–12" (Fiche exercice): equipment, then each workout it is part of. */
+/** "Barre · Pull · 4 × 8–12" (Fiche exercice): equipment, the workouts it is part of, its sets and rep range. */
 export const exerciseDetails = (exercise: ExerciseDto): string =>
   [
     fr.muscu.equipment[exercise.equipment],
-    ...exercise.workouts.flatMap((w) => [w.name, fr.muscu.setsReps(w.sets, w.repMin, w.repMax)]),
+    ...exercise.workouts.map((w) => w.name),
+    fr.muscu.setsReps(exercise.sets, exercise.repMin, exercise.repMax),
   ].join(' · ')
 
 /** "lun 28 sept" */

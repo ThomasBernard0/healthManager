@@ -8,22 +8,6 @@
 export interface SaveWorkoutItemDto {
   exerciseId: string;
   /**
-   * @minimum 1
-   * @maximum 10
-   */
-  sets: number;
-  /**
-   * @minimum 1
-   * @maximum 100
-   */
-  repMin: number;
-  /**
-   * ≥ repMin
-   * @minimum 1
-   * @maximum 100
-   */
-  repMax: number;
-  /**
    * Superset: any id shared by exactly two adjacent items (replaced by the server)
    * @minLength 1
    * @maxLength 36
