@@ -1698,8 +1698,8 @@
           },
           "carbs": {
             "type": "number",
-            "example": 230,
-            "description": "Daily carbs (g)"
+            "example": 243,
+            "description": "Daily carbs (g), derived from kcal, protein and fat when saved"
           },
           "fat": {
             "type": "number",
@@ -1755,12 +1755,6 @@
             "minimum": 0,
             "maximum": 1000
           },
-          "carbs": {
-            "type": "number",
-            "example": 250,
-            "minimum": 0,
-            "maximum": 1000
-          },
           "fat": {
             "type": "number",
             "example": 80,
@@ -1771,7 +1765,6 @@
         "required": [
           "dailyKcal",
           "protein",
-          "carbs",
           "fat"
         ]
       },

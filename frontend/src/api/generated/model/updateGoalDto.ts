@@ -20,10 +20,5 @@ export interface UpdateGoalDto {
    * @minimum 0
    * @maximum 1000
    */
-  carbs: number;
-  /**
-   * @minimum 0
-   * @maximum 1000
-   */
   fat: number;
 }
