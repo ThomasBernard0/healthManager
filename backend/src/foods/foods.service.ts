@@ -31,7 +31,6 @@ export function toFoodDto(food: Food): FoodDto {
     id: food.id,
     name: food.name,
     brand: food.brand,
-    source: food.source,
     per100g: toNutrients(food),
     units: parseUnits(food.units),
   };
@@ -100,7 +99,6 @@ export class FoodsService {
           name: product.name,
           searchName: searchKey(product.name),
           brand: product.brand,
-          source: 'off',
           barcode,
           ...product.per100g,
           units: product.servingGrams ? [{ label: SERVING_LABEL, grams: product.servingGrams }] : [],
@@ -123,7 +121,6 @@ export class FoodsService {
           name,
           searchName: searchKey(name),
           brand: dto.brand?.trim() || null,
-          source: 'custom',
           barcode: dto.barcode ?? null,
           ...normalizeNutrients(dto.per100g),
           units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),

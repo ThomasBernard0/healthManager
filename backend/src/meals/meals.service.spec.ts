@@ -10,7 +10,6 @@ const food = (id: string, kcal: number, protein: number, carbs: number, fat: num
   name: id,
   searchName: id,
   brand: null,
-  source: 'custom' as const,
   barcode: null,
   kcal,
   protein: D(protein),

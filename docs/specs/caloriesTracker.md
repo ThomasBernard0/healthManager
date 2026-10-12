@@ -14,7 +14,7 @@ Repo: `apps/web`, `apps/api`, `packages/shared` (Zod schemas, nutrition and week
 
 ```ts
 // Food — one ingredient
-Food { id, name, brand?, source: "custom" | "off", barcode?,
+Food { id, name, brand?, barcode?,
        per100g: Nutrients, units?: { label: string; grams: number }[], updatedAt }
 
 // Meal — a saved meal ("Mes repas")

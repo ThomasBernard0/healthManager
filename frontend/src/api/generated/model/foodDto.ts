@@ -4,7 +4,6 @@
  * healthManager API
  * OpenAPI spec version: 1.0
  */
-import type { FoodSource } from './foodSource';
 import type { NutrientsDto } from './nutrientsDto';
 import type { FoodUnitDto } from './foodUnitDto';
 
@@ -13,7 +12,6 @@ export interface FoodDto {
   name: string;
   /** @nullable */
   brand: string | null;
-  source: FoodSource;
   /** Per 100 g */
   per100g: NutrientsDto;
   units: FoodUnitDto[];
