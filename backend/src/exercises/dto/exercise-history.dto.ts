@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SetResultDto } from '../../common/set-result.dto.js';
 
-const FEELINGS = ['easy', 'ok', 'hard'] as const;
-
 /** One finished session of an exercise (Historique, Progression chart). */
 export class ExerciseHistoryEntryDto {
   @ApiProperty({ format: 'uuid' })
@@ -14,8 +12,8 @@ export class ExerciseHistoryEntryDto {
   @ApiProperty({ type: [SetResultDto], description: 'Validated sets, in order' })
   sets: SetResultDto[];
 
-  @ApiProperty({ enum: FEELINGS, enumName: 'Feeling', nullable: true })
-  feeling: (typeof FEELINGS)[number] | null;
+  @ApiProperty({ description: 'Facile tapped' })
+  easy: boolean;
 
   @ApiProperty({ example: 0, description: 'Sets already done on its primary muscles (> 0: battery icon)' })
   preFatigue: number;

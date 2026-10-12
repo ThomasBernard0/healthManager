@@ -67,7 +67,7 @@ const ENTRY: SessionExerciseDto = {
   exercise: ex('x2', 'Rowing barre'),
   repMin: 8,
   repMax: 12,
-  feeling: null,
+  easy: false,
   completed: false,
   sets: [set(0, { weight: 60, reps: 12, done: true }), set(1, { weight: 60, reps: 9, done: true }), set(2), set(3)],
   preFatigue: 0,
@@ -250,16 +250,27 @@ describe('Exercice en cours', () => {
     expect(screen.queryByRole('textbox', { name: 'Charge série 3' })).toBeNull()
   })
 
-  it('Terminé needs every set done; Ressenti toggles', async () => {
+  it('Terminé needs every set done; Facile toggles', async () => {
     const all = { ...ENTRY, sets: ENTRY.sets.map((s) => ({ ...s, weight: 60, reps: 10, done: true })) }
     vi.mocked(sessionsGetExercise).mockResolvedValue(all)
-    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...all, feeling: 'easy' })
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...all, easy: true })
     const user = userEvent.setup()
     renderAt('/muscu/seance/s1/e2')
 
-    await user.click(await screen.findByRole('button', { name: 'Facile' }))
-    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'e2', { feeling: 'easy' })
-    expect(await screen.findByRole('button', { name: 'Facile', pressed: true })).toBeInTheDocument()
+    // Off by default; no OK / Dur.
+    const easy = 'Facile, monter la charge la prochaine fois'
+    await user.click(await screen.findByRole('button', { name: easy, pressed: false }))
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'e2', { easy: true })
+    expect(await screen.findByRole('button', { name: easy, pressed: true })).toHaveTextContent('Facile')
+    expect(screen.queryByRole('button', { name: 'OK' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Dur' })).toBeNull()
+
+    // Tapping it again clears it.
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue(all)
+    await user.click(screen.getByRole('button', { name: easy, pressed: true }))
+    expect(sessionsUpdateExercise).toHaveBeenLastCalledWith('s1', 'e2', { easy: false })
+    expect(await screen.findByRole('button', { name: easy, pressed: false })).toBeInTheDocument()
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...all, completed: true })
 
     // Everything done: no early stop, Terminé completes.
     expect(screen.queryByRole('button', { name: 'Terminer l’exercice plus tôt' })).toBeNull()
@@ -364,16 +375,17 @@ describe('Superset en cours', () => {
     expect(sessionsSaveSet).toHaveBeenLastCalledWith('s1', 'ea', 0, { weight: 10, reps: 14, done: false })
   })
 
-  it('has one Ressenti per exercise', async () => {
-    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...B, feeling: 'hard' })
+  it('has one Facile toggle per exercise, with its badge', async () => {
+    vi.mocked(sessionsUpdateExercise).mockResolvedValue({ ...B, easy: true })
     const user = userEvent.setup()
     renderAt('/muscu/seance/s1/superset/ea')
 
-    const row = await screen.findByRole('group', { name: 'Extension triceps poulie' })
-    await user.click(within(row).getByRole('button', { name: 'Dur' }))
-    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'eb', { feeling: 'hard' })
-    expect(await within(row).findByRole('button', { name: 'Dur', pressed: true })).toBeInTheDocument()
-    expect(within(screen.getByRole('group', { name: 'Élévations latérales' })).getByRole('button', { name: 'Dur', pressed: false })).toBeInTheDocument()
+    const toggle = await screen.findByRole('button', { name: 'Extension triceps poulie facile', pressed: false })
+    expect(toggle).toHaveTextContent('BFacile')
+    await user.click(toggle)
+    expect(sessionsUpdateExercise).toHaveBeenCalledWith('s1', 'eb', { easy: true })
+    expect(await screen.findByRole('button', { name: 'Extension triceps poulie facile', pressed: true })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Élévations latérales facile', pressed: false })).toHaveTextContent('AFacile')
   })
 
   it('Terminé completes both exercises once every set is done', async () => {

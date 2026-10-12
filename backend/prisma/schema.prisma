@@ -20,12 +20,6 @@ enum MealMode {
   manual
 }
 
-enum Feeling {
-  easy
-  ok
-  hard
-}
-
 enum LogKind {
   meal
   quick
@@ -251,7 +245,8 @@ model SessionExercise {
   firstSetAt    DateTime?    @db.Timestamptz
   /// Frozen with the first validated set (progression step).
   preFatigue    Decimal?     @db.Decimal(4, 1)
-  feeling       Feeling?
+  /// "Facile" tapped: a clear margin (the weight goes up if the total is in the range).
+  easy          Boolean      @default(false)
   /// Terminé tapped (with at least one set done).
   completed     Boolean      @default(false)
   /// Snapshot of the workout item's group (null: solo, or its partner was skipped).

@@ -1,11 +1,9 @@
-import type { ExerciseHistoryEntryDto, Feeling } from '../../../api/generated/model'
+import type { ExerciseHistoryEntryDto } from '../../../api/generated/model'
 import { formatInt } from '../../../core/format'
-import { LinkIcon } from '../../../core/ui/icons'
+import { Bolt, LinkIcon } from '../../../core/ui/icons'
 import { fr } from '../../../i18n/fr'
 import { formatHistoryDay, formatSessionDate, formatSets, formatWeight } from '../format'
 import styles from './HistoryList.module.css'
-
-const feelingClass = (f: Feeling | null) => (f === 'easy' ? styles.easy : f === 'hard' ? styles.hard : '')
 
 /** Small link icon next to the date of a session done in a superset. */
 const SupersetMark = () => (
@@ -20,7 +18,7 @@ interface HistoryListProps {
   variant?: 'mobile' | 'desktop'
 }
 
-/** Historique: date, sets in the compact format, feeling (desktop: a table). */
+/** Historique: date, sets in the compact format, "Facile" when it was tapped (desktop: a table). */
 export function HistoryList({ entries, variant = 'mobile' }: HistoryListProps) {
   if (variant === 'desktop') return <HistoryTable entries={entries} />
   return (
@@ -38,9 +36,7 @@ export function HistoryList({ entries, variant = 'mobile' }: HistoryListProps) {
                 <span key={line}>{line}</span>
               ))}
             </span>
-            <span className={`${styles.feeling} ${feelingClass(e.feeling)}`}>
-              {e.feeling ? fr.muscu.session.feelings[e.feeling] : ''}
-            </span>
+            {e.easy && <span className={styles.easy}>{fr.muscu.session.easy}</span>}
           </li>
         ))}
       </ul>
@@ -64,7 +60,7 @@ function HistoryTable({ entries }: { entries: ExerciseHistoryEntryDto[] }) {
             ))}
             <th scope="col">{fr.muscu.history.volume}</th>
             <th scope="col" className={styles.end}>
-              {fr.muscu.history.feeling}
+              {fr.muscu.session.easy}
             </th>
           </tr>
         </thead>
@@ -81,8 +77,12 @@ function HistoryTable({ entries }: { entries: ExerciseHistoryEntryDto[] }) {
                 <td key={i}>{e.sets[i] ? `${formatWeight(e.sets[i].weight)} × ${e.sets[i].reps}` : ''}</td>
               ))}
               <td>{formatInt(e.volume)}</td>
-              <td className={`${styles.end} ${feelingClass(e.feeling)}`}>
-                {e.feeling ? fr.muscu.session.feelings[e.feeling] : ''}
+              <td className={styles.end}>
+                {e.easy && (
+                  <span className={styles.easyMark} role="img" aria-label={fr.muscu.session.easy}>
+                    <Bolt size={14} strokeWidth={2.2} />
+                  </span>
+                )}
               </td>
             </tr>
           ))}

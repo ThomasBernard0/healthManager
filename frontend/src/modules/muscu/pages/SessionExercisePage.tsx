@@ -5,15 +5,15 @@ import {
   sessionsSaveSet,
   sessionsUpdateExercise,
 } from '../../../api/generated/endpoints/sessions/sessions'
-import type { Feeling, SessionExerciseDto } from '../../../api/generated/model'
+import type { SessionExerciseDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { ChevronLeft } from '../../../core/ui/icons'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { useToast } from '../../../core/ui/toastContext'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
+import { EasyToggle } from '../components/EasyToggle'
 import { ExerciseThumb } from '../components/ExerciseThumb'
-import { FeelingButtons } from '../components/FeelingButtons'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SetRow, SetTable } from '../components/SetTable'
 import { formatSessionDate, formatSets } from '../format'
@@ -21,7 +21,7 @@ import { exercisePath, MUSCU_PATH, sessionPath } from '../routes'
 import page from './page.module.css'
 import styles from './SessionExercisePage.module.css'
 
-/** Exercice en cours: target vs done for each set, last time, Ressenti, Terminé. */
+/** Exercice en cours: target vs done for each set, last time, Facile, Terminé. */
 export default function SessionExercisePage() {
   const { sessionId = '', entryId = '' } = useParams()
   const loaded = useAsync(() => sessionsGetExercise(sessionId, entryId), `${sessionId}/${entryId}`)
@@ -65,8 +65,7 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
   const saveSet = (index: number, weight: number | null, reps: number | null, done: boolean) =>
     run(() => sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done }))
 
-  const setFeeling = (feeling: Feeling | null) =>
-    run(() => sessionsUpdateExercise(entry.sessionId, entry.id, { feeling }))
+  const setEasy = (easy: boolean) => run(() => sessionsUpdateExercise(entry.sessionId, entry.id, { easy }))
 
   const doneCount = entry.sets.filter((s) => s.done).length
   const allDone = doneCount === entry.sets.length
@@ -130,13 +129,8 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
         </div>
       )}
 
-      <div className={styles.feeling} role="group" aria-labelledby="feeling-label">
-        <div id="feeling-label" className={styles.feelingLabel}>
-          {fr.muscu.session.feeling}
-        </div>
-        <div className={styles.feelings}>
-          <FeelingButtons value={entry.feeling} disabled={busy} onChange={setFeeling} />
-        </div>
+      <div className={styles.easy}>
+        <EasyToggle pressed={entry.easy} disabled={busy} label={fr.muscu.session.easyLabel} onChange={setEasy} />
       </div>
 
       <button type="button" className={styles.complete} disabled={busy || !allDone} onClick={complete}>

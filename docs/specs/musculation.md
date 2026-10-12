@@ -31,7 +31,7 @@ Workout { id, programId, name, position /* order in its program's rotation */,
 Session { id, workoutId, startedAt, finishedAt? }
 SessionExercise { id, sessionId, exerciseId, order, repMin, repMax /* snapshot of the exercise at start */,
                   firstSetAt?, preFatigue?, completed, supersetGroup? /* snapshot of the workout item */,
-                  feeling?: "easy" | "ok" | "hard",
+                  easy: boolean /* "Facile" tapped */,
                   sets: { index, targetWeight?, targetReps?, weight /* kg, 0.5 step */, reps, done, doneAt? }[] }
 // The number of SessionSet rows created at start = the exercise's `sets` at that time.
 
@@ -51,14 +51,14 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 
 **First time** an exercise is done: no target. The user types weight and reps for each set; that session becomes the reference.
 
-**Afterwards**, targets for each set come from the last time the exercise was done (its sets, their weights and reps, and the feeling). The session is judged on the **total reps**, not on the worst set, so a weaker last set (normal fatigue) neither blocks progress nor triggers a drop. With `N` = number of sets and `total` = Σ reps:
+**Afterwards**, targets for each set come from the last time the exercise was done (its sets, their weights and reps, and whether **Facile** was tapped). The session is judged on the **total reps**, not on the worst set, so a weaker last set (normal fatigue) neither blocks progress nor triggers a drop. With `N` = number of sets and `total` = Σ reps:
 
 | Last time (first matching row wins) | Next time |
 |---|---|
-| **Up**: `total ≥ N × (repMax − 1)` (4 × 8–12 → ≥ 44), or feeling **Facile** with `total ≥ N × repMin` | every set: `stepUp(weight)`; target reps = `repMin` |
+| **Up**: `total ≥ N × (repMax − 1)` (4 × 8–12 → ≥ 44), or **Facile** with `total ≥ N × repMin` | every set: `stepUp(weight)`; target reps = `repMin` |
 | **Down**: `total < N × repMin` (4 × 8–12 → < 32) in this session **and** the previous one, the second not explained by more pre-fatigue | every set: `stepDown(weight)`; target reps = `repMin` |
-| Feeling **Dur**, or `total < N × repMin` (first time) | same weights; each set keeps **last time's target** (retried, never lowered to what was done) |
-| Otherwise (feeling **OK** or none) | same weights; each set: target reps = reps done + 1, capped at `repMax` |
+| `total < N × repMin` (first time) | same weights; each set keeps **last time's target** (retried, never lowered to what was done) |
+| Otherwise | same weights; each set: target reps = reps done + 1, capped at `repMax` |
 
 - The +1 per set capped at `repMax` rebalances reps by itself: strong sets stop at the top while weaker ones catch up, until the total reaches the Up threshold.
 - **Drop sets / different weights per set**: each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
@@ -118,14 +118,14 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - Back arrow → list (progress kept). Image, name, "4 × 8–12".
 - Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
-- **Ressenti**: Facile / OK / Dur (single choice, optional).
+- **Facile**: one optional toggle (outlined button with a bolt icon, `aria-pressed`), off by default. On = "I had a clear margin": the weight goes up next time if the total is at least in the range. No OK / Dur: reps already tell a missed or met target.
 - **Terminé** (once every set is done) → back to the list. Not the usual flow: a small "Terminer l'exercice plus tôt" link (after at least one set) asks "Terminer avec 2 / 4 séries ?" first.
 
 ### Fiche exercice (mobile `muscu-4-fiche-exercice`, desktop `bureau-muscu-exercice`)
 - Name, equipment · workout · sets × rep range (from the exercise), pencil → Modifier l'exercice.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
-- **Historique**: date, sets in the compact format, feeling (desktop: table, one column per set + volume). A session done in a superset gets a small link icon next to the date (`aria-label="En superset"`).
+- **Historique**: date, sets in the compact format, "Facile" when it was tapped (desktop: table, one column per set + volume + Facile). A session done in a superset gets a small link icon next to the date (`aria-label="En superset"`).
 
 ### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
 - Séances only (no exercises; they are on Accueil and in Modifier la séance). Header: back, "Programme", delete (inactive programs only; confirm "Supprimer « X » et ses séances ?").
@@ -167,7 +167,7 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 ### Superset en cours (`superset-3-superset-en-cours`)
 - Header: back to list, "{workout} · Superset". Top: the two exercises side by side (image with badge, name, "sets × range"), tap → Fiche exercice.
 - One set table in interleaved order: badge + set number ("A1", "B1"…), then Objectif | kg | Reps | ✓, same behaviour as Exercice en cours (sets in order, placeholder = target, ✓ on empty records the target, under-target reps in orange).
-- "Dernière fois" and **Ressenti** once per exercise, prefixed by its badge.
+- "Dernière fois" once per exercise, prefixed by its badge; one **Facile** toggle per exercise (badge + bolt + "Facile"), side by side.
 - **Terminé** once every set is done; "Terminer le superset plus tôt" otherwise (same rule as stopping an exercise early, per exercise).
 
 ## 6. Build order
@@ -187,11 +187,12 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - After finishing Push A, Accueil proposes Pull; after Push B, it proposes Push A.
 - Exercises can be done in any order from the list; skipped ones keep their target.
 - 4 × 8–12, 50 kg, done 12·12·12·8 (total 44) → next time one step up, targets × 8·8·8·8.
-- Done 11·11·11·10 (total 43), "OK" → 50 × 12·12·12·11; done as targeted (total 47) → step up the time after.
-- Done 12·12·12·7 (total 43), "OK" → 50 × 12·12·12·8; never counts toward a drop.
-- Target 50 × 10·10·10·10, done 10·10·10·8, "OK" → 50 × 11·11·11·9; "Dur" → 50 × 10·10·10·10.
-- Reps rebalance: 10·10·10·8 → 11·11·11·9 → 12·12·12·10 (total 46) → next weight (all "OK", targets met).
-- 57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, whatever the feeling.
+- Done 11·11·11·10 (total 43) → 50 × 12·12·12·11; done as targeted (total 47) → step up the time after.
+- Done 12·12·12·7 (total 43) → 50 × 12·12·12·8; never counts toward a drop.
+- Target 50 × 10·10·10·10, done 10·10·10·8 → 50 × 11·11·11·9.
+- Done 7·7·6·6 (total 26, < 32) the first time → targets retried: 50 × last targets.
+- Reps rebalance: 10·10·10·8 → 11·11·11·9 → 12·12·12·10 (total 46) → next weight (Facile never tapped, targets met).
+- 57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, with or without Facile.
 - Done 9·9·8·7 (total 33, ≥ 32) "Facile" → step up.
 - Done 7·7·6·6 (total 26) twice in a row, same pre-fatigue → every weight one step down, targets × 8; the second time with more pre-fatigue → no drop.
 - Dumbbells 10 kg "Facile", user logs 12,5 → next time a step up from 10 kg gives 12,5.

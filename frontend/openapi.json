@@ -2880,14 +2880,6 @@
           "reps"
         ]
       },
-      "Feeling": {
-        "type": "string",
-        "enum": [
-          "easy",
-          "ok",
-          "hard"
-        ]
-      },
       "ExerciseHistoryEntryDto": {
         "type": "object",
         "properties": {
@@ -2907,13 +2899,9 @@
               "$ref": "#/components/schemas/SetResultDto"
             }
           },
-          "feeling": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Feeling"
-              }
-            ]
+          "easy": {
+            "type": "boolean",
+            "description": "Facile tapped"
           },
           "preFatigue": {
             "type": "number",
@@ -2939,7 +2927,7 @@
           "sessionId",
           "date",
           "sets",
-          "feeling",
+          "easy",
           "preFatigue",
           "inSuperset",
           "volume",
@@ -3479,13 +3467,9 @@
             "type": "number",
             "example": 12
           },
-          "feeling": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Feeling"
-              }
-            ]
+          "easy": {
+            "type": "boolean",
+            "description": "Facile tapped"
           },
           "completed": {
             "type": "boolean",
@@ -3539,7 +3523,7 @@
           "exercise",
           "repMin",
           "repMax",
-          "feeling",
+          "easy",
           "completed",
           "sets",
           "preFatigue",
@@ -3576,13 +3560,9 @@
       "UpdateSessionExerciseDto": {
         "type": "object",
         "properties": {
-          "feeling": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Feeling"
-              }
-            ]
+          "easy": {
+            "type": "boolean",
+            "description": "Facile tapped"
           },
           "completed": {
             "type": "boolean",

@@ -94,7 +94,7 @@ export class ProgressionService {
       include: { sets: { orderBy: { index: 'asc' } } },
     });
     return entries.map((e) => ({
-      feeling: e.feeling,
+      easy: e.easy,
       preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
       complete: e.sets.every((s) => s.done),
       inSuperset: e.supersetGroup !== null,

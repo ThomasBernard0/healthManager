@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
 import { IsWeight } from '../../common/validators.js';
-import { FEELINGS, type Feeling } from './session.dto.js';
 
 export class StartSessionDto {
   @ApiProperty({ format: 'uuid' })
@@ -31,12 +30,12 @@ export class SaveSetDto {
   done: boolean;
 }
 
-/** Ressenti and/or Terminé. */
+/** Facile and/or Terminé. */
 export class UpdateSessionExerciseDto {
-  @ApiPropertyOptional({ enum: FEELINGS, enumName: 'Feeling', nullable: true })
+  @ApiPropertyOptional({ description: 'Facile tapped' })
   @IsOptional()
-  @IsIn(FEELINGS)
-  feeling?: Feeling | null;
+  @IsBoolean()
+  easy?: boolean;
 
   @ApiPropertyOptional({ description: 'Terminé (needs at least one validated set)' })
   @IsOptional()

@@ -70,11 +70,3 @@
   align-items: center;
   gap: var(--space-6);
 }
-
-/* Ressenti: badge + Facile / OK / Dur */
-.feelings {
-  display: grid;
-  grid-template-columns: var(--size-superset-badge) repeat(3, minmax(0, 1fr));
-  gap: var(--space-8);
-  align-items: center;
-}

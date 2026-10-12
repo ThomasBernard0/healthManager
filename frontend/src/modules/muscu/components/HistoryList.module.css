@@ -65,17 +65,17 @@
   line-height: 1.35;
 }
 
-.feeling {
+/* Facile, only when it was tapped (desktop: a small bolt). */
+.easy {
   flex-shrink: 0;
   font-size: var(--font-size-12);
-}
-
-.easy {
   color: var(--color-protein);
 }
 
-.hard {
-  color: var(--color-over);
+.easyMark {
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--color-protein);
 }
 
 /* Desktop table */

@@ -60,23 +60,11 @@
   color: var(--color-ink);
 }
 
-/* Ressenti */
-.feeling {
+/* Facile (superset: one per exercise, side by side) */
+.easy {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-.feelingLabel {
-  padding: 0 var(--space-4);
-  font-size: var(--font-size-13);
-  color: var(--color-muted);
-}
-
-.feelings {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-8);
+  flex-wrap: wrap;
+  gap: var(--space-10);
 }
 
 .complete {

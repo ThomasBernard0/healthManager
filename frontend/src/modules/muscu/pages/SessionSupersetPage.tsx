@@ -6,15 +6,15 @@ import {
   sessionsSaveSet,
   sessionsUpdateExercise,
 } from '../../../api/generated/endpoints/sessions/sessions'
-import type { Feeling, SessionExerciseDto } from '../../../api/generated/model'
+import type { SessionExerciseDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronLeft } from '../../../core/ui/icons'
 import { useToast } from '../../../core/ui/toastContext'
 import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
+import { EasyToggle } from '../components/EasyToggle'
 import { ExerciseImage } from '../components/ExerciseImage'
-import { FeelingButtons } from '../components/FeelingButtons'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SetRow, SetTable } from '../components/SetTable'
 import { SupersetBadge } from '../components/SupersetBadge'
@@ -95,8 +95,8 @@ function Logger({ a, b, onSaved }: LoggerProps) {
   const saveSet = (which: 'a' | 'b', index: number, weight: number | null, reps: number | null, done: boolean) =>
     run(which, (entry) => sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done }))
 
-  const setFeeling = (which: 'a' | 'b', feeling: Feeling | null) =>
-    run(which, (entry) => sessionsUpdateExercise(entry.sessionId, entry.id, { feeling }))
+  const setEasy = (which: 'a' | 'b', easy: boolean) =>
+    run(which, (entry) => sessionsUpdateExercise(entry.sessionId, entry.id, { easy }))
 
   /** Terminé (every set done) or, after confirmation, earlier: each exercise with a validated set is completed. */
   async function complete() {
@@ -200,17 +200,16 @@ function Logger({ a, b, onSaved }: LoggerProps) {
         </div>
       )}
 
-      <div className={common.feeling}>
-        <div className={common.feelingLabel}>{fr.muscu.session.feeling}</div>
+      <div className={common.easy}>
         {(['a', 'b'] as const).map((which) => (
-          <div key={which} className={styles.feelings} role="group" aria-label={entries[which].exercise.name}>
-            <SupersetBadge letter={LETTERS[which]} />
-            <FeelingButtons
-              value={entries[which].feeling}
-              disabled={busy}
-              onChange={(feeling) => setFeeling(which, feeling)}
-            />
-          </div>
+          <EasyToggle
+            key={which}
+            pressed={entries[which].easy}
+            disabled={busy}
+            label={fr.muscu.superset.easyOf(entries[which].exercise.name)}
+            badge={<SupersetBadge letter={LETTERS[which]} />}
+            onChange={(easy) => setEasy(which, easy)}
+          />
         ))}
       </div>
 
