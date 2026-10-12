@@ -157,3 +157,109 @@
 .open:hover {
   color: var(--color-ink);
 }
+
+/* Superset — transcribed from design/musculation/superset-1-modifier-seance.html */
+.item {
+  position: relative;
+}
+
+/* Relier en superset: round button over the divider between two exercises. */
+.link {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: calc(var(--size-badge) / -2);
+  transform: translateX(-50%);
+  width: var(--size-badge);
+  height: var(--size-badge);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-ground);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.link:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.superset {
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-10) 0;
+}
+
+.superset.dragging {
+  background: var(--color-divider);
+}
+
+/* The accent bar is the drag handle of the block. */
+.blockHandle {
+  width: var(--size-badge);
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.bar {
+  width: var(--size-superset-bar);
+  border-radius: var(--radius-xs);
+  background: var(--color-accent);
+}
+
+.blockBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.blockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.supersetLabel {
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-soft-ink);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.unlink {
+  height: var(--size-desktop-toggle);
+  padding: 0 var(--space-8);
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--font-size-12);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.unlink:hover {
+  color: var(--color-ink);
+}
+
+.blockRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--size-row);
+}
+
+.blockRow + .blockRow {
+  border-top: 1px solid var(--color-divider);
+}

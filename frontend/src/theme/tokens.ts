@@ -127,6 +127,10 @@ export const tokens = {
     semibold: '600',
     bold: '700',
   },
+  letterSpacing: {
+    /** Small uppercase labels (SUPERSET). */
+    label: '0.04em',
+  },
   shadow: {
     fab: '0 6px 18px rgba(23, 32, 27, 0.18)',
     dialog: '0 20px 60px rgba(23, 32, 27, 0.25)',
@@ -183,6 +187,10 @@ export const tokens = {
     statusIcon: '32px',
     exerciseImage: '230px',
     exerciseImageDesktop: '300px',
+    /** A / B letter of an exercise in a superset. */
+    supersetBadge: '22px',
+    supersetBadgeSmall: '18px',
+    supersetBar: '3px',
   },
 } as const
 

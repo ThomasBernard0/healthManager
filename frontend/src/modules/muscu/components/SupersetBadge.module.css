@@ -1,0 +1,25 @@
+/* Transcribed from design/musculation/superset-1-modifier-seance.html */
+
+.badge {
+  width: var(--size-superset-badge);
+  height: var(--size-superset-badge);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.b {
+  background: var(--color-protein);
+}
+
+.sm {
+  width: var(--size-superset-badge-small);
+  height: var(--size-superset-badge-small);
+  font-size: var(--font-size-11);
+}
