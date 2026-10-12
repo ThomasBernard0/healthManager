@@ -6,17 +6,25 @@ import { partnerOf, SessionsService } from './sessions.service.js';
 /** Past the checks, the fake stops with this error (the rest is covered against Postgres). */
 const PASSED = new Error('passed the checks');
 
-function service(done: boolean[]) {
+function service(done: boolean[], equipment = 'barbell', update: (args: unknown) => Promise<never> = () => Promise.reject(PASSED)) {
   const entry = {
     id: 'e1',
     sessionId: 's1',
     preFatigue: 0,
     session: { finishedAt: null },
-    sets: done.map((d, index) => ({ id: `set${index}`, index, done: d, targetWeight: null, targetReps: null })),
+    exercise: { equipment },
+    sets: done.map((d, index) => ({
+      id: `set${index}`,
+      index,
+      done: d,
+      doneAt: d ? new Date(1000 + index) : null,
+      targetWeight: null,
+      targetReps: null,
+    })),
   };
   const prisma = {
     sessionExercise: { findFirst: () => Promise.resolve(entry) },
-    sessionSet: { update: () => Promise.reject(PASSED) },
+    sessionSet: { update },
   };
   return new SessionsService(prisma as unknown as PrismaService, {} as ProgressionService);
 }
@@ -38,6 +46,34 @@ describe('SessionsService.saveSet: sets in order', () => {
     await expect(service([true, true, false]).saveSet('s1', 'e1', 0, { weight: 50, reps: 10, done: false })).rejects.toBe(
       PASSED,
     );
+  });
+});
+
+describe('SessionsService.saveSet: assistance (negative weight)', () => {
+  it('accepts −10 for Tractions (bodyweight)', async () => {
+    await expect(service([false], 'bodyweight').saveSet('s1', 'e1', 0, { weight: -10, reps: 9, done: true })).rejects.toBe(
+      PASSED,
+    );
+  });
+
+  it('rejects −10 on a barbell exercise, validated or just typed', async () => {
+    for (const done of [true, false]) {
+      await expect(service([false]).saveSet('s1', 'e1', 0, { weight: -10, reps: 9, done })).rejects.toThrow(
+        BadRequestException,
+      );
+    }
+  });
+
+  it('Lest ↔ Aide: a done set is saved again with the other sign, whatever the sets before it, and keeps its time', async () => {
+    const update = vi.fn().mockRejectedValue(PASSED);
+    // Set 1 was reopened: set 2 is done after a set that is not.
+    await expect(
+      service([false, true], 'bodyweight', update).saveSet('s1', 'e1', 1, { weight: -10, reps: 9, done: true }),
+    ).rejects.toBe(PASSED);
+    expect(update).toHaveBeenCalledWith({
+      where: { id: 'set1' },
+      data: { weight: -10, reps: 9, done: true, doneAt: new Date(1001) },
+    });
   });
 });
 

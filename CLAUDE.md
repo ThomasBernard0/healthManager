@@ -28,7 +28,7 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ```
 shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals,
                          musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
-                         supersets: interleaveSets, blocks, superset context)
+                         supersets: interleaveSets, blocks, superset context; assistance: negative weights, ASSIST_STEP, chartBarValue)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
   prisma/                schema.prisma + migrations/

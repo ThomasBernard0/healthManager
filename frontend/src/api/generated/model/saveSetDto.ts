@@ -7,7 +7,9 @@
 
 export interface SaveSetDto {
   /**
-   * kg, 0.5 kg steps
+   * kg, 0.5 kg steps; < 0: help from an assisted machine (bodyweight exercises only)
+   * @minimum -1000
+   * @maximum 1000
    * @nullable
    */
   weight?: number | null;

@@ -55,15 +55,18 @@ export function parseDateParam(value: string): string {
   return value;
 }
 
-/** A weight in kg: 0–1000 in 0.5 kg steps (0 = body weight without added load). */
+/**
+ * A weight in kg: −1000 to 1000 in 0.5 kg steps (0 = body weight without added load, < 0 = help from an
+ * assisted machine). Only bodyweight exercises take a negative one: the service checks it.
+ */
 export function IsWeight(options?: ValidationOptions): PropertyDecorator {
   return ValidateBy(
     {
       name: 'isWeight',
       validator: {
         validate: (value: unknown) =>
-          typeof value === 'number' && value >= 0 && value <= 1000 && Number.isInteger(value * 2),
-        defaultMessage: () => '$property must be a weight from 0 to 1000 kg in 0.5 kg steps',
+          typeof value === 'number' && value >= -1000 && value <= 1000 && Number.isInteger(value * 2),
+        defaultMessage: () => '$property must be a weight from -1000 to 1000 kg in 0.5 kg steps',
       },
     },
     options,

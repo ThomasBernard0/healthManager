@@ -1,4 +1,4 @@
-import { matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
+import { barKind, chartBarValue, matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
 import type { Exercise, ExerciseImage, Program, Workout, WorkoutItem } from '../generated/prisma/client.js';
@@ -91,7 +91,7 @@ export class ExercisesService {
 
   /** Every finished session with this exercise, most recent first. */
   async history(id: string): Promise<ExerciseHistoryEntryDto[]> {
-    await this.get(id);
+    const { equipment } = await this.get(id);
     const entries = await this.prisma.sessionExercise.findMany({
       where: { exerciseId: id, session: { finishedAt: { not: null } }, sets: { some: { done: true } } },
       orderBy: { session: { finishedAt: 'desc' } },
@@ -108,6 +108,8 @@ export class ExercisesService {
         inSuperset: e.supersetGroup !== null,
         volume: volume(sets),
         heaviest: Math.max(...sets.map((s) => s.weight)),
+        barKind: barKind(equipment),
+        barValue: chartBarValue(sets, equipment),
       };
     });
   }

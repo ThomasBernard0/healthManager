@@ -2880,6 +2880,14 @@
           "reps"
         ]
       },
+      "BarKind": {
+        "type": "string",
+        "enum": [
+          "volume",
+          "reps"
+        ],
+        "description": "What the chart bar shows: volume, or total reps for a bodyweight exercise"
+      },
       "ExerciseHistoryEntryDto": {
         "type": "object",
         "properties": {
@@ -2920,7 +2928,20 @@
           "heaviest": {
             "type": "number",
             "example": 60,
-            "description": "Heaviest weight (kg)"
+            "description": "Heaviest weight (kg); < 0: the least help (bodyweight exercises)"
+          },
+          "barKind": {
+            "description": "What the chart bar shows: volume, or total reps for a bodyweight exercise",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BarKind"
+              }
+            ]
+          },
+          "barValue": {
+            "type": "number",
+            "example": 2160,
+            "description": "Value of the chart bar: Σ weight × reps (kg) or Σ reps"
           }
         },
         "required": [
@@ -2931,7 +2952,9 @@
           "preFatigue",
           "inSuperset",
           "volume",
-          "heaviest"
+          "heaviest",
+          "barKind",
+          "barValue"
         ]
       },
       "SaveExerciseDto": {
@@ -3540,7 +3563,9 @@
             "type": "number",
             "nullable": true,
             "example": 60,
-            "description": "kg, 0.5 kg steps"
+            "minimum": -1000,
+            "maximum": 1000,
+            "description": "kg, 0.5 kg steps; < 0: help from an assisted machine (bodyweight exercises only)"
           },
           "reps": {
             "type": "number",

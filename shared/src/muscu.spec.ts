@@ -1,7 +1,10 @@
 import {
+  barKind,
   blockStatus,
+  chartBarValue,
   groupSets,
   interleaveSets,
+  loadKind,
   nextWorkout,
   toBlocks,
   unlinkSuperset,
@@ -52,6 +55,29 @@ describe('groupSets', () => {
 
   it('sums the volume', () => {
     expect(volume([{ weight: 57.5, reps: 12 }, { weight: 57.5, reps: 12 }, { weight: 57.5, reps: 11 }, { weight: 57.5, reps: 10 }])).toBe(2587.5);
+  });
+});
+
+describe('assistance (bodyweight exercises)', () => {
+  const assisted = [9, 9, 8, 8].map((reps) => ({ weight: -20, reps }));
+
+  it('compact format: help below 0, the body alone at 0, a load above (or on any other equipment)', () => {
+    expect(loadKind(-20, true)).toBe('assist');
+    expect(loadKind(0, true)).toBe('bodyweight');
+    expect(loadKind(5, true)).toBe('load');
+    expect(loadKind(0, false)).toBe('load');
+    expect(groupSets(assisted)).toEqual([{ weight: -20, reps: [9, 9, 8, 8] }]);
+  });
+
+  it('chart bar: total reps for a bodyweight exercise, volume for the others', () => {
+    expect(barKind('bodyweight')).toBe('reps');
+    expect(barKind('barbell')).toBe('volume');
+    expect(chartBarValue(assisted, 'bodyweight')).toBe(34);
+    expect(chartBarValue([12, 12, 11, 10].map((reps) => ({ weight: 57.5, reps })), 'barbell')).toBe(2587.5);
+  });
+
+  it('a 0 kg session is not a zero bar', () => {
+    expect(chartBarValue([9, 8, 8, 8].map((reps) => ({ weight: 0, reps })), 'bodyweight')).toBe(33);
   });
 });
 

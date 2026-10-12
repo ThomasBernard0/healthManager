@@ -14,20 +14,30 @@ export const DEFAULT_STEP: Record<Equipment, number> = {
   bodyweight: 2.5,
 };
 
+/** Step of an assisted machine (10 lb stack), used while the weight is negative (help on a bodyweight exercise). */
+export const ASSIST_STEP = 4.5;
+
 /**
  * One step up: the first known weight above `current` if it is at most 2 steps away (real plates,
- * stacks, dumbbells already used), else `current + step`.
+ * stacks, dumbbells already used), else `current + step`. From a negative weight (help) the step is
+ * ASSIST_STEP and the result never goes above 0: help ends at bodyweight before any added load.
  */
 export function stepUp(current: number, known: number[], step: number): number {
+  const by = current < 0 ? ASSIST_STEP : step;
   const above = known.filter((w) => w > current).sort((a, b) => a - b)[0];
-  return above !== undefined && above <= current + 2 * step ? above : current + step;
+  const next = above !== undefined && above <= current + 2 * by ? above : current + by;
+  return current < 0 ? Math.min(0, next) : next;
 }
 
-/** One step down, mirroring stepUp; never below 0. */
+/**
+ * One step down, mirroring stepUp. From 0 or more it never goes below 0 (help is never proposed);
+ * from a negative weight it goes down by ASSIST_STEP (more help).
+ */
 export function stepDown(current: number, known: number[], step: number): number {
+  const by = current < 0 ? ASSIST_STEP : step;
   const below = known.filter((w) => w < current).sort((a, b) => b - a)[0];
-  const next = below !== undefined && below >= current - 2 * step ? below : current - step;
-  return Math.max(0, next);
+  const next = below !== undefined && below >= current - 2 * by ? below : current - by;
+  return current < 0 ? next : Math.max(0, next);
 }
 
 export interface ExerciseMuscles {

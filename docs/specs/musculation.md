@@ -32,7 +32,7 @@ Session { id, workoutId, startedAt, finishedAt? }
 SessionExercise { id, sessionId, exerciseId, order, repMin, repMax /* snapshot of the exercise at start */,
                   firstSetAt?, preFatigue?, completed, supersetGroup? /* snapshot of the workout item */,
                   easy: boolean /* "Facile" tapped */,
-                  sets: { index, targetWeight?, targetReps?, weight /* kg, 0.5 step */, reps, done, doneAt? }[] }
+                  sets: { index, targetWeight?, targetReps?, weight /* kg, 0.5 step; < 0 = assistance (bodyweight only) */, reps, done, doneAt? }[] }
 // The number of SessionSet rows created at start = the exercise's `sets` at that time.
 
 // Next targets are computed from the last SessionExercise of the exercise (no stored table).
@@ -78,6 +78,14 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 - Example: machine, 8 kg Facile → 12,5 (8 + 4,5). Dumbbells 10 kg Facile → 12; user types 12,5 because 12 doesn't exist; next time from 10 → 12,5 directly.
 - Pure functions in `shared/` with tests (no known weight above, known weight too far, typo removed).
 
+### Assistance (bodyweight exercises)
+Bodyweight exercises (pull-ups, dips…) can be done with help from an assisted machine. Assistance is stored as a **negative weight**: 20 kg of help = `−20`. Less help is a heavier load, so the progression rules above apply unchanged (Up = less help).
+- Only `bodyweight` exercises accept a negative weight (API: −1000 to 1000 in 0.5 steps for them, ≥ 0 for the others → 400). No schema change: `weight` is already a signed decimal.
+- Step: from a negative weight, **4.5** (assisted machines are 10 lb stacks), and `stepUp` never goes above 0 (help ends at bodyweight, it never jumps straight to added load). From 0 or more, the bodyweight step (2.5, added load).
+- `stepDown` never goes below 0 from 0 or more: the app never proposes help on its own. Help comes back only when the user selects **Aide** in a session; from there, help is lowered as usual.
+- Learned weights work as before on the signed values (known −4.5 when stepping up from −9 → −4.5).
+- Example: −9 × 12·11·11·10 (total 44) → −4.5 × 8·8·8·8; −4.5 × 12·12·11·10 → 0 × 8·8·8·8 (bodyweight); 0 × 12·12·12·9 → 2.5 × 8·8·8·8.
+
 ### Order and skipped exercises (fatigue)
 Exercises can be done in any order and some can be skipped, so the same exercise is not always done in the same state.
 - The app records the real order (time of the first set of each exercise).
@@ -116,6 +124,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Exercice en cours (mobile `muscu-3-exercice-en-cours`)
 - Back arrow → list (progress kept). Image, name, "4 × 8–12".
+- Bodyweight exercises only: a segmented **Lest | Aide** control at the top of the set card (mockups `aide-1-tractions-avec-aide`, `aide-2-aide-a-zero`). No setting on the exercise: the session opens in **Aide** when today's targets are negative, else in **Lest**. In Aide the weight column is titled "Aide kg" and every number (targets, inputs, Dernière fois) is shown and typed **positive**; the app stores the negative value. Switching mode during a session flips the sign of the sets already logged for that exercise. One mode per exercise per session.
 - Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
 - **Facile**: one optional toggle (outlined button with a bolt icon, `aria-pressed`), off by default. On = "I had a clear margin": the weight goes up next time if the total is at least in the range. No OK / Dur: reps already tell a missed or met target.
@@ -125,6 +134,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - Name, equipment · workout · sets × rep range (from the exercise), pencil → Modifier l'exercice.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
+- **Bodyweight exercises** (mockup `aide-3-fiche-tractions`): bars = **total reps** (Σ reps, no weight), legend "Reps", callout "45 reps"; the line is the signed weight (help below, added load above) with a dashed line at 0 labelled "Poids du corps". Desktop history: the volume column becomes "Reps" for them.
 - **Historique**: date, sets in the compact format, "Facile" when it was tapped (desktop: table, one column per set + volume + Facile). A session done in a superset gets a small link icon next to the date (`aria-label="En superset"`).
 
 ### Programme (`/muscu/programmes/:id`; desktop: same screen centred, max 560 px)
@@ -141,7 +151,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - Search (accent/case-insensitive) and the list (thumbnail, name, muscles · equipment). No filters. Opened from a workout (picker in Modifier la séance): "+" adds to it; exercises already in it show the workout name; "+ Créer un exercice" creates a custom exercise and adds it to the workout.
 
 ### Compact set format
-Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". A weight change starts a new line (mobile) or group: "57,5 kg × 11 · 10" / "55 kg × 10 · 9". Keeps 4–5 sets readable on a phone.
+Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". Bodyweight exercises: negative → "Aide 20 kg × 9 · 9 · 8 · 8", 0 → "Poids du corps × 9 · 8 · 8 · 8", positive → "5 kg × …" as usual. A weight change starts a new line (mobile) or group: "57,5 kg × 11 · 10" / "55 kg × 10 · 9". Keeps 4–5 sets readable on a phone.
 
 ### Modifier l'exercice (mobile `muscu-7-modifier-exercice`)
 - Name; **Séries et répétitions**: three number inputs Séries × Min – Max (defaults 4 × 8–12; API rejects `sets < 1`, `repMin < 1`, `repMin > repMax`); muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
@@ -180,7 +190,8 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 6. Combined chart, history, desktop layouts.
 7. Programs: group workouts, one active (rotation restarts on activation), Programme page.
 8. Supersets: schema, link/unlink, list card, Superset en cours, superset context.
-9. Sets and rep range on the exercise (see the README of this handoff).
+9. Sets and rep range on the exercise.
+10. Assistance on bodyweight exercises (see the README of this handoff).
 
 ## 7. Acceptance checks
 
@@ -214,4 +225,8 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - The same exercise in two workouts shows the same "sets × range" in both.
 - Changing Rowing from 4 × 8–12 to 3 × 8–12: the next session has 3 sets; past sessions still show 4 sets in history and chart volume.
 - Changing a range to 6–10 with 3 sets: Up threshold 27 reps, Down threshold 18; weights unchanged.
+- Tractions, Aide 20 × 9·9·8·8 (total 34) → targets Aide 20 × 10·10·9·9; inputs show 20, the API stores −20.
+- Aide 4,5 × 12·12·11·10 → next session opens in Lest with targets 0 × 8·8·8·8; from 0 × 7·7·6·6 twice → stays 0 (no help proposed).
+- Selecting Aide mid-session on a set logged 10 → stored −10. Sending −10 for a barbell exercise → 400.
+- Chart of a bodyweight exercise: bars = total reps; a 0 kg session isn't a zero bar.
 - Food pages are unchanged except the switcher in the top bar.

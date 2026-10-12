@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { SetResultDto } from './setResultDto';
+import type { BarKind } from './barKind';
 
 export interface ExerciseHistoryEntryDto {
   sessionId: string;
@@ -20,6 +21,10 @@ export interface ExerciseHistoryEntryDto {
   inSuperset: boolean;
   /** Σ weight × reps (kg) */
   volume: number;
-  /** Heaviest weight (kg) */
+  /** Heaviest weight (kg); < 0: the least help (bodyweight exercises) */
   heaviest: number;
+  /** What the chart bar shows: volume, or total reps for a bodyweight exercise */
+  barKind: BarKind;
+  /** Value of the chart bar: Σ weight × reps (kg) or Σ reps */
+  barValue: number;
 }

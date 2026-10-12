@@ -19,6 +19,8 @@ const LINE_BOTTOM = 52
 /**
  * Progression: one bar per session = volume (Σ weight × reps), line = heaviest weight. No summary numbers:
  * tapping (or hovering) a bar highlights it and shows its date, sets and volume above it.
+ * Bodyweight exercises: bars = total reps, and the line is the signed weight (help below, added load above)
+ * around a dashed line at 0, "Poids du corps".
  */
 export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionChartProps) {
   const [selected, setSelected] = useState<number | null>(null)
@@ -36,8 +38,10 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
     return () => document.removeEventListener('pointerdown', onPointer)
   }, [selected])
 
-  const maxVolume = Math.max(1, ...entries.map((e) => e.volume))
-  const weights = entries.map((e) => e.heaviest)
+  const reps = entries.some((e) => e.barKind === 'reps')
+  const maxBar = Math.max(1, ...entries.map((e) => e.barValue))
+  // The 0 kg line of a bodyweight exercise is always in the plot.
+  const weights = [...entries.map((e) => e.heaviest), ...(reps ? [0] : [])]
   const minW = Math.min(...weights)
   const maxW = Math.max(...weights)
   const x = (i: number) => ((i + 0.5) / n) * 100
@@ -57,12 +61,22 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
           </span>
           <span className={styles.key}>
             <span className={styles.barKey} />
-            {fr.muscu.history.volume}
+            {reps ? fr.muscu.history.reps : fr.muscu.history.volume}
           </span>
         </div>
       </div>
 
-      <div ref={root} className={styles.plot} role="group" aria-label={fr.muscu.history.chart}>
+      <div
+        ref={root}
+        className={styles.plot}
+        role="group"
+        aria-label={reps ? fr.muscu.history.chartReps : fr.muscu.history.chart}
+      >
+        {reps && (
+          <div className={styles.zero} style={{ top: `${y(0)}%` }}>
+            <span className={styles.zeroLabel}>{fr.muscu.history.bodyweight}</span>
+          </div>
+        )}
         <div className={styles.bars}>
           {entries.map((e, i) => (
             <button
@@ -70,7 +84,10 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
               type="button"
               data-bar
               className={styles.column}
-              aria-label={fr.muscu.history.bar(formatSessionDate(e.date), formatInt(e.volume))}
+              aria-label={(reps ? fr.muscu.history.barReps : fr.muscu.history.bar)(
+                formatSessionDate(e.date),
+                formatInt(e.barValue),
+              )}
               aria-pressed={selected === i}
               onClick={() => setSelected((s) => (s === i ? null : i))}
               onPointerEnter={(ev) => ev.pointerType === 'mouse' && setHovered(i)}
@@ -80,7 +97,7 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
             >
               <span
                 className={`${styles.bar} ${i === shown ? styles.barShown : i === n - 1 ? styles.barLast : ''}`}
-                style={{ height: `${(e.volume / maxVolume) * BAR_MAX}%` }}
+                style={{ height: `${(e.barValue / maxBar) * BAR_MAX}%` }}
               />
             </button>
           ))}
@@ -101,12 +118,14 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
             role="status"
           >
             <div className={styles.calloutMuted}>{formatSessionDate(entries[shown].date)}</div>
-            {formatSets(entries[shown].sets).map((line) => (
+            {formatSets(entries[shown].sets, reps).map((line) => (
               <div key={line} className={styles.calloutStrong}>
                 {line}
               </div>
             ))}
-            <div className={styles.calloutMuted}>{fr.muscu.history.kg(formatInt(entries[shown].volume))}</div>
+            <div className={styles.calloutMuted}>
+              {(reps ? fr.muscu.history.repsCount : fr.muscu.history.kg)(formatInt(entries[shown].barValue))}
+            </div>
           </div>
         )}
       </div>

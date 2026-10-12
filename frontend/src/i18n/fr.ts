@@ -131,6 +131,9 @@ export const fr = {
       reopen: (set: string) => `${set} faite, modifier`,
       stopEarly: 'Terminer le superset plus tôt',
       inHistory: 'En superset',
+      assistOf: (set: string) => `Aide ${set}`,
+      /** Lest | Aide control of one exercise: "Type de charge Tractions" */
+      loadTypeOf: (exercise: string) => `Type de charge ${exercise}`,
       /** Facile toggle of one exercise: "Élévations latérales facile" */
       easyOf: (exercise: string) => `${exercise} facile`,
     },
@@ -138,14 +141,23 @@ export const fr = {
       progression: 'Progression',
       load: 'Charge',
       volume: 'Volume',
+      reps: 'Reps',
       title: 'Historique',
       chart: 'Charge et volume par séance',
+      chartReps: 'Charge et total de reps par séance',
+      /** Dashed line at 0 kg on the chart of a bodyweight exercise. */
+      bodyweight: 'Poids du corps',
       date: 'Date',
       set: (n: number) => `Série ${n}`,
       /** "2 588 kg" */
       kg: (value: string) => `${value} kg`,
       /** Bar label: "lun 21 sept : 2 588 kg" */
       bar: (date: string, volume: string) => `${date} : ${volume} kg`,
+      /** "45 reps" */
+      repsCount: (value: string) => `${value} reps`,
+      barReps: (date: string, reps: string) => `${date} : ${reps} reps`,
+      /** Table cell of a set done with help: "Aide 20 × 9" */
+      assistSet: (weight: string, reps: number) => `Aide ${weight} × ${reps}`,
     },
     session: {
       resume: 'Reprendre la séance',
@@ -161,6 +173,11 @@ export const fr = {
       target: 'Objectif',
       kg: 'kg',
       reps: 'Reps',
+      loadType: 'Type de charge',
+      lest: 'Lest',
+      assist: 'Aide',
+      assistKg: 'Aide kg',
+      assistOf: (n: number) => `Aide série ${n}`,
       weightOf: (n: number) => `Charge série ${n}`,
       repsOf: (n: number) => `Répétitions série ${n}`,
       validate: (n: number) => `Valider la série ${n}`,
@@ -174,6 +191,12 @@ export const fr = {
       stopEarlyAction: 'Terminer',
       /** "60 kg × 10 · 9 · 9 · 8" */
       setGroup: (weight: string, reps: string) => `${weight} kg × ${reps}`,
+      /** "Aide 20 kg" */
+      assistWeight: (weight: string) => `Aide ${weight} kg`,
+      /** "Aide 20 kg × 9 · 9 · 8 · 8" */
+      assistGroup: (weight: string, reps: string) => `Aide ${weight} kg × ${reps}`,
+      /** "Poids du corps × 9 · 8 · 8 · 8" */
+      bodyweightGroup: (reps: string) => `Poids du corps × ${reps}`,
     },
   },
   access: {

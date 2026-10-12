@@ -35,7 +35,7 @@ export function nextWorkout<W extends { id: string; position: number }>(
 }
 
 export interface SetResult {
-  /** kg (0 for body weight without added load). */
+  /** kg (0 for body weight without added load, < 0 for help from an assisted machine). */
   weight: number;
   reps: number;
 }
@@ -61,6 +61,24 @@ export function groupSets(sets: SetResult[]): SetGroup[] {
 
 /** Σ weight × reps (kg). */
 export const volume = (sets: SetResult[]): number => sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+
+/** What a chart bar of an exercise shows: its volume, or its total reps when the weight is not the whole load. */
+export const BAR_KINDS = ['volume', 'reps'] as const;
+export type BarKind = (typeof BAR_KINDS)[number];
+
+export const barKind = (equipment: Equipment): BarKind => (equipment === 'bodyweight' ? 'reps' : 'volume');
+
+/** Value of a chart bar: Σ weight × reps, or Σ reps for a bodyweight exercise (0 kg or help is not a zero bar). */
+export const chartBarValue = (sets: SetResult[], equipment: Equipment): number =>
+  barKind(equipment) === 'reps' ? sets.reduce((sum, s) => sum + s.reps, 0) : volume(sets);
+
+/** How a weight reads: help from an assisted machine (< 0), the body alone (0 on a bodyweight exercise), or a load. */
+export type LoadKind = 'assist' | 'bodyweight' | 'load';
+
+export function loadKind(weight: number, bodyweight: boolean): LoadKind {
+  if (weight < 0) return 'assist';
+  return weight === 0 && bodyweight ? 'bodyweight' : 'load';
+}
 
 export interface InterleavedSet<T> {
   /** 'a': first exercise of the superset, 'b': second. */
