@@ -110,7 +110,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 ### Accueil (mobile `muscu-1-accueil`, desktop `bureau-muscu-accueil`)
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
 - **Mes programmes** (where Mes séances was):
-  - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then "+ Nouvelle séance" (added to the active program);
+  - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then a last row **"+ Nouvelle séance" inside the same card** (divider above, dashed "+" badge in the position column, accent text; added to the active program — mockup `muscu-1b-mes-programmes`);
   - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (asks "Activer « X » ?" first);
   - "+ Nouveau programme": a sheet asking for the name, then the new program's page.
 - **Mes exercices** (mobile: between Prochaine séance and Mes programmes; desktop: right column, Prochaine séance and Mes programmes stacked on the left): each exercise once, by name → its Fiche exercice, in two tabs (segmented control, shown only when the second one has exercises): **Programme actif** (default: the exercises of the active program) and **Autres programmes** (exercises used only in inactive programs). No link to the bank on Accueil (it is reached from Modifier la séance).

@@ -160,7 +160,19 @@ describe('Accueil', () => {
       .getAllByRole('link')
       .filter((l) => /^\/muscu\/seances\/(?!nouvelle)/.test(l.getAttribute('href') ?? ''))
     expect(rows.map((r) => r.textContent)).toEqual(['1Push A1 exercice · lun 5 oct', '2Pull2 exercices · lun 28 septSuivante'])
-    expect(screen.getByRole('link', { name: '+ Nouvelle séance' })).toHaveAttribute('href', '/muscu/seances/nouvelle')
+    // Last row of the active program's card.
+    const card = screen.getByText('Actif').closest('a')!.parentElement!
+    const cardLinks = within(card).getAllByRole('link')
+    expect(cardLinks.at(-1)).toHaveAccessibleName('Nouvelle séance')
+    expect(cardLinks.at(-1)).toHaveAttribute('href', '/muscu/seances/nouvelle')
+  })
+
+  it('has no Nouvelle séance link without an active program', async () => {
+    vi.mocked(programsList).mockResolvedValue([LEGS])
+    vi.mocked(workoutsList).mockResolvedValue([])
+    renderAt('/muscu')
+    await screen.findByRole('button', { name: '+ Nouveau programme' })
+    expect(screen.queryByRole('link', { name: 'Nouvelle séance' })).toBeNull()
   })
 
   it('Démarrer starts the next workout and opens the session; a session in progress shows Reprendre', async () => {
@@ -275,7 +287,7 @@ describe('Accueil', () => {
         <HomePage />
       </MemoryRouter>,
     )
-    await screen.findByRole('link', { name: '+ Nouvelle séance' })
+    await screen.findByRole('link', { name: 'Nouvelle séance' })
     expect(screen.queryByRole('region', { name: 'Prochaine séance' })).toBeNull()
   })
 })

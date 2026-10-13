@@ -184,6 +184,31 @@
   border-top: 1px solid var(--color-divider);
 }
 
+/* Last row of the active program's card: Nouvelle séance (design/musculation/muscu-1b-mes-programmes.html). */
+.newWorkoutRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--size-row-tall);
+  border-top: 1px solid var(--color-divider);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+  text-decoration: none;
+}
+
+.newWorkoutBadge {
+  width: var(--size-badge);
+  height: var(--size-badge);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* The other programs: name (→ its page) and Activer. */
 .programRow {
   display: flex;
@@ -263,7 +288,8 @@
   padding: var(--space-18) var(--space-20);
 }
 
-.columns .row {
+.columns .row,
+.columns .newWorkoutRow {
   min-height: var(--size-row);
 }
 
