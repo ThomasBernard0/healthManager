@@ -6,7 +6,7 @@ import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessi
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
 import type { ExerciseDto, ProgramSummaryDto, SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
-import { ChevronRight, Play } from '../../../core/ui/icons'
+import { ChevronRight, Play, Plus } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
@@ -107,12 +107,16 @@ function MyPrograms({ programs, workouts }: { programs: ProgramSummaryDto[]; wor
             <span className={styles.upNext}>{fr.muscu.program.active}</span>
             <ChevronRight size={18} className={styles.chevron} />
           </Link>
-          <WorkoutRows workouts={workouts} />
+          {workouts.length > 0 && <WorkoutRows workouts={workouts} />}
+          {/* Last row of the card: the new séance goes into this program. */}
+          <Link to={NEW_WORKOUT_PATH} className={styles.newWorkoutRow}>
+            <span className={styles.newWorkoutBadge}>
+              <Plus size={14} strokeWidth={2.4} />
+            </span>
+            {fr.muscu.home.newWorkout}
+          </Link>
         </div>
       )}
-      <Link to={NEW_WORKOUT_PATH} className={styles.newWorkout}>
-        {fr.muscu.home.newWorkout}
-      </Link>
       {others.length > 0 && (
         <div className={styles.listCard}>
           <ProgramRows programs={others} />

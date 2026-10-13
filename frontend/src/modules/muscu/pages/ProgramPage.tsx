@@ -130,7 +130,7 @@ function Program({ program }: { program: ProgramDto }) {
           </div>
         )}
         <Link to={newWorkoutPath(program.id)} className={home.newWorkout}>
-          {fr.muscu.home.newWorkout}
+          {fr.muscu.program.newWorkout}
         </Link>
       </section>
 
