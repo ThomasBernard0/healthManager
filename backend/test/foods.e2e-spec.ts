@@ -21,7 +21,7 @@ const food = (n: number, name: string, kcal: number): Row => ({
   protein: 1,
   carbs: 2,
   fat: 3,
-  units: [],
+  portionGrams: null,
 });
 
 /** In-memory stand-in for Food, and the meal items pointing at it. */
@@ -75,11 +75,11 @@ describe('Foods (e2e)', () => {
     expect(res.body.map((f: { name: string }) => f.name)).toEqual(['Granola', 'Pâtes', 'Thon']);
   });
 
-  it('edits a food: name, values per 100 g and units', async () => {
+  it('edits a food: name, values per 100 g and portion', async () => {
     const body = {
       name: ' Granola maison ',
       per100g: { kcal: 460, protein: 10, carbs: 60.04, fat: 18 },
-      units: [{ label: ' bol ', grams: 45 }],
+      portionGrams: 45,
     };
     const res = await request(app.getHttpServer()).put(`/api/foods/${uuid(2)}`).send(body).expect(200);
     expect(res.body).toEqual({
@@ -87,10 +87,20 @@ describe('Foods (e2e)', () => {
       name: 'Granola maison',
       brand: null,
       per100g: { kcal: 460, protein: 10, carbs: 60, fat: 18 },
-      units: [{ label: 'bol', grams: 45 }],
+      portionGrams: 45,
     });
     await request(app.getHttpServer()).put(`/api/foods/${uuid(9)}`).send(body).expect(404);
     await request(app.getHttpServer()).put(`/api/foods/${uuid(2)}`).send({ ...body, barcode: '3017620422003' }).expect(400);
+  });
+
+  it('clears the portion when it is left out, and refuses an impossible one', async () => {
+    const body = { name: 'Granola maison', per100g: { kcal: 460, protein: 10, carbs: 60, fat: 18 } };
+    const res = await request(app.getHttpServer()).put(`/api/foods/${uuid(2)}`).send(body).expect(200);
+    expect(res.body.portionGrams).toBeNull();
+    for (const portionGrams of [0, 2000.1, 40.25]) {
+      await request(app.getHttpServer()).put(`/api/foods/${uuid(2)}`).send({ ...body, portionGrams }).expect(400);
+    }
+    await request(app.getHttpServer()).put(`/api/foods/${uuid(2)}`).send({ ...body, units: [] }).expect(400);
   });
 
   it('refuses to delete a food used by a meal, naming one meal', async () => {

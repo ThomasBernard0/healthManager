@@ -18,12 +18,12 @@ export const formatGrams = (n: number): string => `${formatInt(n)} ${fr.common.g
 /** "×1,5" */
 export const formatQuantity = (n: number): string => `×${formatDecimal(n)}`
 
-/** "P 28 · G 45 · L 14" */
+/** "P 28 · L 14 · G 45": carbs always last. */
 export function formatMacros(n: { protein: number; carbs: number; fat: number }): string {
   return [
     `${fr.macros.p} ${formatInt(n.protein)}`,
-    `${fr.macros.g} ${formatInt(n.carbs)}`,
     `${fr.macros.l} ${formatInt(n.fat)}`,
+    `${fr.macros.g} ${formatInt(n.carbs)}`,
   ].join(' · ')
 }
 
@@ -90,9 +90,12 @@ export function formatWeekTitle(monday: string, thisMonday: string): string {
   return fr.week.weekOf(formatDayMonth(monday))
 }
 
-/** Parses a typed number, accepting a French decimal comma. Empty → null. */
+/** "2 portions" */
+export const formatPortions = (n: number): string => `${formatDecimal(n)} ${fr.food.portions(n)}`
+
+/** Parses a typed number, accepting a French decimal comma and grouping spaces ("1 200"). Empty → null. */
 export function parseNumber(value: string): number | null {
-  const trimmed = value.trim().replace(',', '.')
+  const trimmed = value.replace(/\s/g, '').replace(',', '.')
   if (trimmed === '') return null
   const n = Number(trimmed)
   return Number.isFinite(n) ? n : null

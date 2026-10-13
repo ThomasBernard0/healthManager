@@ -26,7 +26,6 @@ export * from './exercisesImageParams';
 export * from './exercisesListParams';
 export * from './foodDto';
 export * from './foodInUseDto';
-export * from './foodUnitDto';
 export * from './foodsSearchParams';
 export * from './goalDto';
 export * from './healthResponseDto';

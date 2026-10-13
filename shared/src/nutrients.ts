@@ -80,7 +80,27 @@ export function ingredientNutrients(per100g: Nutrients, grams: number): Nutrient
   return scaleNutrients(per100g, grams / 100);
 }
 
-export type MealTotalsSource = 'override' | 'manual' | 'ingredients';
+/** A food entered per portion → per 100 g: value × 100 / portionGrams (kcal to the unit, macros to 0.1 g). */
+export function per100gFromPortion(perPortion: Nutrients, portionGrams: number): Nutrients {
+  return scaleNutrients(perPortion, 100 / portionGrams);
+}
+
+/** One portion of a food: per100g × portionGrams / 100. */
+export function portionFromPer100g(per100g: Nutrients, portionGrams: number): Nutrients {
+  return ingredientNutrients(per100g, portionGrams);
+}
+
+/** Upper bound of a quantity in portions (storage: 5 digits, 2 decimals). */
+export const MAX_PORTIONS = 999.99;
+
+/** Rounds a count of portions to 0.01 (its storage precision). */
+export const roundPortions = (portions: number): number => roundClean(portions * 100) / 100;
+
+/** Grams as a count of portions: grams / portionGrams, to 0.01. */
+export const portionsFromGrams = (grams: number, portionGrams: number): number =>
+  roundPortions(grams / portionGrams);
+
+export type MealTotalsSource ='override' | 'manual' | 'ingredients';
 
 export interface MealTotalsInput {
   mode: 'ingredients' | 'manual';

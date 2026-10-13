@@ -91,10 +91,10 @@ export function DayDesktop({ data, week, onOpenEntry, onAdd }: DayDesktopProps) 
               {fr.macros.p} {formatInt(entry.total.protein)}
             </span>
             <span className={styles.macro}>
-              {fr.macros.g} {formatInt(entry.total.carbs)}
+              {fr.macros.l} {formatInt(entry.total.fat)}
             </span>
             <span className={styles.macro}>
-              {fr.macros.l} {formatInt(entry.total.fat)}
+              {fr.macros.g} {formatInt(entry.total.carbs)}
             </span>
             <span className={styles.kcal}>{formatInt(entry.total.kcal)}</span>
             <button

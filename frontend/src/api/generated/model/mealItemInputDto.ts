@@ -12,8 +12,11 @@ export interface MealItemInputDto {
    * @maximum 5000
    */
   grams: number;
-  /** @nullable */
-  unitLabel?: string | null;
-  /** @nullable */
-  unitCount?: number | null;
+  /**
+   * Count when the quantity was entered in portions of the food (display only)
+   * @minimum 0.01
+   * @maximum 999.99
+   * @nullable
+   */
+  portions?: number | null;
 }

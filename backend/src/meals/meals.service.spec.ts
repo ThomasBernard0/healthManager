@@ -15,7 +15,7 @@ const food = (id: string, kcal: number, protein: number, carbs: number, fat: num
   protein: D(protein),
   carbs: D(carbs),
   fat: D(fat),
-  units: null,
+  portionGrams: null,
   updatedAt: new Date(),
 });
 
@@ -95,8 +95,8 @@ describe('MealsService', () => {
 
   it('sums ingredients, unless an override is set — and says which is used', async () => {
     const items = [
-      { id: 'i1', mealId: 'm', foodId: 'pates', food: pasta, grams: D(220), unitLabel: null, unitCount: null, position: 0 },
-      { id: 'i2', mealId: 'm', foodId: 'thon', food: tuna, grams: D(112), unitLabel: null, unitCount: null, position: 1 },
+      { id: 'i1', mealId: 'm', foodId: 'pates', food: pasta, grams: D(220), portions: null, position: 0 },
+      { id: 'i2', mealId: 'm', foodId: 'thon', food: tuna, grams: D(112), portions: null, position: 1 },
     ];
     prisma.meal.findUnique.mockResolvedValue(meal('m', 'Salade', { mode: 'ingredients', manualKcal: null, items }));
     const dto = await service.get('m');

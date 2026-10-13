@@ -90,7 +90,7 @@ describe('Barcode lookup (e2e)', () => {
   });
   afterAll(() => app.close());
 
-  it('imports an Open Food Facts product once, with its serving as a unit', async () => {
+  it('imports an Open Food Facts product once, with its serving as the portion', async () => {
     const first = await request(app.getHttpServer())
       .get(`/api/foods/barcode/${NUTELLA}`)
       .expect(200);
@@ -99,7 +99,7 @@ describe('Barcode lookup (e2e)', () => {
         name: 'Nutella',
         brand: 'Ferrero',
         per100g: { kcal: 539, protein: 6.3, carbs: 57.5, fat: 30.9 },
-        units: [{ label: 'portion', grams: 15 }],
+        portionGrams: 15,
       },
       suggestedName: null,
     });

@@ -137,8 +137,8 @@ model Food {
   protein    Decimal    @db.Decimal(7, 1)
   carbs      Decimal    @db.Decimal(7, 1)
   fat        Decimal    @db.Decimal(7, 1)
-  /// [{ label, grams }] — e.g. { label: "c. à s.", grams: 10 }
-  units      Json?
+  /// Weight of one portion (g); null: dosed in grams only.
+  portionGrams Decimal? @db.Decimal(7, 1)
   updatedAt  DateTime   @updatedAt
   mealItems  MealItem[]
 
@@ -175,9 +175,8 @@ model MealItem {
   foodId    String
   food      Food     @relation(fields: [foodId], references: [id], onDelete: Restrict)
   grams     Decimal  @db.Decimal(7, 1)
-  /// Display only: the unit the quantity was entered with (e.g. 1 × "c. à s.").
-  unitLabel String?
-  unitCount Decimal? @db.Decimal(5, 2)
+  /// Display only: the count when the quantity was entered in portions of the food.
+  portions  Decimal? @db.Decimal(5, 2)
   position  Int
 
   @@index([mealId])

@@ -56,8 +56,8 @@ function Week({ monday }: { monday: string }) {
     <div className={styles.tiles}>
       <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
       <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />
-      <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
       <Tile label={fr.week.fatPerDay} value={`${formatInt(data.average.fat)} ${fr.common.grams}`} />
+      <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
     </div>
   )
 
@@ -156,8 +156,8 @@ function Week({ monday }: { monday: string }) {
           <div className={styles.tiles}>
             <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
             <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />
-            <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
             <Tile label={fr.week.fatPerDay} value={`${formatInt(data.average.fat)} ${fr.common.grams}`} />
+            <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
           </div>
         </>
       )}

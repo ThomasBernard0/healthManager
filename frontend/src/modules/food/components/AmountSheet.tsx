@@ -1,7 +1,14 @@
-import { ingredientNutrients } from '@healthmanager/shared'
+import {
+  ingredientNutrients,
+  MAX_PORTIONS,
+  portionsFromGrams,
+  roundMacro,
+  roundPortions,
+} from '@healthmanager/shared'
 import { useState, type FormEvent } from 'react'
 import type { FoodDto } from '../../../api/generated/model'
 import { formatDecimal, formatInt, formatMacros, parseNumber } from '../../../core/format'
+import { Segmented } from '../../../core/ui/Segmented'
 import { Sheet } from '../../../core/ui/Sheet'
 import form from '../../../core/ui/form.module.css'
 import { fr } from '../../../i18n/fr'
@@ -9,8 +16,8 @@ import styles from './AmountSheet.module.css'
 
 export interface Amount {
   grams: number
-  unitLabel: string | null
-  unitCount: number | null
+  /** The count when entered in portions of the food, else null. */
+  portions: number | null
 }
 
 interface AmountSheetProps {
@@ -22,28 +29,44 @@ interface AmountSheetProps {
   onRemove?: () => void
 }
 
-const GRAMS = fr.common.grams
+type Unit = 'portions' | 'grams'
 
-/** How much of an ingredient: grams, or a count of one of the food's units (c. à s., pièce…). */
+const UNITS = [
+  { value: 'portions', label: fr.food.inPortions },
+  { value: 'grams', label: fr.food.inGrams },
+] as const
+
+/** How much of an ingredient: grams, or a count of portions when the food has one. */
 export function AmountSheet({ food, initial, onClose, onConfirm, onRemove }: AmountSheetProps) {
-  const [unit, setUnit] = useState(initial?.unitLabel ?? GRAMS)
-  const [value, setValue] = useState(() =>
-    initial ? formatDecimal(initial.unitCount ?? initial.grams) : food.units.length ? '1' : '100',
-  )
-  const selected = food.units.find((u) => u.label === unit)
+  const { portionGrams } = food
+  const startInPortions = portionGrams !== null && (!initial || initial.portions !== null)
+  const [unit, setUnit] = useState<Unit>(startInPortions ? 'portions' : 'grams')
+  const [value, setValue] = useState(() => {
+    if (!initial) return startInPortions ? '1' : '100'
+    // From the grams: the food's portion may have changed since the ingredient was added.
+    return formatDecimal(
+      portionGrams !== null && startInPortions ? portionsFromGrams(initial.grams, portionGrams) : initial.grams,
+    )
+  })
   const count = parseNumber(value)
-  const grams = count === null ? null : selected ? count * selected.grams : count
-  const valid = grams !== null && grams > 0 && grams <= 5000
+  const portions = unit === 'portions' && portionGrams !== null && count !== null ? roundPortions(count) : null
+  const grams = portions !== null && portionGrams !== null ? roundMacro(portions * portionGrams) : count
+  const valid = grams !== null && grams > 0 && grams <= 5000 && (portions === null || portions <= MAX_PORTIONS)
   const preview = valid ? ingredientNutrients(food.per100g, grams) : null
+
+  /** Switching converts the value already typed (2 portions ⇄ 80 g). */
+  function switchUnit(next: Unit) {
+    if (next === unit || portionGrams === null) return
+    if (count !== null && count > 0) {
+      setValue(formatDecimal(next === 'grams' ? roundMacro(count * portionGrams) : portionsFromGrams(count, portionGrams)))
+    }
+    setUnit(next)
+  }
 
   function submit(e: FormEvent) {
     e.preventDefault()
     if (!valid || grams === null) return
-    onConfirm(
-      selected
-        ? { grams, unitLabel: selected.label, unitCount: count }
-        : { grams, unitLabel: null, unitCount: null },
-    )
+    onConfirm({ grams, portions })
   }
 
   return (
@@ -61,25 +84,14 @@ export function AmountSheet({ food, initial, onClose, onConfirm, onRemove }: Amo
               onChange={(e) => setValue(e.target.value)}
               onFocus={(e) => e.target.select()}
             />
-            <span className={form.affixUnit}>{unit}</span>
+            <span className={form.affixUnit}>
+              {unit === 'portions' ? fr.food.portions(count ?? 1) : fr.common.grams}
+            </span>
           </span>
         </label>
 
-        {food.units.length > 0 && (
-          <div className={styles.units} role="radiogroup" aria-label={fr.food.unit}>
-            {[GRAMS, ...food.units.map((u) => u.label)].map((label) => (
-              <button
-                key={label}
-                type="button"
-                role="radio"
-                aria-checked={unit === label}
-                className={unit === label ? styles.unitActive : styles.unit}
-                onClick={() => setUnit(label)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        {portionGrams !== null && (
+          <Segmented label={fr.food.amountUnit} value={unit} options={UNITS} onChange={switchUnit} />
         )}
 
         <div className={styles.preview}>

@@ -1,10 +1,12 @@
 import {
   ingredientNutrients,
   isIsoDate,
+  MAX_PORTIONS,
   mealTotals,
   type Nutrients,
   parisNowTime,
   parisToday,
+  portionsFromGrams,
   roundKcal,
   roundMacro,
 } from '@healthmanager/shared'
@@ -22,10 +24,11 @@ import {
 } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto, SaveMealDto } from '../../../api/generated/model'
 import { invalidateData } from '../../../core/dataVersion'
-import { formatDayMonth, formatDecimal, formatInt, formatMacros, parseNumber } from '../../../core/format'
+import { formatDayMonth, formatDecimal, formatInt, formatMacros, formatPortions, parseNumber } from '../../../core/format'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { Barcode, ChevronLeft } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
+import { Segmented } from '../../../core/ui/Segmented'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
 import { fr } from '../../../i18n/fr'
@@ -50,12 +53,16 @@ export interface MealDraft {
   manual?: NutrientFields
 }
 
+const MODES = [
+  { value: 'ingredients', label: fr.meal.byIngredients },
+  { value: 'manual', label: fr.meal.byTotals },
+] as const
 const EMPTY_FIELDS: NutrientFields = { kcal: '', protein: '', carbs: '', fat: '' }
-const NUTRIENT_KEYS = ['kcal', 'protein', 'carbs', 'fat'] as const
+const NUTRIENT_KEYS = ['kcal', 'protein', 'fat', 'carbs'] as const
 const MACROS = [
   { key: 'protein', label: fr.macros.protein, aria: fr.quick.proteinGrams },
-  { key: 'carbs', label: fr.macros.carbs, aria: fr.quick.carbsGrams },
   { key: 'fat', label: fr.macros.fat, aria: fr.quick.fatGrams },
+  { key: 'carbs', label: fr.macros.carbs, aria: fr.quick.carbsGrams },
 ] as const
 
 const toFields = (n: Nutrients): NutrientFields => ({
@@ -72,6 +79,16 @@ function parseFields(f: NutrientFields): Nutrients | null {
   if (kcal === null || kcal < 0 || macros.some((m) => m === null || m < 0)) return null
   const [protein, carbs, fat] = macros as number[]
   return { kcal: roundKcal(kcal), protein: roundMacro(protein), carbs: roundMacro(carbs), fat: roundMacro(fat) }
+}
+
+/**
+ * The count of an ingredient entered in portions, else null. Read from its grams: the food's portion
+ * may have changed (or gone) since.
+ */
+function portionsOf({ food, grams, portions }: Ingredient): number | null {
+  if (portions === null || food.portionGrams === null) return null
+  const count = portionsFromGrams(grams, food.portionGrams)
+  return count > 0 && count <= MAX_PORTIONS ? count : null
 }
 
 let keySeq = 0
@@ -112,8 +129,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
         key: nextKey(),
         food: i.food,
         grams: i.grams,
-        unitLabel: i.unitLabel,
-        unitCount: i.unitCount,
+        portions: i.portions,
       })) ?? [],
   )
   const [manual, setManual] = useState<NutrientFields>(
@@ -161,8 +177,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
           ? ingredients.map((i) => ({
               foodId: i.food.id,
               grams: roundMacro(i.grams),
-              unitLabel: i.unitLabel,
-              unitCount: i.unitCount,
+              portions: portionsOf(i),
             }))
           : [],
       manualTotals: mode === 'manual' ? manualTotals : null,
@@ -257,20 +272,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
       </label>
 
       {isNew ? (
-        <div className={styles.segmented} role="radiogroup">
-          {(['ingredients', 'manual'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="radio"
-              aria-checked={mode === m}
-              className={mode === m ? styles.segmentActive : styles.segment}
-              onClick={() => setMode(m)}
-            >
-              {m === 'ingredients' ? fr.meal.byIngredients : fr.meal.byTotals}
-            </button>
-          ))}
-        </div>
+        <Segmented value={mode} options={MODES} onChange={setMode} />
       ) : (
         // A saved meal keeps its mode: switching would drop its ingredients (or its typed totals).
         <div className={styles.modeFixed}>{mode === 'ingredients' ? fr.meal.byIngredients : fr.meal.byTotals}</div>
@@ -282,6 +284,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
             <ul className={styles.ingredients}>
               {ingredients.map((item, index) => {
                 const n = ingredientNutrients(item.food.per100g, item.grams)
+                const portions = portionsOf(item)
                 return (
                   <li key={item.key} className={styles.ingredient}>
                     <div className={styles.ingredientMain}>
@@ -294,9 +297,7 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
                       aria-label={fr.meal.editIngredient(item.food.name)}
                       onClick={() => setOverlay({ kind: 'amount', food: item.food, index })}
                     >
-                      {item.unitLabel && item.unitCount !== null
-                        ? `${formatDecimal(item.unitCount)} ${item.unitLabel}`
-                        : `${formatInt(item.grams)} ${fr.common.grams}`}
+                      {portions !== null ? formatPortions(portions) : `${formatInt(item.grams)} ${fr.common.grams}`}
                     </button>
                     <span className={styles.ingredientKcal}>{formatInt(n.kcal)}</span>
                   </li>
@@ -333,10 +334,10 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
                   {fr.macros.protein} <b>{formatInt(computed.totals.protein)} {fr.common.grams}</b>
                 </div>
                 <div>
-                  {fr.macros.carbs} <b>{formatInt(computed.totals.carbs)} {fr.common.grams}</b>
+                  {fr.macros.fat} <b>{formatInt(computed.totals.fat)} {fr.common.grams}</b>
                 </div>
                 <div>
-                  {fr.macros.fat} <b>{formatInt(computed.totals.fat)} {fr.common.grams}</b>
+                  {fr.macros.carbs} <b>{formatInt(computed.totals.carbs)} {fr.common.grams}</b>
                 </div>
               </div>
             ) : (

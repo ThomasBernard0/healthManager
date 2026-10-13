@@ -6,7 +6,7 @@ import { fr } from '../../../i18n/fr'
 import { dayPath } from '../routes'
 import styles from './WeekTable.module.css'
 
-/** Semaine on desktop: kcal, P, G, L and the gap to each day's target, with a week total row. */
+/** Semaine on desktop: kcal, P, L, G and the gap to each day's target, with a week total row. */
 export function WeekTable({ week }: { week: WeekSummaryDto }) {
   const t = fr.desktop.table
   return (
@@ -17,8 +17,8 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
             <th className={styles.dayCol}>{t.day}</th>
             <th>{t.kcal}</th>
             <th>{t.p}</th>
-            <th>{t.g}</th>
             <th>{t.l}</th>
+            <th>{t.g}</th>
             <th>{t.gap}</th>
           </tr>
         </thead>
@@ -41,8 +41,8 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
                 </td>
                 <td className={styles.kcal}>{formatInt(d.eaten.kcal)}</td>
                 <td>{formatInt(d.eaten.protein)}</td>
-                <td>{formatInt(d.eaten.carbs)}</td>
                 <td>{formatInt(d.eaten.fat)}</td>
+                <td>{formatInt(d.eaten.carbs)}</td>
                 <td>
                   <Gap left={d.left?.kcal ?? null} remainingStyle={isToday ? 'muted' : 'signed'} hidden={isFuture} />
                 </td>
@@ -53,8 +53,8 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
             <td className={styles.dayCol}>{t.week}</td>
             <td>{formatInt(week.eaten.kcal)}</td>
             <td>{formatInt(week.eaten.protein)}</td>
-            <td>{formatInt(week.eaten.carbs)}</td>
             <td>{formatInt(week.eaten.fat)}</td>
+            <td>{formatInt(week.eaten.carbs)}</td>
             <td>
               <Gap left={week.left?.kcal ?? null} remainingStyle="accent" />
             </td>
