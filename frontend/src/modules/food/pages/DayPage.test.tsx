@@ -77,7 +77,7 @@ describe('DayPage', () => {
     const card = meals.closest('section')!
     expect(text(card)).toContain('2 repas · 1 460 kcal')
     const rows = within(card).getAllByRole('button')
-    expect(rows.map(text)).toEqual(['08:10Bol yaourt grecP 10 · G 20 · L 5420', '12:45Bowl poulet rizP 10 · G 20 · L 5640'])
+    expect(rows.map(text)).toEqual(['08:10Bol yaourt grecP 10 · L 5 · G 20420', '12:45Bowl poulet rizP 10 · L 5 · G 20640'])
 
     expect(text(document.body)).toContain('740kcal restantesaujourd’hui')
     expect(text(screen.getByRole('link', { name: 'Modifier l’objectif du jour' }))).toContain('2 200')
@@ -169,7 +169,7 @@ describe('DayPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
     const dialog = await screen.findByRole('dialog', { name: 'Ajouter un repas' })
     expect(text(dialog)).toContain('Mes repas · 2')
-    expect(text(dialog)).toContain('250 kcal · P 30 · G 22 · L 5 · hier')
+    expect(text(dialog)).toContain('250 kcal · P 30 · L 5 · G 22 · hier')
 
     const search = within(dialog).getByLabelText('Chercher dans mes repas')
     await user.type(search, 'FAJIT')

@@ -1,17 +1,14 @@
-import { normalizeNutrients, searchKey, searchTerms } from '@healthmanager/shared';
+import { normalizeNutrients, roundMacro, searchKey, searchTerms } from '@healthmanager/shared';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { toNutrients } from '../common/decimal.js';
+import { num, toNutrients } from '../common/decimal.js';
 import type { Food } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
-import { FoodDto, FoodUnitDto } from './dto/food.dto.js';
+import { FoodDto } from './dto/food.dto.js';
 import type { FoodInUseDto } from './dto/food-in-use.dto.js';
 import { UpdateFoodDto } from './dto/update-food.dto.js';
 import { OpenFoodFactsClient } from './open-food-facts.client.js';
-
-/** Household unit added to scanned products that declare a serving size. */
-const SERVING_LABEL = 'portion';
 
 const isUniqueViolation = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002';
@@ -20,21 +17,13 @@ export const FOOD_SEARCH_LIMIT = 30;
 /** Candidates fetched before ranking. */
 const CANDIDATES = 300;
 
-function parseUnits(units: unknown): FoodUnitDto[] {
-  if (!Array.isArray(units)) return [];
-  return units.filter(
-    (u): u is FoodUnitDto =>
-      typeof u === 'object' && u !== null && typeof u.label === 'string' && typeof u.grams === 'number',
-  );
-}
-
 export function toFoodDto(food: Food): FoodDto {
   return {
     id: food.id,
     name: food.name,
     brand: food.brand,
     per100g: toNutrients(food),
-    units: parseUnits(food.units),
+    portionGrams: food.portionGrams === null ? null : num(food.portionGrams),
   };
 }
 
@@ -46,7 +35,7 @@ function toData(dto: UpdateFoodDto) {
     searchName: searchKey(name),
     brand: dto.brand?.trim() || null,
     ...normalizeNutrients(dto.per100g),
-    units: (dto.units ?? []).map((u) => ({ label: u.label.trim(), grams: u.grams })),
+    portionGrams: dto.portionGrams ?? null,
   };
 }
 
@@ -121,7 +110,8 @@ export class FoodsService {
           brand: product.brand,
           barcode,
           ...product.per100g,
-          units: product.servingGrams ? [{ label: SERVING_LABEL, grams: product.servingGrams }] : [],
+          // A declared serving size is the portion.
+          portionGrams: roundMacro(product.servingGrams ?? 0) || null,
         },
       });
       return { food: toFoodDto(food), suggestedName: null };

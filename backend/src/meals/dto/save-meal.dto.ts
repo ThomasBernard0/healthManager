@@ -1,3 +1,4 @@
+import { MAX_PORTIONS } from '@healthmanager/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -28,18 +29,19 @@ export class MealItemInputDto {
   @Max(5000)
   grams: number;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'c. à s.' })
-  @IsOptional()
-  @IsString()
-  @Length(1, 30)
-  unitLabel?: string | null;
-
-  @ApiPropertyOptional({ type: Number, nullable: true, example: 1 })
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    example: 2,
+    minimum: 0.01,
+    maximum: MAX_PORTIONS,
+    description: 'Count when the quantity was entered in portions of the food (display only)',
+  })
   @IsOptional()
   @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 2 })
   @Min(0.01)
-  @Max(100)
-  unitCount?: number | null;
+  @Max(MAX_PORTIONS)
+  portions?: number | null;
 }
 
 /** Create or replace a saved meal. */

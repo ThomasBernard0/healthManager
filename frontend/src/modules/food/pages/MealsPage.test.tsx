@@ -24,14 +24,14 @@ const GRANOLA: FoodDto = {
   name: 'Granola maison',
   brand: null,
   per100g: { kcal: 450, protein: 10, carbs: 60, fat: 18 },
-  units: [{ label: 'bol', grams: 45 }],
+  portionGrams: 45,
 }
 const SKYR: FoodDto = {
   id: 'f2',
   name: 'Skyr nature',
   brand: 'Siggi’s',
   per100g: { kcal: 63, protein: 11, carbs: 4, fat: 0.2 },
-  units: [],
+  portionGrams: null,
 }
 const MEAL = {
   id: 'm1',
@@ -83,15 +83,17 @@ describe('Mes repas (Gérer) — Ingrédients', () => {
     const dialog = screen.getByRole('dialog', { name: 'Modifier l’ingrédient' })
     const name = within(dialog).getByRole('textbox', { name: 'Nom' })
     expect(name).toHaveValue('Granola maison')
-    expect(within(dialog).getByRole('textbox', { name: 'Calories' })).toHaveValue('450')
-    expect(within(dialog).getByRole('textbox', { name: 'Nom de l’unité' })).toHaveValue('bol')
+    // A food with a portion opens in Par portion: 45 g of 450 kcal / 100 g.
+    expect(within(dialog).getByRole('radio', { name: 'Par portion' })).toBeChecked()
+    expect(within(dialog).getByRole('textbox', { name: 'Poids d’une portion en grammes' })).toHaveValue('45')
+    expect(within(dialog).getByRole('textbox', { name: 'Calories' })).toHaveValue('203')
     await user.clear(name)
     await user.type(name, 'Granola')
     await user.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
     expect(foodsUpdate).toHaveBeenCalledWith('f1', {
       name: 'Granola',
       per100g: { kcal: 450, protein: 10, carbs: 60, fat: 18 },
-      units: [{ label: 'bol', grams: 45 }],
+      portionGrams: 45,
     })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(foodsListAll).toHaveBeenCalledTimes(2)
@@ -113,7 +115,7 @@ describe('Mes repas (Gérer) — Ingrédients', () => {
     expect(foodsCreate).toHaveBeenCalledWith({
       name: 'Muesli',
       per100g: { kcal: 380, protein: 9, carbs: 62, fat: 8 },
-      units: [],
+      portionGrams: null,
     })
   })
 

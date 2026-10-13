@@ -3,6 +3,9 @@ import {
   ingredientNutrients,
   isPlausiblePer100g,
   mealTotals,
+  per100gFromPortion,
+  portionFromPer100g,
+  portionsFromGrams,
   sumNutrients,
 } from './nutrients.js';
 
@@ -17,6 +20,33 @@ describe('ingredientNutrients', () => {
       carbs: 67.1,
       fat: 2,
     });
+  });
+});
+
+describe('portions', () => {
+  it('converts values typed for one portion to per 100 g', () => {
+    // Jambon: 40 g, 45 kcal, P 8,4 / L 1,2 / G 0,4
+    expect(per100gFromPortion({ kcal: 45, protein: 8.4, fat: 1.2, carbs: 0.4 }, 40)).toEqual({
+      kcal: 113,
+      protein: 21,
+      fat: 3,
+      carbs: 1,
+    });
+  });
+
+  it('gives one portion back from per 100 g (kcal to the unit, macros to 0.1 g)', () => {
+    expect(portionFromPer100g({ kcal: 113, protein: 21, fat: 3, carbs: 1 }, 40)).toEqual({
+      kcal: 45,
+      protein: 8.4,
+      fat: 1.2,
+      carbs: 0.4,
+    });
+    expect(portionFromPer100g(pasta, 15)).toEqual({ kcal: 24, protein: 0.9, carbs: 4.6, fat: 0.1 });
+  });
+
+  it('counts grams in portions, to 0.01', () => {
+    expect(portionsFromGrams(80, 40)).toBe(2);
+    expect(portionsFromGrams(50, 15)).toBe(3.33);
   });
 });
 

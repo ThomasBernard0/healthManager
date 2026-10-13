@@ -45,11 +45,8 @@ export class MealItemDto {
   @ApiProperty({ example: 220 })
   grams: number;
 
-  @ApiProperty({ type: String, nullable: true, example: 'c. à s.', description: 'Unit it was entered with' })
-  unitLabel: string | null;
-
-  @ApiProperty({ type: Number, nullable: true, example: 1 })
-  unitCount: number | null;
+  @ApiProperty({ type: Number, nullable: true, example: 2, description: 'Count when it was entered in portions of the food' })
+  portions: number | null;
 
   @ApiProperty({ type: NutrientsDto, description: 'grams / 100 × per100g' })
   nutrients: NutrientsDto;

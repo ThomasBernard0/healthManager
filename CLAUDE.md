@@ -26,7 +26,7 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ## Folder structure
 
 ```
-shared/                  @healthmanager/shared — pure TS, no deps (nutrients, calendar/weeks, goals,
+shared/                  @healthmanager/shared — pure TS, no deps (nutrients, per-portion ⇄ per-100 g, calendar/weeks, goals,
                          musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
                          supersets: interleaveSets, blocks, superset context; assistance: negative weights, ASSIST_STEP, chartBarValue)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
@@ -133,7 +133,7 @@ After editing `shared/src`, rebuild it so the apps see the change.
   made in a dialog call `invalidateData()` so the page underneath reloads (`useDataVersion()` in its key).
 - **Barcodes**: validated with `normalizeBarcode` (shared, GTIN check digit) on both sides. The frontend never calls
   Open Food Facts: `GET /api/foods/barcode/:code` returns the food known by that barcode, else imports the OFF
-  product once (`source: off`, serving → "portion" unit), else `{ food: null, suggestedName }` → "Mon aliment"
+  product once (its serving size → the food's `portionGrams`), else `{ food: null, suggestedName }` → "Mon aliment"
   created with the barcode. Camera scan on mobile only (native `BarcodeDetector`, else the ZXing wasm ponyfill loaded
   on demand from our origin); no Scanner button on desktop. `zxing-wasm` is pinned to the exact version
   `barcode-detector` expects (a test checks it): bump them together.

@@ -5,7 +5,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { NutrientsDto } from './nutrientsDto';
-import type { FoodUnitDto } from './foodUnitDto';
 
 export interface CreateFoodDto {
   /**
@@ -19,5 +18,11 @@ export interface CreateFoodDto {
   barcode?: string;
   /** Per 100 g */
   per100g: NutrientsDto;
-  units?: FoodUnitDto[];
+  /**
+   * Weight of one portion (g); left out or null: dosed in grams only
+   * @minimum 0.1
+   * @maximum 2000
+   * @nullable
+   */
+  portionGrams?: number | null;
 }

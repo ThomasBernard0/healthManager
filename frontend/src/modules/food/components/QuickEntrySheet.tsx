@@ -22,8 +22,8 @@ interface QuickEntrySheetProps {
 
 const MACROS = [
   { key: 'protein', label: fr.macros.protein, aria: fr.quick.proteinGrams },
-  { key: 'carbs', label: fr.macros.carbs, aria: fr.quick.carbsGrams },
   { key: 'fat', label: fr.macros.fat, aria: fr.quick.fatGrams },
+  { key: 'carbs', label: fr.macros.carbs, aria: fr.quick.carbsGrams },
 ] as const
 
 type MacroKey = (typeof MACROS)[number]['key']
@@ -46,7 +46,7 @@ export function QuickEntrySheet({ date, today, onClose, onBack, onLogged, onSave
     e.preventDefault()
     if (!valid || state === 'saving') return
     setState('saving')
-    const [protein, carbs, fat] = macroValues.map((v) => roundMacro(v ?? 0))
+    const [protein, fat, carbs] = macroValues.map((v) => roundMacro(v ?? 0))
     try {
       await logEntriesCreateQuick({
         date,

@@ -26,16 +26,16 @@ vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
   logEntriesCreateQuick: vi.fn(),
 }))
 
-const food = (id: string, name: string, kcal: number, protein: number, carbs: number, fat: number, units: FoodDto['units'] = []): FoodDto => ({
+const food = (id: string, name: string, kcal: number, protein: number, carbs: number, fat: number, portionGrams: number | null = null): FoodDto => ({
   id,
   name,
   brand: null,
   per100g: { kcal, protein, carbs, fat },
-  units,
+  portionGrams,
 })
 
 const pasta = food('f1', 'Pâtes cuites', 158, 5.8, 30.5, 0.9)
-const oil = food('f2', 'Huile d’olive', 900, 0, 0, 100, [{ label: 'c. à s.', grams: 13 }])
+const oil = food('f2', 'Huile d’olive', 900, 0, 0, 100, 13)
 
 const text = (el: HTMLElement) => (el.textContent ?? '').replace(/[  ]/g, ' ')
 
@@ -74,17 +74,17 @@ describe('MealEditorPage (Nouveau repas)', () => {
     )
   })
 
-  it('sums ingredients live (grams and units), then saves to Mes repas and logs it', async () => {
+  it('sums ingredients live (grams and portions), then saves to Mes repas and logs it', async () => {
     vi.mocked(mealsCreate).mockResolvedValue({ id: 'm1' } as MealDto)
     const user = userEvent.setup()
     renderEditor()
 
     await user.type(screen.getByLabelText('Nom'), 'Salade de pâtes')
     await addIngredient(user, 'pâtes', 'Pâtes cuites', '220')
-    await addIngredient(user, 'huile', 'Huile d’olive', '1', 'c. à s.')
+    await addIngredient(user, 'huile', 'Huile d’olive')
 
-    // 220 g pasta = 348 kcal; 1 c. à s. (13 g) oil = 117 kcal → 465
-    expect(text(document.body)).toContain('1 c. à s.')
+    // 220 g pasta = 348 kcal; 1 portion (13 g) of oil = 117 kcal → 465
+    expect(text(document.body)).toContain('1 portion')
     expect(text(document.body)).toContain('465 kcal')
 
     await user.click(screen.getByRole('button', { name: 'Enregistrer et ajouter au 4 octobre' }))
@@ -92,8 +92,8 @@ describe('MealEditorPage (Nouveau repas)', () => {
       name: 'Salade de pâtes',
       mode: 'ingredients',
       items: [
-        { foodId: 'f1', grams: 220, unitLabel: null, unitCount: null },
-        { foodId: 'f2', grams: 13, unitLabel: 'c. à s.', unitCount: 1 },
+        { foodId: 'f1', grams: 220, portions: null },
+        { foodId: 'f2', grams: 13, portions: 1 },
       ],
       manualTotals: null,
       override: null,
@@ -134,7 +134,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
     expect(foodsCreate).toHaveBeenCalledWith({
       name: 'Granola maison',
       per100g: { kcal: 450, protein: 10, carbs: 60, fat: 18 },
-      units: [],
+      portionGrams: null,
     })
     expect(await screen.findByRole('dialog', { name: 'Granola maison' })).toBeInTheDocument()
   })
@@ -183,7 +183,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
         name: 'Biscuits',
         barcode: '5000112637922',
         per100g: { kcal: 450, protein: 6, carbs: 65, fat: 18 },
-        units: [],
+        portionGrams: null,
       })
       expect(await screen.findByRole('dialog', { name: 'Biscuits' })).toBeInTheDocument()
     })

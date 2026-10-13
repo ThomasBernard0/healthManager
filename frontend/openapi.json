@@ -2082,27 +2082,6 @@
           "lastEatenOn"
         ]
       },
-      "FoodUnitDto": {
-        "type": "object",
-        "properties": {
-          "label": {
-            "type": "string",
-            "example": "c. à s.",
-            "minLength": 1,
-            "maxLength": 30
-          },
-          "grams": {
-            "type": "number",
-            "example": 10,
-            "minimum": 0.1,
-            "maximum": 2000
-          }
-        },
-        "required": [
-          "label",
-          "grams"
-        ]
-      },
       "FoodDto": {
         "type": "object",
         "properties": {
@@ -2126,11 +2105,11 @@
               }
             ]
           },
-          "units": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FoodUnitDto"
-            }
+          "portionGrams": {
+            "type": "number",
+            "nullable": true,
+            "example": 40,
+            "description": "Weight of one portion (g); null: dosed in grams only"
           }
         },
         "required": [
@@ -2138,7 +2117,7 @@
           "name",
           "brand",
           "per100g",
-          "units"
+          "portionGrams"
         ]
       },
       "MealItemDto": {
@@ -2155,16 +2134,11 @@
             "type": "number",
             "example": 220
           },
-          "unitLabel": {
-            "type": "string",
-            "nullable": true,
-            "example": "c. à s.",
-            "description": "Unit it was entered with"
-          },
-          "unitCount": {
+          "portions": {
             "type": "number",
             "nullable": true,
-            "example": 1
+            "example": 2,
+            "description": "Count when it was entered in portions of the food"
           },
           "nutrients": {
             "description": "grams / 100 × per100g",
@@ -2179,8 +2153,7 @@
           "id",
           "food",
           "grams",
-          "unitLabel",
-          "unitCount",
+          "portions",
           "nutrients"
         ]
       },
@@ -2287,15 +2260,13 @@
             "minimum": 0.1,
             "maximum": 5000
           },
-          "unitLabel": {
-            "type": "string",
-            "nullable": true,
-            "example": "c. à s."
-          },
-          "unitCount": {
+          "portions": {
             "type": "number",
             "nullable": true,
-            "example": 1
+            "example": 2,
+            "minimum": 0.01,
+            "maximum": 999.99,
+            "description": "Count when the quantity was entered in portions of the food (display only)"
           }
         },
         "required": [
@@ -2418,11 +2389,13 @@
               }
             ]
           },
-          "units": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FoodUnitDto"
-            }
+          "portionGrams": {
+            "type": "number",
+            "nullable": true,
+            "example": 40,
+            "minimum": 0.1,
+            "maximum": 2000,
+            "description": "Weight of one portion (g); left out or null: dosed in grams only"
           }
         },
         "required": [
@@ -2452,11 +2425,13 @@
               }
             ]
           },
-          "units": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FoodUnitDto"
-            }
+          "portionGrams": {
+            "type": "number",
+            "nullable": true,
+            "example": 40,
+            "minimum": 0.1,
+            "maximum": 2000,
+            "description": "Weight of one portion (g); left out or null: dosed in grams only"
           }
         },
         "required": [

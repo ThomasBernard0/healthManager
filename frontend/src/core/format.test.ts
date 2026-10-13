@@ -1,8 +1,10 @@
 import {
   formatDayTitle,
+  formatDecimal,
   formatInt,
   formatLongDate,
   formatMacros,
+  formatPortions,
   formatQuantity,
   formatWeekRange,
   formatWeekTitle,
@@ -17,7 +19,8 @@ describe('format', () => {
     expect(nbsp(formatInt(1460))).toBe('1 460')
     expect(nbsp(formatInt(16400.4))).toBe('16 400')
     expect(formatQuantity(1.5)).toBe('×1,5')
-    expect(formatMacros({ protein: 27.6, carbs: 45, fat: 13.9 })).toBe('P 28 · G 45 · L 14')
+    expect([1, 1.5, 2].map(formatPortions)).toEqual(['1 portion', '1,5 portion', '2 portions'])
+    expect(formatMacros({ protein: 27.6, carbs: 45, fat: 13.9 })).toBe('P 28 · L 14 · G 45')
   })
 
   it('formats dates in French without timezone drift', () => {
@@ -31,6 +34,7 @@ describe('format', () => {
   it('parses numbers typed with a comma', () => {
     expect(parseNumber('12,5')).toBe(12.5)
     expect(parseNumber(' 950 ')).toBe(950)
+    expect(parseNumber(formatDecimal(1200))).toBe(1200)
     expect(parseNumber('')).toBeNull()
     expect(parseNumber('abc')).toBeNull()
   })

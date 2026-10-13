@@ -71,8 +71,7 @@ function toMealDto(meal: MealWithItems, stats: MealStats): MealDto {
       id: item.id,
       food: toFoodDto(item.food),
       grams: num(item.grams),
-      unitLabel: item.unitLabel,
-      unitCount: item.unitCount === null ? null : num(item.unitCount),
+      portions: item.portions === null ? null : num(item.portions),
       nutrients: ingredientNutrients(toNutrients(item.food), num(item.grams)),
     })),
     manualTotals: manualTotalsOf(meal),
@@ -216,8 +215,7 @@ export class MealsService {
     return dto.items.map((item, position) => ({
       foodId: item.foodId,
       grams: roundMacro(item.grams),
-      unitLabel: item.unitLabel ?? null,
-      unitCount: item.unitCount ?? null,
+      portions: item.portions ?? null,
       position,
     }));
   }

@@ -4,13 +4,6 @@
   gap: var(--space-14);
 }
 
-.group {
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-15);
-  margin-top: var(--space-4);
-}
-
 .barcode {
   display: flex;
   justify-content: space-between;
@@ -24,8 +17,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-.unitRow {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-8);
+/* "Pour 100 g ........ 113 kcal · P 21 · L 3 · G 1", computed from the values of one portion. */
+.per100g {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-13);
+  color: var(--color-muted);
+}
+
+.per100gValue {
+  color: var(--color-ink);
 }

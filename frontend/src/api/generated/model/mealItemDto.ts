@@ -12,12 +12,10 @@ export interface MealItemDto {
   food: FoodDto;
   grams: number;
   /**
-   * Unit it was entered with
+   * Count when it was entered in portions of the food
    * @nullable
    */
-  unitLabel: string | null;
-  /** @nullable */
-  unitCount: number | null;
+  portions: number | null;
   /** grams / 100 × per100g */
   nutrients: NutrientsDto;
 }
