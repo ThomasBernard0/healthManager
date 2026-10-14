@@ -1,7 +1,8 @@
 import {
   DEFAULT_STEP,
-  nextTargets,
-  preFatigue,
+  parisToday,
+  sessionPreFatigue,
+  targetsFromHistory,
   type Equipment,
   type ExerciseLog,
   type Muscle,
@@ -21,22 +22,23 @@ export interface SessionEntry {
   sets: { done: boolean; doneAt: Date | null }[];
 }
 
+const toTimes = (e: SessionEntry) => ({
+  id: e.id,
+  firstSetAt: e.firstSetAt?.getTime() ?? null,
+  exercise: e.exercise,
+  sets: e.sets.map((s) => ({ done: s.done, doneAt: s.doneAt?.getTime() ?? null })),
+});
+
 /**
  * Pre-fatigue of an exercise in its session: sets of the other exercises validated before its first set
  * (all of them while it is not started).
  */
 export function entryPreFatigue(entry: SessionEntry, entries: SessionEntry[]): PreFatigue {
-  const cutoff = entry.firstSetAt?.getTime() ?? Number.POSITIVE_INFINITY;
-  return preFatigue(
-    entry.exercise,
-    entries
-      .filter((other) => other.id !== entry.id)
-      .map((other) => ({
-        ...other.exercise,
-        sets: other.sets.filter((s) => s.done && s.doneAt && s.doneAt.getTime() < cutoff).length,
-      })),
-  );
+  return sessionPreFatigue(toTimes(entry), entries.map(toTimes));
 }
+
+/** A past session of an exercise, with its Europe/Paris date. */
+export type DatedLog = ExerciseLog & { date: string };
 
 export interface TargetsQuery {
   exerciseId: string;
@@ -47,8 +49,6 @@ export interface TargetsQuery {
   todayPreFatigue: number;
   /** The exercise is in a superset now. */
   todayInSuperset: boolean;
-  /** The session the targets are for (not part of the history). */
-  sessionId?: string;
 }
 
 /** Next targets from the history of an exercise (no stored table: computed from its sessions). */
@@ -57,14 +57,8 @@ export class ProgressionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async targets(query: TargetsQuery): Promise<Target[] | null> {
-    const [history, known] = await Promise.all([
-      this.history(query.exerciseId, query.sessionId),
-      this.knownWeights(query.exerciseId),
-    ]);
-    return nextTargets({
-      last: history[0] ?? null,
-      previous: history[1] ?? null,
-      beforePrevious: history[2] ?? null,
+    const [history, known] = await Promise.all([this.history(query.exerciseId), this.knownWeights(query.exerciseId)]);
+    return targetsFromHistory(history, {
       setCount: query.setCount,
       repMin: query.repMin,
       repMax: query.repMax,
@@ -76,24 +70,24 @@ export class ProgressionService {
   }
 
   /**
-   * The last three finished sessions with this exercise (skipped ones were dropped: they don't count). The
-   * third only tells whether the second was a first time in a superset.
+   * The last three finished sessions with this exercise, most recent first (skipped ones were dropped: they
+   * don't count). The third only tells whether the second was a first time in a superset.
    */
-  async history(exerciseId: string, excludeSessionId?: string): Promise<ExerciseLog[]> {
+  async history(exerciseId: string): Promise<DatedLog[]> {
     const where: Prisma.SessionExerciseWhereInput = {
       exerciseId,
       session: { finishedAt: { not: null } },
       sets: { some: { done: true } },
-      ...(excludeSessionId ? { sessionId: { not: excludeSessionId } } : {}),
     };
     const entries = await this.prisma.sessionExercise.findMany({
       where,
       orderBy: { session: { finishedAt: 'desc' } },
       take: 3,
       // Every set: the ones not done tell an exercise stopped early.
-      include: { sets: { orderBy: { index: 'asc' } } },
+      include: { session: { select: { finishedAt: true } }, sets: { orderBy: { index: 'asc' } } },
     });
     return entries.map((e) => ({
+      date: parisToday(e.session.finishedAt!),
       easy: e.easy,
       preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
       complete: e.sets.every((s) => s.done),

@@ -1,6 +1,6 @@
 import type { Equipment, Muscle } from './muscu.js';
 
-/** Musculation progression (double progression), spec §3. Pure functions, used by the API. */
+/** Musculation progression (double progression), spec §3. Pure functions, used by the API and by the phone during a session. */
 
 /**
  * Default weight step by equipment (kg); bodyweight = added load. Machine stacks are 10 lb ≈ 4.5 kg,
@@ -69,6 +69,32 @@ export function preFatigue(target: ExerciseMuscles, earlier: (ExerciseMuscles & 
     for (const m of [...primary, ...secondary]) hit.add(m);
   }
   return { value, muscles: target.primaryMuscles.filter((m) => hit.has(m)) };
+}
+
+/** An exercise of the session in progress, as its pre-fatigue needs it (times in ms since the epoch). */
+export interface SessionEntry {
+  id: string;
+  /** Time of its first validated set (null: not started). */
+  firstSetAt: number | null;
+  exercise: ExerciseMuscles;
+  sets: { done: boolean; doneAt: number | null }[];
+}
+
+/**
+ * Pre-fatigue of an exercise in its session: sets of the other exercises validated before its first set
+ * (all of them while it is not started).
+ */
+export function sessionPreFatigue(entry: SessionEntry, entries: SessionEntry[]): PreFatigue {
+  const cutoff = entry.firstSetAt ?? Number.POSITIVE_INFINITY;
+  return preFatigue(
+    entry.exercise,
+    entries
+      .filter((other) => other.id !== entry.id)
+      .map((other) => ({
+        ...other.exercise,
+        sets: other.sets.filter((s) => s.done && s.doneAt !== null && s.doneAt < cutoff).length,
+      })),
+  );
 }
 
 export interface LoggedSet {
@@ -191,4 +217,17 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
 
   // The exercise's set count changed: added sets copy the last set's target, removed ones are dropped.
   return Array.from({ length: setCount }, (_, i) => targets[Math.min(i, targets.length - 1)]);
+}
+
+/** nextTargets from the history of an exercise: its last finished sessions, most recent first (up to three). */
+export function targetsFromHistory(
+  history: ExerciseLog[],
+  input: Omit<NextTargetsInput, 'last' | 'previous' | 'beforePrevious'>,
+): Target[] | null {
+  return nextTargets({
+    ...input,
+    last: history[0] ?? null,
+    previous: history[1] ?? null,
+    beforePrevious: history[2] ?? null,
+  });
 }

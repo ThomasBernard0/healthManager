@@ -1,4 +1,6 @@
-import { entryPreFatigue, type SessionEntry } from './progression.service.js';
+import { DIPS_THEN_BENCH } from '@healthmanager/shared/testing';
+import type { PrismaService } from '../prisma/prisma.service.js';
+import { entryPreFatigue, ProgressionService, type SessionEntry } from './progression.service.js';
 
 const at = (minute: number) => new Date(Date.UTC(2026, 9, 10, 8, minute));
 const entry = (
@@ -41,5 +43,41 @@ describe('entryPreFatigue (order of the session)', () => {
   it('done first: no pre-fatigue', () => {
     const bench = entry('bench', ['chest'], ['triceps'], [-5, null, null, null]);
     expect(entryPreFatigue(bench, [dips, curls, bench])).toEqual({ value: 0, muscles: [] });
+  });
+});
+
+describe('ProgressionService.targets (same history as the phone: the shared fixture)', () => {
+  const { bench } = DIPS_THEN_BENCH;
+  // What Postgres returns for that history, most recent first.
+  const rows = bench.history.map((log, i) => ({
+    easy: log.easy,
+    preFatigue: log.preFatigue,
+    supersetGroup: log.inSuperset ? 'g' : null,
+    session: { finishedAt: new Date(`${log.date}T17:00:00Z`) },
+    sets: log.sets.map((s, index) => ({ index, done: true, ...s, id: `${i}-${index}` })),
+  }));
+  const prisma = {
+    sessionExercise: { findMany: () => Promise.resolve(rows) },
+    sessionSet: { findMany: () => Promise.resolve(bench.known.map((weight) => ({ weight }))) },
+  };
+  const service = new ProgressionService(prisma as unknown as PrismaService);
+  const targets = (todayPreFatigue: number) =>
+    service.targets({
+      exerciseId: 'bench',
+      equipment: bench.equipment,
+      setCount: bench.sets,
+      repMin: bench.repMin,
+      repMax: bench.repMax,
+      todayPreFatigue,
+      todayInSuperset: false,
+    });
+
+  it('gives the history the bundle sends', async () => {
+    expect(await service.history('bench')).toEqual(bench.history);
+  });
+
+  it('Développé couché after 3 sets of Dips, and done first', async () => {
+    expect(await targets(3)).toEqual(DIPS_THEN_BENCH.benchAfterDips);
+    expect(await targets(0)).toEqual(DIPS_THEN_BENCH.benchFirst);
   });
 });

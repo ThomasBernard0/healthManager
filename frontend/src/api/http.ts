@@ -28,3 +28,18 @@ export const apiClient = <T>(
   config: AxiosRequestConfig,
   options?: AxiosRequestConfig,
 ): Promise<T> => http.request<T>({ ...config, ...options }).then(({ data }) => data)
+
+/** The request never got an answer: no connection, or too weak. */
+export function isNetworkError(error: unknown): boolean {
+  return axios.isAxiosError(error) && !error.response && error.code !== 'ERR_CANCELED'
+}
+
+/** The API answered 404 (gone, e.g. finished or discarded on another device). */
+export function isNotFound(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404
+}
+
+/** The status the API answered with (undefined: no answer). */
+export function httpStatus(error: unknown): number | undefined {
+  return axios.isAxiosError(error) ? error.response?.status : undefined
+}

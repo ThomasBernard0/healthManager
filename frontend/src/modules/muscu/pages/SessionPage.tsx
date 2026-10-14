@@ -1,76 +1,113 @@
 import { blockStatus, toBlocks } from '@healthmanager/shared'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { sessionsFinish, sessionsGet, sessionsRemove } from '../../../api/generated/endpoints/sessions/sessions'
-import type { SessionDto } from '../../../api/generated/model'
-import { invalidateData, useDataVersion } from '../../../core/dataVersion'
+import { sessionsFinish, sessionsRemove } from '../../../api/generated/endpoints/sessions/sessions'
+import { httpStatus, isNetworkError, isNotFound } from '../../../api/http'
+import { invalidateData } from '../../../core/dataVersion'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
-import { Check, ChevronRight, Close, Pencil } from '../../../core/ui/icons'
+import { Check, ChevronRight, Close, CloudOff } from '../../../core/ui/icons'
 import form from '../../../core/ui/form.module.css'
-import { useAsync } from '../../../core/useAsync'
+import { useOnline } from '../../../core/useOnline'
 import { fr } from '../../../i18n/fr'
 import { ExerciseImage } from '../components/ExerciseImage'
 import { ExerciseThumb } from '../components/ExerciseThumb'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { SupersetBadge } from '../components/SupersetBadge'
-import { MUSCU_PATH, sessionExercisePath, sessionSupersetPath, workoutPath } from '../routes'
+import { entryStatus, finishBody, type LocalSession } from '../offline/localSession'
+import { SessionImages } from '../offline/SessionImages'
+import { clearLocalSession, resumeSession, useLocalSession } from '../offline/store'
+import { MUSCU_PATH, sessionExercisePath, sessionSupersetPath } from '../routes'
 import page from './page.module.css'
 import styles from './SessionPage.module.css'
 
-/** Séance — liste: the exercises of the session in progress, done in any order. */
+/** Séance — liste: the exercises of the session in progress, done in any order, from the local copy. */
 export default function SessionPage() {
   const { sessionId = '' } = useParams()
-  const version = useDataVersion()
-  const session = useAsync(() => sessionsGet(sessionId), `${sessionId}#${version}`)
-  const data = session.data?.id === sessionId ? session.data : undefined
+  const local = useLocalSession()
 
-  if (data?.finishedAt) return <Navigate to={MUSCU_PATH} replace />
-  if (session.status === 'error' && !data) {
-    return (
-      <MuscuLayout>
-        <div className={page.alert} role="alert">
-          <span className={form.error}>{fr.common.loadError}</span>
-          <button type="button" className={form.secondary} onClick={session.reload}>
-            {fr.common.retry}
-          </button>
-        </div>
-      </MuscuLayout>
-    )
-  }
-  return <MuscuLayout>{data && <SessionList session={data} />}</MuscuLayout>
+  // Another session is in progress on this device: that one comes first.
+  if (local && local.id !== sessionId) return <Navigate to={MUSCU_PATH} replace />
+  return (
+    <MuscuLayout>
+      {local ? (
+        <SessionImages>
+          <SessionList session={local} />
+        </SessionImages>
+      ) : (
+        local === null && <Resume sessionId={sessionId} />
+      )}
+    </MuscuLayout>
+  )
 }
 
-function SessionList({ session }: { session: SessionDto }) {
+/** A session in progress on the server but not on this device: its bundle is loaded here (needs the connection). */
+function Resume({ sessionId }: { sessionId: string }) {
+  const [state, setState] = useState<'loading' | 'gone' | 'offline' | 'error'>('loading')
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    resumeSession(sessionId).catch((error: unknown) => {
+      if (isNetworkError(error)) setState('offline')
+      else if (httpStatus(error) === 404 || httpStatus(error) === 409) setState('gone')
+      else setState('error')
+    })
+  }, [sessionId, attempt])
+
+  // Finished or discarded meanwhile: nothing to resume.
+  if (state === 'gone') return <Navigate to={MUSCU_PATH} replace />
+  if (state === 'loading') return null
+  return (
+    <div className={page.alert} role="alert">
+      <span className={form.error}>{state === 'offline' ? fr.common.noConnection : fr.common.loadError}</span>
+      <button
+        type="button"
+        className={form.secondary}
+        onClick={() => {
+          setState('loading')
+          setAttempt((n) => n + 1)
+        }}
+      >
+        {fr.common.retry}
+      </button>
+    </div>
+  )
+}
+
+function SessionList({ session }: { session: LocalSession }) {
   const navigate = useNavigate()
-  const [quit, setQuit] = useState<'closed' | 'open' | 'busy' | 'error'>('closed')
-  const [finishing, setFinishing] = useState<'idle' | 'busy' | 'error'>('idle')
+  const online = useOnline()
+  const [quit, setQuit] = useState<'closed' | 'open' | 'busy' | 'error' | 'offline'>('closed')
+  const [finishing, setFinishing] = useState<'idle' | 'busy' | 'error' | 'offline'>('idle')
   // A superset is one card, and counts as one.
-  const blocks = toBlocks(session.exercises.map((e) => ({ ...e, group: e.supersetGroup })))
+  const entries = session.exercises.map((e) => ({ ...e, status: entryStatus(e), group: e.supersetGroup }))
+  const blocks = toBlocks(entries)
   const done = blocks.filter((block) => blockStatus(block.map((e) => e.status)) === 'done').length
-  const logged = session.exercises.some((e) => e.status !== 'todo')
+  const logged = entries.some((e) => e.status !== 'todo')
+
+  /** Leaves the session: the local copy is deleted only once the server agreed (or no longer has it). */
+  async function leave(request: () => Promise<unknown>): Promise<'offline' | 'error' | null> {
+    try {
+      await request()
+    } catch (error) {
+      if (isNetworkError(error)) return 'offline'
+      if (!isNotFound(error)) return 'error'
+    }
+    await clearLocalSession()
+    invalidateData()
+    navigate(MUSCU_PATH, { replace: true })
+    return null
+  }
 
   async function discard() {
     setQuit('busy')
-    try {
-      await sessionsRemove(session.id)
-    } catch {
-      setQuit('error')
-      return
-    }
-    invalidateData()
-    navigate(MUSCU_PATH, { replace: true })
+    const failed = await leave(() => sessionsRemove(session.id))
+    if (failed) setQuit(failed)
   }
 
   async function finish() {
     setFinishing('busy')
-    try {
-      await sessionsFinish(session.id)
-    } catch {
-      setFinishing('error')
-      return
-    }
-    invalidateData()
-    navigate(MUSCU_PATH, { replace: true })
+    const failed = await leave(() => sessionsFinish(session.id, finishBody(session)))
+    if (failed) setFinishing(failed)
   }
 
   return (
@@ -79,7 +116,8 @@ function SessionList({ session }: { session: SessionDto }) {
         <button
           type="button"
           className={page.iconButton}
-          aria-label={fr.muscu.session.quit}
+          aria-label={online ? fr.muscu.session.quit : fr.muscu.session.quitOffline}
+          disabled={!online}
           // Nothing logged yet: nothing to lose, no question.
           onClick={() => (logged ? setQuit('open') : discard())}
         >
@@ -89,17 +127,12 @@ function SessionList({ session }: { session: SessionDto }) {
           <h1 className={page.title}>{session.workoutName}</h1>
           <div className={styles.progress}>{fr.muscu.session.progress(done, blocks.length)}</div>
         </div>
-        {session.workoutId ? (
-          // Changes apply to the next sessions, not to this one.
-          <Link
-            to={workoutPath(session.workoutId)}
-            className={`${page.iconButton} ${styles.edit}`}
-            aria-label={fr.muscu.session.edit}
-          >
-            <Pencil size={18} />
-          </Link>
-        ) : (
+        {online ? (
           <span className={page.spacer} />
+        ) : (
+          <span className={styles.offline} role="img" aria-label={fr.common.noConnection}>
+            <CloudOff />
+          </span>
         )}
       </header>
 
@@ -150,12 +183,19 @@ function SessionList({ session }: { session: SessionDto }) {
         })}
       </ul>
 
-      {finishing === 'error' && (
+      {(finishing === 'error' || finishing === 'offline') && (
         <div className={form.error} role="alert">
-          {fr.common.saveError}
+          {finishing === 'offline' ? fr.common.noConnection : fr.common.saveError}
         </div>
       )}
-      <button type="button" className={styles.finish} disabled={finishing === 'busy'} onClick={finish}>
+      <button
+        type="button"
+        className={styles.finish}
+        aria-label={online ? undefined : fr.muscu.session.finishOffline}
+        disabled={!online || finishing === 'busy'}
+        onClick={finish}
+      >
+        {!online && <CloudOff size={18} />}
         {fr.muscu.session.finish}
       </button>
 
@@ -164,7 +204,7 @@ function SessionList({ session }: { session: SessionDto }) {
           title={fr.muscu.session.confirmQuit}
           confirmLabel={fr.muscu.session.quitAction}
           busy={quit === 'busy'}
-          error={quit === 'error' ? fr.common.saveError : null}
+          error={quit === 'offline' ? fr.common.noConnection : quit === 'error' ? fr.common.saveError : null}
           onConfirm={discard}
           onCancel={() => setQuit('closed')}
         />

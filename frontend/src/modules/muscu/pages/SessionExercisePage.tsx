@@ -1,16 +1,8 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
-import {
-  sessionsGetExercise,
-  sessionsSaveSet,
-  sessionsUpdateExercise,
-} from '../../../api/generated/endpoints/sessions/sessions'
-import type { SessionExerciseDto } from '../../../api/generated/model'
-import { invalidateData } from '../../../core/dataVersion'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft } from '../../../core/ui/icons'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { useToast } from '../../../core/ui/toastContext'
-import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { EasyToggle } from '../components/EasyToggle'
 import { ExerciseThumb } from '../components/ExerciseThumb'
@@ -19,27 +11,38 @@ import { MuscuLayout } from '../components/MuscuLayout'
 import { SetRow, SetTable } from '../components/SetTable'
 import { formatSessionDate, formatSets } from '../format'
 import { setInMode, setsToFlip, signedWeight, useLoadMode, type LoadMode } from '../loadMode'
-import { exercisePath, MUSCU_PATH, sessionPath } from '../routes'
+import {
+  exerciseView,
+  saveSet as saveLocalSet,
+  updateExercise,
+  type ExerciseView,
+  type LocalSession,
+} from '../offline/localSession'
+import { SessionImages } from '../offline/SessionImages'
+import { updateLocalSession, useLocalSession } from '../offline/store'
+import { sessionPath } from '../routes'
 import page from './page.module.css'
 import styles from './SessionExercisePage.module.css'
 
-/** Exercice en cours: target vs done for each set, last time, Facile, Terminé. */
+/** Exercice en cours: target vs done for each set, last time, Facile, Terminé — on the local copy only. */
 export default function SessionExercisePage() {
   const { sessionId = '', entryId = '' } = useParams()
-  const loaded = useAsync(() => sessionsGetExercise(sessionId, entryId), `${sessionId}/${entryId}`)
-  // Each save returns the updated exercise.
-  const [latest, setLatest] = useState<SessionExerciseDto | null>(null)
-  const fresh = loaded.data?.id === entryId ? loaded.data : undefined
-  const data = latest?.id === entryId ? latest : fresh
+  const local = useLocalSession()
+  const entry = local?.id === sessionId ? exerciseView(local, entryId) : null
 
-  if (loaded.status === 'error' && !data) {
-    // Finished or discarded meanwhile (another device): nothing to log here any more.
-    return <Navigate to={MUSCU_PATH} replace />
-  }
-  return <MuscuLayout>{data && <Logger entry={data} onSaved={setLatest} />}</MuscuLayout>
+  if (local === undefined) return <MuscuLayout>{null}</MuscuLayout>
+  // Not on this device (or not in the session): the list loads it, or goes back to Accueil.
+  if (!entry) return <Navigate to={sessionPath(sessionId)} replace />
+  return (
+    <MuscuLayout>
+      <SessionImages>
+        <Logger entry={entry} />
+      </SessionImages>
+    </MuscuLayout>
+  )
 }
 
-function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: SessionExerciseDto) => void }) {
+function Logger({ entry }: { entry: ExerciseView }) {
   const navigate = useNavigate()
   const location = useLocation()
   const toast = useToast()
@@ -52,11 +55,11 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
 
   const toList = () => (location.key !== 'default' ? navigate(-1) : navigate(sessionPath(entry.sessionId)))
 
-  async function run(action: () => Promise<SessionExerciseDto>): Promise<boolean> {
+  /** Every change is written to the device (no network). */
+  async function run(change: (session: LocalSession) => LocalSession): Promise<boolean> {
     setBusy(true)
     try {
-      onSaved(await action())
-      invalidateData()
+      await updateLocalSession(change)
       return true
     } catch {
       toast({ message: fr.common.saveError })
@@ -67,12 +70,13 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
   }
 
   const saveSet = (index: number, weight: number | null, reps: number | null, done: boolean) =>
-    run(() =>
-      sessionsSaveSet(entry.sessionId, entry.id, index, {
-        weight: weight === null || mode === null ? weight : signedWeight(weight, mode),
-        reps,
-        done,
-      }),
+    run((session) =>
+      saveLocalSet(
+        session,
+        entry.id,
+        index,
+        { weight: weight === null || mode === null ? weight : signedWeight(weight, mode), reps, done },
+      ),
     )
 
   /** Lest ↔ Aide: the sets already logged are saved again with the other sign. */
@@ -80,17 +84,13 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
     chooseMode(next)
     const logged = setsToFlip(entry.sets, next)
     if (logged.length === 0) return
-    const saved = await run(async () => {
-      let latest = entry
-      for (const { index, weight, reps } of logged) {
-        latest = await sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done: true })
-      }
-      return latest
-    })
+    const saved = await run((session) =>
+      logged.reduce((s, { index, weight, reps }) => saveLocalSet(s, entry.id, index, { weight, reps, done: true }), session),
+    )
     if (!saved) chooseMode(null)
   }
 
-  const setEasy = (easy: boolean) => run(() => sessionsUpdateExercise(entry.sessionId, entry.id, { easy }))
+  const setEasy = (easy: boolean) => run((session) => updateExercise(session, entry.id, { easy }))
 
   const doneCount = entry.sets.filter((s) => s.done).length
   const allDone = doneCount === entry.sets.length
@@ -98,7 +98,7 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
   /** Terminé (every set done) or, after confirmation, Terminer l'exercice plus tôt. */
   async function complete() {
     if (!entry.completed) {
-      if (!(await run(() => sessionsUpdateExercise(entry.sessionId, entry.id, { completed: true })))) return
+      if (!(await run((session) => updateExercise(session, entry.id, { completed: true })))) return
     }
     toList()
   }
@@ -112,13 +112,13 @@ function Logger({ entry, onSaved }: { entry: SessionExerciseDto; onSaved: (e: Se
         <span className={styles.workout}>{entry.workoutName}</span>
       </header>
 
-      <Link to={exercisePath(entry.exercise.id)} className={styles.identity}>
+      <div className={styles.identity}>
         <ExerciseThumb exercise={entry.exercise} size="lg" />
         <span className={styles.identityText}>
           <h1 className={styles.name}>{entry.exercise.name}</h1>
           <span className={styles.scheme}>{fr.muscu.setsReps(entry.sets.length, entry.repMin, entry.repMax)}</span>
         </span>
-      </Link>
+      </div>
 
       <SetTable
         assist={mode === 'assist'}

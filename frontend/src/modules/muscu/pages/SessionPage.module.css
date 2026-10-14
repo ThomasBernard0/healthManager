@@ -92,15 +92,30 @@
   color: var(--color-ink);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
 }
 
-.finish:hover {
+.finish:hover:not(:disabled) {
   border-color: var(--color-accent);
 }
 
-/* → Modifier la séance */
-.edit {
-  color: var(--color-muted);
+.finish:disabled {
+  border-color: var(--color-border);
+  color: var(--color-reference);
+}
+
+/* No connection: right of the header (muscu-2b-seance-liste-sans-connexion) */
+.offline {
+  width: var(--size-touch);
+  height: var(--size-touch);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
 }
 
 /* Superset card — transcribed from design/musculation/superset-2-seance-liste.html */

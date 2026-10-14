@@ -15,12 +15,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-14);
-  color: var(--color-ink);
-  text-decoration: none;
-}
-
-.identity:hover {
-  color: var(--color-ink);
 }
 
 .identityText {

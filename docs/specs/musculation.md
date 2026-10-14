@@ -119,11 +119,12 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 ### Séance — liste (mobile `muscu-2-seance-liste`; desktop: same screen centred, max 560 px)
 - Opens on **Démarrer**. Header: close (confirm if sets were logged), workout name, "2 / 5 faits".
 - One card per exercise, any order: thumbnail, name, and status only (✓ when done — name muted —, "En cours" outlined, chevron when to do). **No targets and no results in the list**; they appear when the exercise is opened.
-- **Terminer la séance** saves the session; exercises not done are ignored.
-- A started session survives reloads (saved after every set).
+- **Terminer la séance** sends the whole session in one call; exercises not done are ignored.
+- No pencil / no link to Modifier la séance during a session.
+- **Offline** (see "Session without connection" below; mockup `muscu-2b-seance-liste-sans-connexion`): a crossed-cloud icon (`role="img"`, `aria-label="Pas de connexion"`, warning colour) at the right of the header; the close button and **Terminer la séance** are disabled (Terminer keeps its label, with the crossed cloud before it). Everything else works.
 
 ### Exercice en cours (mobile `muscu-3-exercice-en-cours`)
-- Back arrow → list (progress kept). Image, name, "4 × 8–12".
+- Back arrow → list (progress kept). Image, name, "4 × 8–12" — **not a link** (no Fiche exercice during a session). Identical with or without connection.
 - Bodyweight exercises only: a segmented **Lest | Aide** control at the top of the set card (mockups `aide-1-tractions-avec-aide`, `aide-2-aide-a-zero`). No setting on the exercise: the session opens in **Aide** when today's targets are negative, else in **Lest**. In Aide the weight column is titled "Aide kg" and every number (targets, inputs, Dernière fois) is shown and typed **positive**; the app stores the negative value. Switching mode during a session flips the sign of the sets already logged for that exercise. One mode per exercise per session.
 - Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
@@ -156,6 +157,17 @@ Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". B
 ### Modifier l'exercice (mobile `muscu-7-modifier-exercice`)
 - Name; **Séries et répétitions**: three number inputs Séries × Min – Max (defaults 4 × 8–12; API rejects `sets < 1`, `repMin < 1`, `repMin > repMax`); muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
 
+### Session without connection
+The gym has no network. Only **Démarrer**, **Terminer la séance** and **Quitter la séance** (close) need the connection; everything in between runs on the phone.
+- **Démarrer** (online): the server creates the session and returns a **session bundle**: the session, and for each exercise everything needed to compute today's targets on the phone — the exercise (name, equipment, muscles, sets, rep range, image), its last and previous logs (sets, pre-fatigue, inSuperset, completed, easy), its known weights and step, plus the superset groups. The images are downloaded once at that moment and kept with the bundle.
+- **During the session** (no API call at all): opening an exercise computes its targets with the same `shared/` functions as the server (`preFatigue` from the sets already done in this session, `nextTargets`, superset context, assistance). Validating a set, reopening it, Facile, Lest | Aide, "Terminer l'exercice plus tôt" and Terminé only update the local copy. Each set keeps its `doneAt` (phone clock).
+- **Local copy**: one active session only, stored on the device (IndexedDB), written after every change, so closing the tab, a reload, a lock or a restart lose nothing. At Démarrer the app calls `navigator.storage.persist()` (best effort). The Séance screens read the local copy, never the API.
+- **Terminer la séance** (online): one request with the whole session (every exercise: sets with targets, weight, reps, done, doneAt; easy; completed; Lest | Aide sign). The server stores it, recomputes pre-fatigue from `doneAt` as today, marks the session finished. The local copy is deleted only after a success. Idempotent: sending the same session again after a lost response returns success, not 409.
+- **Quitter la séance** (online): deletes the session on the server, then the local copy.
+- **No connection** = `navigator.onLine` is false, or the request fails on the network: the action is refused (button disabled when offline; a failed request shows "Pas de connexion" and keeps everything). Démarrer offline is disabled too.
+- Accueil: a session in the local copy shows as the session in progress ("Reprendre"), even offline. Starting on another device while one is in progress is still refused by the server (409).
+- Fiche exercice, Modifier la séance and the rest of the app are not reachable from a session; they keep needing the connection as today.
+
 ## 5. Supersets
 
 Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2…), usually on independent muscle groups. Planned in the workout, never created during a session.
@@ -175,7 +187,7 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - A superset is **one card**: stacked double thumbnail, "SUPERSET" label, both names with their A/B badges, one status for the pair (to do / En cours / ✓ when both are done). It counts as one item in "x / y faits".
 
 ### Superset en cours (`superset-3-superset-en-cours`)
-- Header: back to list, "{workout} · Superset". Top: the two exercises side by side (image with badge, name, "sets × range"), tap → Fiche exercice.
+- Header: back to list, "{workout} · Superset". Top: the two exercises side by side (image with badge, name, "sets × range"), not links.
 - One set table in interleaved order: badge + set number ("A1", "B1"…), then Objectif | kg | Reps | ✓, same behaviour as Exercice en cours (sets in order, placeholder = target, ✓ on empty records the target, under-target reps in orange).
 - "Dernière fois" once per exercise, prefixed by its badge; one **Facile** toggle per exercise (badge + bolt + "Facile"), side by side.
 - **Terminé** once every set is done; "Terminer le superset plus tôt" otherwise (same rule as stopping an exercise early, per exercise).
@@ -191,9 +203,16 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 7. Programs: group workouts, one active (rotation restarts on activation), Programme page.
 8. Supersets: schema, link/unlink, list card, Superset en cours, superset context.
 9. Sets and rep range on the exercise.
-10. Assistance on bodyweight exercises (see the README of this handoff).
+10. Assistance on bodyweight exercises.
+11. Session without connection (see the README of this handoff).
 
 ## 7. Acceptance checks
+
+- Démarrer online, then airplane mode: every exercise opens with its targets and image, sets are validated, Facile and Terminé work, the list shows ✓; a reload keeps everything.
+- Opening Développé couché after 3 sets of Dips offline gives the same targets as the server would (pre-fatigue computed on the phone).
+- Offline, Terminer la séance and the close button are disabled and the crossed cloud shows; back online, Terminer sends the session once and the history shows it with the right doneAt order.
+- Terminer sent twice (lost response) → one session, no 409.
+- No link to the Fiche exercice or to Modifier la séance anywhere in a session.
 
 - After finishing Push A, Accueil proposes Pull; after Push B, it proposes Push A.
 - Exercises can be done in any order from the list; skipped ones keep their target.

@@ -4,11 +4,15 @@ import {
   judge,
   nextTargets,
   preFatigue,
+  sessionPreFatigue,
   stepDown,
   stepUp,
+  targetsFromHistory,
   type ExerciseLog,
   type NextTargetsInput,
+  type SessionEntry,
 } from './progression.js';
+import { DIPS_THEN_BENCH } from './testing/index.js';
 
 /** A past session: weight (one for all sets, or one per set), reps done, Facile tapped, targets. */
 function log(
@@ -381,5 +385,53 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
       expect(weights(stepped)).toEqual([52.5, 52.5, 52.5]);
       expect(reps(stepped)).toEqual([6, 6, 6]);
     });
+  });
+});
+
+describe('sessionPreFatigue (order of the session)', () => {
+  const entry = (
+    id: string,
+    primaryMuscles: SessionEntry['exercise']['primaryMuscles'],
+    secondaryMuscles: SessionEntry['exercise']['secondaryMuscles'],
+    doneAt: (number | null)[],
+  ): SessionEntry => ({
+    id,
+    firstSetAt: doneAt.find((m) => m !== null) ?? null,
+    exercise: { primaryMuscles, secondaryMuscles },
+    sets: doneAt.map((m) => ({ done: m !== null, doneAt: m })),
+  });
+  const dips = entry('dips', ['chest'], ['triceps'], [0, 3, 6, null]);
+  const curls = entry('curls', ['biceps'], ['forearms'], [10, 12, 14, 16]);
+
+  it('not started yet: every set validated so far on its primary muscles', () => {
+    const bench = entry('bench', ['chest'], ['triceps'], [null, null, null, null]);
+    expect(sessionPreFatigue(bench, [dips, curls, bench])).toEqual({ value: 3, muscles: ['chest'] });
+  });
+
+  it('started: only the sets validated before its first set count', () => {
+    const bench = entry('bench', ['chest'], ['triceps'], [4, 8, null, null]);
+    expect(sessionPreFatigue(bench, [dips, curls, bench]).value).toBe(2);
+  });
+});
+
+describe('targetsFromHistory', () => {
+  const { bench } = DIPS_THEN_BENCH;
+  const targets = (todayPreFatigue: number) =>
+    targetsFromHistory(bench.history, {
+      setCount: bench.sets,
+      repMin: bench.repMin,
+      repMax: bench.repMax,
+      known: bench.known,
+      step: DEFAULT_STEP[bench.equipment],
+      todayPreFatigue,
+    });
+
+  it('Développé couché after 3 sets of Dips: no +1; done first: +1', () => {
+    expect(targets(3)).toEqual(DIPS_THEN_BENCH.benchAfterDips);
+    expect(targets(0)).toEqual(DIPS_THEN_BENCH.benchFirst);
+  });
+
+  it('no history: no target', () => {
+    expect(targetsFromHistory([], { setCount: 4, repMin: 8, repMax: 12, known: [], step: 5, todayPreFatigue: 0 })).toBeNull();
   });
 });

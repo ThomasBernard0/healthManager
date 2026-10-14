@@ -15,6 +15,8 @@ const light = {
   accentLight: '#9CC4AE',
   onAccent: '#FFFFFF',
   over: '#B4510F',
+  /** No connection (crossed cloud during a session). */
+  warning: '#A8720F',
   protein: '#2F5D8A',
   carbs: '#C98A1B',
   fat: '#7A4E91',
@@ -48,6 +50,7 @@ const dark: typeof light = {
   accentLight: '#2F5C45',
   onAccent: '#0F1411',
   over: '#F0955A',
+  warning: '#E2B35C',
   protein: '#82AAD6',
   carbs: '#E2B35C',
   fat: '#BE97D4',

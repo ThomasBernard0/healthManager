@@ -30,6 +30,10 @@ import { ToastProvider } from '../../../core/ui/Toast'
 import HomePage from './HomePage'
 import ProgramPage from './ProgramPage'
 import WorkoutEditPage from './WorkoutEditPage'
+import { clearLocalSession, saveLocalSession } from '../offline/store'
+
+// Démarrer keeps the session on the device: none left for the next test.
+afterEach(() => clearLocalSession())
 
 vi.mock('../../../api/generated/endpoints/workouts/workouts', () => ({
   workoutsList: vi.fn(),
@@ -182,7 +186,6 @@ describe('Accueil', () => {
       workoutId: 'pull',
       workoutName: 'Pull',
       startedAt: '2026-10-10T08:00:00.000Z',
-      finishedAt: null,
       exercises: [],
     })
     const user = userEvent.setup()
@@ -210,6 +213,35 @@ describe('Accueil', () => {
     expect(within(card).getByText('Push A')).toBeInTheDocument()
     await user.click(within(card).getByRole('button', { name: 'Reprendre la séance' }))
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s9'))
+  })
+
+  it('a session kept on this device shows as Reprendre, even offline; the server is not asked', async () => {
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false)
+    vi.mocked(workoutsList).mockRejectedValue(new Error('offline'))
+    vi.mocked(programsList).mockRejectedValue(new Error('offline'))
+    await saveLocalSession({
+      id: 's5',
+      workoutId: 'pull',
+      workoutName: 'Pull',
+      startedAt: '2026-10-10T08:00:00.000Z',
+      exercises: [],
+    })
+    const user = userEvent.setup()
+    renderAt('/muscu')
+    const card = await screen.findByRole('region', { name: 'Séance en cours' })
+    expect(within(card).getByText('Pull')).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Reprendre la séance' }))
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/seance/s5'))
+    expect(sessionsCurrent).not.toHaveBeenCalled()
+    vi.restoreAllMocks()
+  })
+
+  it('Démarrer needs the connection', async () => {
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false)
+    vi.mocked(workoutsList).mockResolvedValue([summary('pull', 'Pull', 1, ['Rowing barre'], { isNext: true })])
+    renderAt('/muscu')
+    expect(await screen.findByRole('button', { name: 'Démarrer' })).toBeDisabled()
+    vi.restoreAllMocks()
   })
 
   it('lists Mes exercices (only those of the active program, once) and has no Exercices link', async () => {
@@ -489,7 +521,6 @@ describe('Modifier la séance', () => {
       workoutId: 'pull',
       workoutName: 'Pull',
       startedAt: '2026-10-11T08:00:00.000Z',
-      finishedAt: null,
       exercises: [],
     })
     const user = userEvent.setup()
