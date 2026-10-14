@@ -18,12 +18,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  color: var(--color-ink);
-  text-decoration: none;
-}
-
-.exercise:hover {
-  color: var(--color-ink);
 }
 
 .imageBox {

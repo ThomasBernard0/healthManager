@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { exercisesImage } from '../../api/generated/endpoints/exercises/exercises'
 
 export interface LoadedImage {
@@ -24,9 +24,16 @@ function load(exerciseId: string, imageVersion: string, key: string): Promise<vo
   return request
 }
 
+/**
+ * During a session: the pictures stored on the device with it, by exercise id. Inside it nothing is fetched
+ * (the session runs without the network).
+ */
+export const LocalImages = createContext<ReadonlyMap<string, LoadedImage> | null>(null)
+
 /** The exercise's picture, once loaded (null: none, or not there yet). */
 export function useExerciseImage(exerciseId: string, imageVersion: string | null): LoadedImage | null {
-  const key = imageVersion === null ? null : `${exerciseId}:${imageVersion}`
+  const local = useContext(LocalImages)
+  const key = imageVersion === null || local ? null : `${exerciseId}:${imageVersion}`
   const [, setLoads] = useState(0)
 
   useEffect(() => {
@@ -43,5 +50,6 @@ export function useExerciseImage(exerciseId: string, imageVersion: string | null
     }
   }, [exerciseId, imageVersion, key])
 
+  if (local) return imageVersion === null ? null : (local.get(exerciseId) ?? null)
   return key === null ? null : (loaded.get(key) ?? null)
 }

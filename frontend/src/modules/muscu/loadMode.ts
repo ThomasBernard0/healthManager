@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { SessionExerciseDto, SessionSetDto } from '../../api/generated/model'
+import type { SessionSetDto } from '../../api/generated/model'
+import type { ExerciseView } from './offline/localSession'
 
 /** How the weight of a bodyweight exercise is typed in a session: added load (Lest) or help from an assisted machine (Aide). */
 export type LoadMode = 'load' | 'assist'
@@ -32,7 +33,7 @@ export function setInMode(set: SessionSetDto, mode: LoadMode): SessionSetDto {
  * Mode of an exercise in its session (null: not a bodyweight exercise, no Lest | Aide control). One mode per
  * exercise per session: `choose` sets it once the user picked one.
  */
-export function useLoadMode(entry: SessionExerciseDto): [LoadMode | null, (mode: LoadMode | null) => void] {
+export function useLoadMode(entry: ExerciseView): [LoadMode | null, (mode: LoadMode | null) => void] {
   const [chosen, choose] = useState<LoadMode | null>(null)
   const mode = entry.exercise.equipment === 'bodyweight' ? (chosen ?? initialLoadMode(entry.sets)) : null
   return [mode, choose]

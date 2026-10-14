@@ -1,17 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseIntPipe,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Put,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -21,8 +8,8 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { SaveSetDto, StartSessionDto, UpdateSessionExerciseDto } from './dto/save-session.dto.js';
-import { CurrentSessionDto, SessionDto, SessionExerciseDto } from './dto/session.dto.js';
+import { FinishSessionDto, StartSessionDto } from './dto/save-session.dto.js';
+import { CurrentSessionDto, SessionBundleDto, SessionDto } from './dto/session.dto.js';
 import { SessionsService } from './sessions.service.js';
 
 @ApiTags('sessions')
@@ -37,13 +24,13 @@ export class SessionsController {
     return this.sessions.current();
   }
 
-  /** Démarrer a workout. */
+  /** Démarrer a workout: returns the bundle the phone runs the session from, without the network. */
   @Post()
-  @ApiCreatedResponse({ type: SessionDto })
+  @ApiCreatedResponse({ type: SessionBundleDto })
   @ApiNotFoundResponse()
   @ApiBadRequestResponse({ description: 'No exercise, or not in the active program' })
   @ApiConflictResponse({ description: 'A session is already in progress' })
-  start(@Body() dto: StartSessionDto): Promise<SessionDto> {
+  start(@Body() dto: StartSessionDto): Promise<SessionBundleDto> {
     return this.sessions.start(dto.workoutId);
   }
 
@@ -54,53 +41,23 @@ export class SessionsController {
     return this.sessions.get(id);
   }
 
-  /** Exercice en cours: sets with targets, last time, Facile. */
-  @Get(':id/exercises/:exerciseId')
-  @ApiOkResponse({ type: SessionExerciseDto })
-  @ApiNotFoundResponse()
-  getExercise(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('exerciseId', ParseUUIDPipe) exerciseId: string,
-  ): Promise<SessionExerciseDto> {
-    return this.sessions.getExercise(id, exerciseId);
-  }
-
-  /** Validates (✓) or reopens a set; saved after every set. */
-  @Put(':id/exercises/:exerciseId/sets/:index')
-  @ApiOkResponse({ type: SessionExerciseDto })
-  @ApiBadRequestResponse({ description: 'No value and no target' })
+  /** The bundle of a session in progress, to resume it on a device without its local copy. */
+  @Get(':id/bundle')
+  @ApiOkResponse({ type: SessionBundleDto })
   @ApiNotFoundResponse()
   @ApiConflictResponse({ description: 'Session already finished' })
-  saveSet(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('exerciseId', ParseUUIDPipe) exerciseId: string,
-    @Param('index', ParseIntPipe) index: number,
-    @Body() dto: SaveSetDto,
-  ): Promise<SessionExerciseDto> {
-    return this.sessions.saveSet(id, exerciseId, index, dto);
+  bundle(@Param('id', ParseUUIDPipe) id: string): Promise<SessionBundleDto> {
+    return this.sessions.bundle(id);
   }
 
-  /** Facile and/or Terminé. */
-  @Patch(':id/exercises/:exerciseId')
-  @ApiOkResponse({ type: SessionExerciseDto })
-  @ApiNotFoundResponse()
-  @ApiConflictResponse({ description: 'Session already finished' })
-  updateExercise(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('exerciseId', ParseUUIDPipe) exerciseId: string,
-    @Body() dto: UpdateSessionExerciseDto,
-  ): Promise<SessionExerciseDto> {
-    return this.sessions.updateExercise(id, exerciseId, dto);
-  }
-
-  /** Terminer la séance. */
+  /** Terminer la séance, with the whole session run on the phone. Already finished: 204 (a retry). */
   @Post(':id/finish')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
+  @ApiBadRequestResponse({ description: 'Not an exercise of the session, set index out of range, bad weight' })
   @ApiNotFoundResponse()
-  @ApiConflictResponse({ description: 'Session already finished' })
-  finish(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.sessions.finish(id);
+  finish(@Param('id', ParseUUIDPipe) id: string, @Body() dto: FinishSessionDto): Promise<void> {
+    return this.sessions.finish(id, dto);
   }
 
   /** Quitter la séance (discards it). */

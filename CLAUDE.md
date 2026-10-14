@@ -59,6 +59,7 @@ frontend/                React SPA
     core/modules.ts      module list + last module per device (launch opens it); core/ui/ModuleSwitcher in each top bar
     modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
     modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, supersets; spec docs/specs/musculation.md
+      offline/           the session in progress on the device (IndexedDB): bundle, images, pure session logic
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
@@ -142,8 +143,13 @@ After editing `shared/src`, rebuild it so the apps see the change.
   served by `GET /api/exercises/:id/image?v=<imageVersion>` (immutable cache). The frontend loads them through the
   generated client (`useExerciseImage`: blob → object URL, the access key can't go in an `<img src>`). Uploads
   (Créer / Modifier l'exercice) are resized to a JPEG on the device; an SVG (the old line drawings) is tinted with a CSS mask.
-- **PWA**: the service worker precaches the app shell only; `/api` is never cached (offline → "Chargement impossible").
+- **PWA**: the service worker precaches the app shell only; `/api` is never cached by it (offline → "Chargement impossible").
   It updates itself (`autoUpdate`). Not active in `vite` dev; test it on a build served by Nest.
+- **The séance runs without the network** (spec "Session without connection"): Démarrer returns a session bundle
+  (`POST /api/sessions`, or `GET /api/sessions/:id/bundle` to resume on another device) that the phone keeps in IndexedDB
+  with the exercise images (`modules/muscu/offline/`). The session screens read and write only that local copy (targets
+  computed with `shared/`); Terminer sends the whole session in one idempotent request. Only Démarrer, Terminer and
+  Quitter need the connection; the rest of `/api` is still never cached.
 - **All UI strings live in `frontend/src/i18n/fr.ts`** (French only, no helper/explanatory text);
   numbers via `core/format.ts` (`Intl.NumberFormat('fr-FR')`).
 

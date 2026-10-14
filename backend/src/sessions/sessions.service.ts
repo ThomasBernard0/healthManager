@@ -1,19 +1,12 @@
-import { parisToday, type Equipment } from '@healthmanager/shared';
+import { DEFAULT_STEP } from '@healthmanager/shared';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
 import { EXERCISE_INCLUDE, toExerciseDto } from '../exercises/exercises.service.js';
 import type { SessionSet } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { entryPreFatigue, ProgressionService } from './progression.service.js';
-import { SaveSetDto, UpdateSessionExerciseDto } from './dto/save-session.dto.js';
-import {
-  CurrentSessionDto,
-  ExerciseStatus,
-  LastTimeDto,
-  SessionDto,
-  SessionExerciseDto,
-  SessionSetDto,
-} from './dto/session.dto.js';
+import { FinishExerciseDto, FinishSessionDto } from './dto/save-session.dto.js';
+import { CurrentSessionDto, ExerciseStatus, SessionBundleDto, SessionDto, SessionSetDto } from './dto/session.dto.js';
 
 const SETS = { sets: { orderBy: { index: 'asc' } } } as const;
 const SESSION_INCLUDE = {
@@ -27,6 +20,7 @@ const toSetDto = (s: SessionSet): SessionSetDto => ({
   weight: s.weight === null ? null : num(s.weight),
   reps: s.reps,
   done: s.done,
+  doneAt: s.doneAt?.toISOString() ?? null,
 });
 
 function status(e: { completed: boolean; sets: { done: boolean }[] }): ExerciseStatus {
@@ -45,6 +39,42 @@ export function partnerOf<E extends Grouped>(entry: Grouped, entries: E[]): E | 
   return entries.find((e) => e.id !== entry.id && e.supersetGroup === entry.supersetGroup) ?? null;
 }
 
+/** An exercise of the session, as Terminer checks the body against it. */
+interface StoredEntry {
+  id: string;
+  exercise: { equipment: string };
+  sets: { index: number }[];
+}
+
+/**
+ * Checks what the phone sends against the session: its own exercises, each once; set indexes within the set
+ * count, each once; help (a negative weight) on bodyweight exercises only; a validated set with its values
+ * and time.
+ */
+export function checkFinish(sent: FinishExerciseDto[], stored: StoredEntry[]): void {
+  const seen = new Set<string>();
+  for (const e of sent) {
+    const entry = stored.find((s) => s.id === e.id);
+    if (!entry) throw new BadRequestException(`exercise ${e.id} is not in this session`);
+    if (seen.has(e.id)) throw new BadRequestException(`exercise ${e.id} is sent twice`);
+    seen.add(e.id);
+    const indexes = new Set<number>();
+    for (const set of e.sets) {
+      if (!entry.sets.some((s) => s.index === set.index)) {
+        throw new BadRequestException(`set index ${set.index} is out of range`);
+      }
+      if (indexes.has(set.index)) throw new BadRequestException(`set index ${set.index} is sent twice`);
+      indexes.add(set.index);
+      if (typeof set.weight === 'number' && set.weight < 0 && entry.exercise.equipment !== 'bodyweight') {
+        throw new BadRequestException('weight must not be negative (bodyweight exercises only)');
+      }
+      if (set.done && (set.weight == null || set.reps == null || set.doneAt == null)) {
+        throw new BadRequestException('a validated set needs weight, reps and doneAt');
+      }
+    }
+  }
+}
+
 @Injectable()
 export class SessionsService {
   constructor(
@@ -59,9 +89,9 @@ export class SessionsService {
 
   /**
    * Démarrer: one session at a time, workouts of the active program only; every exercise of the workout with the
-   * sets and rep range it has now (targets set on the first one).
+   * sets and rep range it has now. Returns the bundle the phone runs the session from.
    */
-  async start(workoutId: string): Promise<SessionDto> {
+  async start(workoutId: string): Promise<SessionBundleDto> {
     const open = await this.prisma.session.findFirst({ where: { finishedAt: null } });
     if (open) throw new ConflictException('A session is already in progress');
     const workout = await this.prisma.workout.findUnique({
@@ -87,7 +117,7 @@ export class SessionsService {
         },
       },
     });
-    return this.get(session.id);
+    return this.bundle(session.id);
   }
 
   async get(id: string): Promise<SessionDto> {
@@ -110,121 +140,102 @@ export class SessionsService {
   }
 
   /**
-   * Exercice en cours. Until its first set is validated, targets and pre-fatigue are computed live (the
-   * order of the exercises can still change); then they are frozen with the sets.
+   * The session bundle: the session in progress and, for each exercise, what the phone needs to compute its
+   * targets with the shared functions (history, known weights, step). Démarrer returns the same.
    */
-  async getExercise(sessionId: string, id: string): Promise<SessionExerciseDto> {
-    const session = await this.prisma.session.findUnique({ where: { id: sessionId }, include: SESSION_INCLUDE });
-    const entry = session?.exercises.find((e) => e.id === id);
-    if (!session || !entry) throw new NotFoundException('Session exercise not found');
-    const fatigue = entryPreFatigue(entry, session.exercises);
-    const frozen = entry.preFatigue !== null;
-    const live = frozen ? null : await this.targetsFor(sessionId, entry, fatigue.value);
+  async bundle(id: string): Promise<SessionBundleDto> {
+    const session = await this.prisma.session.findUnique({ where: { id }, include: SESSION_INCLUDE });
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.finishedAt) throw new ConflictException('Session already finished');
+    const exercises = await Promise.all(
+      session.exercises.map(async (e) => {
+        const [history, knownWeights] = await Promise.all([
+          this.progression.history(e.exerciseId),
+          this.progression.knownWeights(e.exerciseId),
+        ]);
+        return {
+          id: e.id,
+          exercise: toExerciseDto(e.exercise),
+          repMin: e.repMin,
+          repMax: e.repMax,
+          supersetGroup: e.supersetGroup,
+          easy: e.easy,
+          completed: e.completed,
+          sets: e.sets.map(toSetDto),
+          history,
+          knownWeights,
+          step: DEFAULT_STEP[e.exercise.equipment],
+        };
+      }),
+    );
     return {
-      id: entry.id,
-      sessionId: entry.sessionId,
+      id: session.id,
+      workoutId: session.workoutId,
       workoutName: session.workoutName,
-      exercise: toExerciseDto(entry.exercise),
-      repMin: entry.repMin,
-      repMax: entry.repMax,
-      easy: entry.easy,
-      completed: entry.completed,
-      sets: entry.sets.map((s, i) => ({
-        ...toSetDto(s),
-        ...(live ? { targetWeight: live[i]?.weight ?? null, targetReps: live[i]?.reps ?? null } : {}),
-      })),
-      preFatigue: frozen ? num(entry.preFatigue!) : fatigue.value,
-      fatiguedMuscles: fatigue.muscles,
-      lastTime: await this.lastTime(entry.exerciseId, entry.sessionId),
-      supersetGroup: entry.supersetGroup,
-      partnerId: partnerOf(entry, session.exercises)?.id ?? null,
+      startedAt: session.startedAt.toISOString(),
+      exercises,
     };
   }
 
-  /** ✓ on a set row (in order): empty values record the target; done = false reopens any row. */
-  async saveSet(sessionId: string, id: string, index: number, dto: SaveSetDto): Promise<SessionExerciseDto> {
-    let entry = await this.openEntry(sessionId, id);
-    const row = entry.sets.find((s) => s.index === index);
-    if (!row) throw new NotFoundException('Set not found');
-    // Help from an assisted machine (a negative weight) only exists on bodyweight exercises.
-    if (typeof dto.weight === 'number' && dto.weight < 0 && entry.exercise.equipment !== 'bodyweight') {
-      throw new BadRequestException('weight must not be negative (bodyweight exercises only)');
-    }
-    // New sets are validated in order; any done set can still be reopened, or saved again (Lest ↔ Aide).
-    if (dto.done && !row.done && entry.sets.some((s) => s.index < index && !s.done)) {
-      throw new BadRequestException('Validate the sets in order');
-    }
-    if (entry.preFatigue === null) entry = await this.freeze(sessionId, id);
-    const set = entry.sets.find((s) => s.index === index)!;
-
-    const now = new Date();
-    if (dto.done) {
-      const weight = dto.weight ?? (set.targetWeight === null ? null : num(set.targetWeight));
-      const reps = dto.reps ?? set.targetReps;
-      if (weight === null || reps === null) throw new BadRequestException('weight and reps are required (no target)');
-      // A set already done keeps its time: the order of the exercises doesn't change when it is corrected.
-      const doneAt = set.done && set.doneAt ? set.doneAt : now;
-      await this.prisma.sessionSet.update({ where: { id: set.id }, data: { weight, reps, done: true, doneAt } });
-    } else {
-      await this.prisma.sessionSet.update({
-        where: { id: set.id },
-        data: { weight: dto.weight ?? null, reps: dto.reps ?? null, done: false, doneAt: null },
-      });
-    }
-
-    // The real order of the exercises: the time of their first validated set.
-    const done = await this.prisma.sessionSet.findMany({
-      where: { sessionExerciseId: id, done: true },
-      orderBy: { doneAt: 'asc' },
-    });
-    await this.prisma.sessionExercise.update({
-      where: { id },
-      data: {
-        firstSetAt: done[0]?.doneAt ?? null,
-        ...(done.length === 0 ? { completed: false } : {}),
-      },
-    });
-    return this.getExercise(sessionId, id);
-  }
-
-  /** Facile and/or Terminé. */
-  async updateExercise(sessionId: string, id: string, dto: UpdateSessionExerciseDto): Promise<SessionExerciseDto> {
-    const entry = await this.openEntry(sessionId, id);
-    if (dto.completed && !entry.sets.some((s) => s.done)) {
-      throw new BadRequestException('Terminé needs at least one validated set');
-    }
-    await this.prisma.sessionExercise.update({
-      where: { id },
-      data: {
-        ...(dto.easy !== undefined ? { easy: dto.easy } : {}),
-        ...(dto.completed !== undefined ? { completed: dto.completed } : {}),
-      },
-    });
-    return this.getExercise(sessionId, id);
-  }
-
   /**
-   * Terminer la séance: exercises with no validated set are dropped (a session with none is discarded).
-   * An exercise whose superset partner was dropped was done solo.
+   * Terminer la séance with the whole session run on the phone, in one transaction: the sets, Facile and
+   * Terminé are stored; the real order (first set of each exercise) and the pre-fatigue come from doneAt; then
+   * exercises with no validated set are dropped (a session with none is discarded) and an exercise whose
+   * superset partner was dropped was done solo. Already finished: nothing to do (a retry after a lost response).
    */
-  async finish(id: string): Promise<void> {
-    const session = await this.prisma.session.findUnique({ where: { id } });
-    if (!session) throw new NotFoundException('Session not found');
-    if (session.finishedAt) throw new ConflictException('Session already finished');
-    await this.prisma.sessionExercise.deleteMany({ where: { sessionId: id, sets: { none: { done: true } } } });
-    const left = await this.prisma.sessionExercise.findMany({
-      where: { sessionId: id },
-      select: { id: true, supersetGroup: true },
+  async finish(id: string, dto: FinishSessionDto): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const session = await tx.session.findUnique({
+        where: { id },
+        include: { exercises: { include: { exercise: true, ...SETS } } },
+      });
+      if (!session) throw new NotFoundException('Session not found');
+      if (session.finishedAt) return;
+      checkFinish(dto.exercises, session.exercises);
+
+      for (const sent of dto.exercises) {
+        const entry = session.exercises.find((e) => e.id === sent.id)!;
+        for (const set of sent.sets) {
+          await tx.sessionSet.update({
+            where: { id: entry.sets.find((s) => s.index === set.index)!.id },
+            data: {
+              targetWeight: set.targetWeight ?? null,
+              targetReps: set.targetReps ?? null,
+              weight: set.weight ?? null,
+              reps: set.reps ?? null,
+              done: set.done,
+              doneAt: set.done ? new Date(set.doneAt!) : null,
+            },
+          });
+        }
+      }
+
+      const stored = await tx.sessionExercise.findMany({ where: { sessionId: id }, include: { exercise: true, ...SETS } });
+      const entries = stored.map((e) => {
+        const times = e.sets.filter((s) => s.done && s.doneAt).map((s) => s.doneAt!.getTime());
+        return { ...e, firstSetAt: times.length > 0 ? new Date(Math.min(...times)) : null };
+      });
+      const left = entries.filter((e) => e.firstSetAt !== null);
+      if (left.length === 0) {
+        await tx.session.delete({ where: { id } });
+        return;
+      }
+      for (const entry of left) {
+        const sent = dto.exercises.find((e) => e.id === entry.id);
+        await tx.sessionExercise.update({
+          where: { id: entry.id },
+          data: {
+            firstSetAt: entry.firstSetAt,
+            preFatigue: entryPreFatigue(entry, entries).value,
+            ...(sent ? { easy: sent.easy, completed: sent.completed } : {}),
+          },
+        });
+      }
+      await tx.sessionExercise.deleteMany({ where: { sessionId: id, id: { notIn: left.map((e) => e.id) } } });
+      const alone = left.filter((e) => e.supersetGroup !== null && !partnerOf(e, left)).map((e) => e.id);
+      await tx.sessionExercise.updateMany({ where: { id: { in: alone } }, data: { supersetGroup: null } });
+      await tx.session.update({ where: { id }, data: { finishedAt: new Date() } });
     });
-    if (left.length === 0) {
-      await this.prisma.session.delete({ where: { id } });
-      return;
-    }
-    const alone = left.filter((e) => e.supersetGroup !== null && !partnerOf(e, left)).map((e) => e.id);
-    await this.prisma.$transaction([
-      this.prisma.sessionExercise.updateMany({ where: { id: { in: alone } }, data: { supersetGroup: null } }),
-      this.prisma.session.update({ where: { id }, data: { finishedAt: new Date() } }),
-    ]);
   }
 
   /** Quitter la séance: discards it. */
@@ -232,76 +243,5 @@ export class SessionsService {
     const session = await this.prisma.session.findUnique({ where: { id } });
     if (!session) throw new NotFoundException('Session not found');
     await this.prisma.session.delete({ where: { id } });
-  }
-
-  /** First set of an exercise: its pre-fatigue and the targets of every set are fixed now. */
-  private async freeze(sessionId: string, id: string) {
-    const session = await this.prisma.session.findUniqueOrThrow({ where: { id: sessionId }, include: SESSION_INCLUDE });
-    const entry = session.exercises.find((e) => e.id === id)!;
-    const fatigue = entryPreFatigue(entry, session.exercises);
-    const targets = await this.targetsFor(sessionId, entry, fatigue.value);
-    await this.prisma.$transaction([
-      this.prisma.sessionExercise.update({ where: { id }, data: { preFatigue: fatigue.value } }),
-      ...entry.sets.map((s, i) =>
-        this.prisma.sessionSet.update({
-          where: { id: s.id },
-          data: { targetWeight: targets?.[i]?.weight ?? null, targetReps: targets?.[i]?.reps ?? null },
-        }),
-      ),
-    ]);
-    return this.openEntry(sessionId, id);
-  }
-
-  private targetsFor(
-    sessionId: string,
-    entry: {
-      exerciseId: string;
-      repMin: number;
-      repMax: number;
-      supersetGroup: string | null;
-      sets: unknown[];
-      exercise: { equipment: Equipment };
-    },
-    todayPreFatigue: number,
-  ) {
-    return this.progression.targets({
-      exerciseId: entry.exerciseId,
-      equipment: entry.exercise.equipment,
-      setCount: entry.sets.length,
-      repMin: entry.repMin,
-      repMax: entry.repMax,
-      todayPreFatigue,
-      todayInSuperset: entry.supersetGroup !== null,
-      sessionId,
-    });
-  }
-
-  private async openEntry(sessionId: string, id: string) {
-    const entry = await this.prisma.sessionExercise.findFirst({
-      where: { id, sessionId },
-      include: { session: true, exercise: { select: { equipment: true } }, ...SETS },
-    });
-    if (!entry) throw new NotFoundException('Session exercise not found');
-    if (entry.session.finishedAt) throw new ConflictException('Session already finished');
-    return entry;
-  }
-
-  /** The validated sets of the last finished session with this exercise (other than this one). */
-  private async lastTime(exerciseId: string, sessionId: string): Promise<LastTimeDto | null> {
-    const last = await this.prisma.sessionExercise.findFirst({
-      where: {
-        exerciseId,
-        sessionId: { not: sessionId },
-        session: { finishedAt: { not: null } },
-        sets: { some: { done: true } },
-      },
-      orderBy: { session: { finishedAt: 'desc' } },
-      include: { session: true, sets: { where: { done: true }, orderBy: { index: 'asc' } } },
-    });
-    if (!last?.session.finishedAt) return null;
-    return {
-      date: parisToday(last.session.finishedAt),
-      sets: last.sets.map((s) => ({ weight: num(s.weight!), reps: s.reps! })),
-    };
   }
 }

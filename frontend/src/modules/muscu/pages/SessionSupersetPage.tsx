@@ -1,17 +1,9 @@
 import { interleaveSets } from '@healthmanager/shared'
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
-import {
-  sessionsGetExercise,
-  sessionsSaveSet,
-  sessionsUpdateExercise,
-} from '../../../api/generated/endpoints/sessions/sessions'
-import type { SessionExerciseDto } from '../../../api/generated/model'
-import { invalidateData } from '../../../core/dataVersion'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmSheet } from '../../../core/ui/ConfirmSheet'
 import { ChevronLeft } from '../../../core/ui/icons'
 import { useToast } from '../../../core/ui/toastContext'
-import { useAsync } from '../../../core/useAsync'
 import { fr } from '../../../i18n/fr'
 import { EasyToggle } from '../components/EasyToggle'
 import { ExerciseImage } from '../components/ExerciseImage'
@@ -21,47 +13,44 @@ import { SetRow, SetTable } from '../components/SetTable'
 import { SupersetBadge } from '../components/SupersetBadge'
 import { formatSessionDate, formatSets } from '../format'
 import { setInMode, setsToFlip, signedWeight, useLoadMode, type LoadMode } from '../loadMode'
-import { exercisePath, MUSCU_PATH, sessionExercisePath, sessionPath } from '../routes'
+import {
+  exerciseView,
+  saveSet as saveLocalSet,
+  updateExercise,
+  type ExerciseView,
+  type LocalSession,
+} from '../offline/localSession'
+import { SessionImages } from '../offline/SessionImages'
+import { updateLocalSession, useLocalSession } from '../offline/store'
+import { sessionExercisePath, sessionPath } from '../routes'
 import page from './page.module.css'
 import common from './SessionExercisePage.module.css'
 import styles from './SessionSupersetPage.module.css'
 
-/** The two exercises of the superset: a (first in the workout) and b. */
-interface Pair {
-  a: SessionExerciseDto
-  b: SessionExerciseDto | null
-}
-
 const LETTERS = { a: 'A', b: 'B' } as const
 
-/** Superset en cours: the sets of two exercises done alternately (A1, B1, A2…), opened by the first one. */
+/** Superset en cours: the sets of two exercises done alternately (A1, B1, A2…), opened by the first one. Local copy only. */
 export default function SessionSupersetPage() {
   const { sessionId = '', entryId = '' } = useParams()
-  const loaded = useAsync(async (): Promise<Pair> => {
-    const a = await sessionsGetExercise(sessionId, entryId)
-    return { a, b: a.partnerId ? await sessionsGetExercise(sessionId, a.partnerId) : null }
-  }, `${sessionId}/${entryId}`)
-  // Each save returns the updated exercise.
-  const [latest, setLatest] = useState<Pair | null>(null)
-  const fresh = loaded.data?.a.id === entryId ? loaded.data : undefined
-  const data = latest?.a.id === entryId ? latest : fresh
+  const local = useLocalSession()
+  const a = local?.id === sessionId ? exerciseView(local, entryId) : null
+  const b = local && a?.partnerId ? exerciseView(local, a.partnerId) : null
 
-  if (loaded.status === 'error' && !data) {
-    // Finished or discarded meanwhile (another device): nothing to log here any more.
-    return <Navigate to={MUSCU_PATH} replace />
-  }
-  // Not in a superset (any more): the usual screen.
-  if (data && !data.b) return <Navigate to={sessionExercisePath(sessionId, entryId)} replace />
-  return <MuscuLayout>{data?.b && <Logger a={data.a} b={data.b} onSaved={setLatest} />}</MuscuLayout>
+  if (local === undefined) return <MuscuLayout>{null}</MuscuLayout>
+  // Not on this device (or not in the session): the list loads it, or goes back to Accueil.
+  if (!a) return <Navigate to={sessionPath(sessionId)} replace />
+  // Not in a superset: the usual screen.
+  if (!b) return <Navigate to={sessionExercisePath(sessionId, entryId)} replace />
+  return (
+    <MuscuLayout>
+      <SessionImages>
+        <Logger a={a} b={b} />
+      </SessionImages>
+    </MuscuLayout>
+  )
 }
 
-interface LoggerProps {
-  a: SessionExerciseDto
-  b: SessionExerciseDto
-  onSaved: (pair: Pair) => void
-}
-
-function Logger({ a, b, onSaved }: LoggerProps) {
+function Logger({ a, b }: { a: ExerciseView; b: ExerciseView }) {
   const navigate = useNavigate()
   const location = useLocation()
   const toast = useToast()
@@ -81,15 +70,11 @@ function Logger({ a, b, onSaved }: LoggerProps) {
 
   const toList = () => (location.key !== 'default' ? navigate(-1) : navigate(sessionPath(a.sessionId)))
 
-  /** Saves one exercise; the other one is read again while its targets are still live (nothing validated yet). */
-  async function run(which: 'a' | 'b', action: (entry: SessionExerciseDto) => Promise<SessionExerciseDto>): Promise<boolean> {
+  /** Every change is written to the device (no network). */
+  async function run(change: (session: LocalSession) => LocalSession): Promise<boolean> {
     setBusy(true)
     try {
-      const saved = await action(entries[which])
-      const other = which === 'a' ? b : a
-      const refreshed = other.sets.some((s) => s.done) ? other : await sessionsGetExercise(other.sessionId, other.id)
-      onSaved(which === 'a' ? { a: saved, b: refreshed } : { a: refreshed, b: saved })
-      invalidateData()
+      await updateLocalSession(change)
       return true
     } catch {
       toast({ message: fr.common.saveError })
@@ -99,54 +84,39 @@ function Logger({ a, b, onSaved }: LoggerProps) {
     }
   }
 
-  const saveSet = (which: 'a' | 'b', index: number, weight: number | null, reps: number | null, done: boolean) =>
-    run(which, (entry) => {
-      const mode = modes[which]
-      return sessionsSaveSet(entry.sessionId, entry.id, index, {
-        weight: weight === null || mode === null ? weight : signedWeight(weight, mode),
-        reps,
-        done,
-      })
-    })
+  const saveSet = (which: 'a' | 'b', index: number, weight: number | null, reps: number | null, done: boolean) => {
+    const mode = modes[which]
+    return run((session) =>
+      saveLocalSet(
+        session,
+        entries[which].id,
+        index,
+        { weight: weight === null || mode === null ? weight : signedWeight(weight, mode), reps, done },
+      ),
+    )
+  }
 
   /** Lest ↔ Aide: the sets already logged for that exercise are saved again with the other sign. */
   async function switchMode(which: 'a' | 'b', next: LoadMode) {
     choose[which](next)
     const logged = setsToFlip(entries[which].sets, next)
     if (logged.length === 0) return
-    const saved = await run(which, async (entry) => {
-      let latest = entry
-      for (const { index, weight, reps } of logged) {
-        latest = await sessionsSaveSet(entry.sessionId, entry.id, index, { weight, reps, done: true })
-      }
-      return latest
-    })
+    const id = entries[which].id
+    const saved = await run((session) =>
+      logged.reduce((s, { index, weight, reps }) => saveLocalSet(s, id, index, { weight, reps, done: true }), session),
+    )
     if (!saved) choose[which](null)
   }
 
   const setEasy = (which: 'a' | 'b', easy: boolean) =>
-    run(which, (entry) => sessionsUpdateExercise(entry.sessionId, entry.id, { easy }))
+    run((session) => updateExercise(session, entries[which].id, { easy }))
 
   /** Terminé (every set done) or, after confirmation, earlier: each exercise with a validated set is completed. */
   async function complete() {
-    setBusy(true)
-    try {
-      const [doneA, doneB] = await Promise.all(
-        [a, b].map((entry) =>
-          entry.completed || !entry.sets.some((s) => s.done)
-            ? entry
-            : sessionsUpdateExercise(entry.sessionId, entry.id, { completed: true }),
-        ),
-      )
-      onSaved({ a: doneA, b: doneB })
-      invalidateData()
-    } catch {
-      toast({ message: fr.common.saveError })
-      return
-    } finally {
-      setBusy(false)
-    }
-    toList()
+    const saved = await run((session) =>
+      [a, b].reduce((s, entry) => updateExercise(s, entry.id, { completed: entry.completed || entry.sets.some((x) => x.done) }), session),
+    )
+    if (saved) toList()
   }
 
   return (
@@ -162,7 +132,7 @@ function Logger({ a, b, onSaved }: LoggerProps) {
         {(['a', 'b'] as const).map((which) => {
           const entry = entries[which]
           return (
-            <Link key={entry.id} to={exercisePath(entry.exercise.id)} className={styles.exercise}>
+            <div key={entry.id} className={styles.exercise}>
               <span className={styles.imageBox}>
                 <ExerciseImage exercise={entry.exercise} className={styles.image} />
                 <span className={styles.imageBadge}>
@@ -173,7 +143,7 @@ function Logger({ a, b, onSaved }: LoggerProps) {
                 <span className={styles.exerciseName}>{entry.exercise.name}</span>
                 <span className={styles.scheme}>{fr.muscu.setsReps(entry.sets.length, entry.repMin, entry.repMax)}</span>
               </span>
-            </Link>
+            </div>
           )
         })}
       </div>

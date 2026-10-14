@@ -6,11 +6,10 @@
  */
 import type {
   CurrentSessionDto,
-  SaveSetDto,
+  FinishSessionDto,
+  SessionBundleDto,
   SessionDto,
-  SessionExerciseDto,
-  StartSessionDto,
-  UpdateSessionExerciseDto
+  StartSessionDto
 } from '../../model';
 
 import { apiClient } from '../../../http';
@@ -29,8 +28,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     }
   export const sessionsStart = (
     startSessionDto: StartSessionDto,
- options?: SecondParameter<typeof apiClient<SessionDto>>,) => {
-      return apiClient<SessionDto>(
+ options?: SecondParameter<typeof apiClient<SessionBundleDto>>,) => {
+      return apiClient<SessionBundleDto>(
       {url: `/api/sessions`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: startSessionDto
@@ -53,45 +52,22 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     },
       options);
     }
-  export const sessionsGetExercise = (
+  export const sessionsBundle = (
     id: string,
-    exerciseId: string,
- options?: SecondParameter<typeof apiClient<SessionExerciseDto>>,) => {
-      return apiClient<SessionExerciseDto>(
-      {url: `/api/sessions/${id}/exercises/${exerciseId}`, method: 'GET'
-    },
-      options);
-    }
-  export const sessionsUpdateExercise = (
-    id: string,
-    exerciseId: string,
-    updateSessionExerciseDto: UpdateSessionExerciseDto,
- options?: SecondParameter<typeof apiClient<SessionExerciseDto>>,) => {
-      return apiClient<SessionExerciseDto>(
-      {url: `/api/sessions/${id}/exercises/${exerciseId}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: updateSessionExerciseDto
-    },
-      options);
-    }
-  export const sessionsSaveSet = (
-    id: string,
-    exerciseId: string,
-    index: number,
-    saveSetDto: SaveSetDto,
- options?: SecondParameter<typeof apiClient<SessionExerciseDto>>,) => {
-      return apiClient<SessionExerciseDto>(
-      {url: `/api/sessions/${id}/exercises/${exerciseId}/sets/${index}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: saveSetDto
+ options?: SecondParameter<typeof apiClient<SessionBundleDto>>,) => {
+      return apiClient<SessionBundleDto>(
+      {url: `/api/sessions/${id}/bundle`, method: 'GET'
     },
       options);
     }
   export const sessionsFinish = (
     id: string,
+    finishSessionDto: FinishSessionDto,
  options?: SecondParameter<typeof apiClient<void>>,) => {
       return apiClient<void>(
-      {url: `/api/sessions/${id}/finish`, method: 'POST'
+      {url: `/api/sessions/${id}/finish`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: finishSessionDto
     },
       options);
     }
@@ -99,7 +75,5 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 export type SessionsStartResult = NonNullable<Awaited<ReturnType<typeof sessionsStart>>>
 export type SessionsGetResult = NonNullable<Awaited<ReturnType<typeof sessionsGet>>>
 export type SessionsRemoveResult = NonNullable<Awaited<ReturnType<typeof sessionsRemove>>>
-export type SessionsGetExerciseResult = NonNullable<Awaited<ReturnType<typeof sessionsGetExercise>>>
-export type SessionsUpdateExerciseResult = NonNullable<Awaited<ReturnType<typeof sessionsUpdateExercise>>>
-export type SessionsSaveSetResult = NonNullable<Awaited<ReturnType<typeof sessionsSaveSet>>>
+export type SessionsBundleResult = NonNullable<Awaited<ReturnType<typeof sessionsBundle>>>
 export type SessionsFinishResult = NonNullable<Awaited<ReturnType<typeof sessionsFinish>>>

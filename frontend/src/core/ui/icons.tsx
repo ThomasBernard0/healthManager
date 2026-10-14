@@ -155,3 +155,12 @@ export const LinkOff = (p: IconProps) => (
     <path d="M4 4l16 16" />
   </Icon>
 )
+
+/** Crossed cloud (no connection). */
+export const CloudOff = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2 2l20 20" />
+    <path d="M5.8 8.6A6 6 0 0 0 7 20h10.5" />
+    <path d="M20.7 17.3A4 4 0 0 0 17.5 11h-1A7 7 0 0 0 9.9 6.4" />
+  </Icon>
+)

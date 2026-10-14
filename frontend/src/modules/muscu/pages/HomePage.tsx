@@ -4,19 +4,21 @@ import { exercisesList } from '../../../api/generated/endpoints/exercises/exerci
 import { programsList } from '../../../api/generated/endpoints/programs/programs'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
-import type { ExerciseDto, ProgramSummaryDto, SessionDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import type { ExerciseDto, ProgramSummaryDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
 import { ChevronRight, Play, Plus } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
 import { useIsDesktop } from '../../../core/useIsDesktop'
+import { useOnline } from '../../../core/useOnline'
 import { useOverlayParam } from '../../../core/useOverlayParam'
 import { fr } from '../../../i18n/fr'
 import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { NewProgramSheet, ProgramRows, WorkoutRows } from '../components/ProgramLists'
 import { formatSessionDate, formatTargets } from '../format'
+import { useLocalSession } from '../offline/store'
 import { NEW_WORKOUT_PATH, programPath, sessionPath } from '../routes'
 import { useStartSession } from '../useStartSession'
 import page from './page.module.css'
@@ -31,11 +33,21 @@ export default function HomePage() {
   const version = useDataVersion()
   const workouts = useAsync(() => workoutsList(), `workouts#${version}`)
   const programs = useAsync(() => programsList(), `programs#${version}`)
-  const current = useAsync(() => sessionsCurrent(), `current#${version}`)
+  // A session in progress on this device comes first (it works offline); else the one on the server, if any.
+  const local = useLocalSession()
+  const current = useAsync(
+    () => (local === null ? sessionsCurrent() : Promise.resolve({ session: null })),
+    `current#${version}#${local === null}`,
+  )
   const next = workouts.data?.find((w) => w.isNext)
-  const inProgress = current.data?.session ?? null
+  const server = current.data?.session
+  const inProgress: InProgress | null = local
+    ? { id: local.id, workoutName: local.workoutName, exercises: local.exercises.map((e) => e.exercise.name) }
+    : server
+      ? { id: server.id, workoutName: server.workoutName, exercises: server.exercises.map((e) => e.exercise.name) }
+      : null
   // Wait for both, so Démarrer never starts a second session.
-  const ready = workouts.data && current.data
+  const ready = workouts.data && local !== undefined && (local || current.data)
   const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
   const mine = exercises.data ?? []
 
@@ -61,6 +73,7 @@ export default function HomePage() {
     return (
       <MuscuLayout width="wide">
         {error}
+        {local && !loaded && <NextCard workout={undefined} inProgress={inProgress} desktop />}
         {loaded && (
           <div className={styles.columns}>
             {/* Left: what to do next, then the programs. Right: my exercises. */}
@@ -81,6 +94,7 @@ export default function HomePage() {
     <MuscuLayout>
       <ModuleSwitcher current="muscu" />
       {error}
+      {local && !loaded && <NextCard workout={undefined} inProgress={inProgress} />}
       {loaded && (
         <>
           {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} />}
@@ -173,20 +187,28 @@ function MyExercises({ exercises }: { exercises: ExerciseDto[] }) {
   )
 }
 
+/** The session in progress: its workout and the names of its exercises. */
+interface InProgress {
+  id: string
+  workoutName: string
+  exercises: string[]
+}
+
 interface NextCardProps {
   workout: WorkoutSummaryDto | undefined
   /** A session in progress replaces the next workout: Reprendre. */
-  inProgress: SessionDto | null
+  inProgress: InProgress | null
   desktop?: boolean
 }
 
 function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
   const navigate = useNavigate()
   const { start, status } = useStartSession()
+  const online = useOnline()
   const name = inProgress ? inProgress.workoutName : workout!.name
   // Targets: the next workout only (desktop list).
   const exercises = inProgress
-    ? inProgress.exercises.map((e) => ({ name: e.exercise.name, targets: null }))
+    ? inProgress.exercises.map((name) => ({ name, targets: null }))
     : workout!.exercises
   return (
     <section className={styles.nextCard} aria-label={inProgress ? fr.muscu.home.inProgress : fr.muscu.home.next}>
@@ -209,15 +231,16 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
       ) : (
         <div className={styles.nextExercises}>{exercises.map((e) => e.name).join(', ')}</div>
       )}
-      {status === 'error' && (
+      {(status === 'error' || status === 'offline') && (
         <div className={form.error} role="alert">
-          {fr.common.saveError}
+          {status === 'offline' ? fr.common.noConnection : fr.common.saveError}
         </div>
       )}
       <button
         type="button"
         className={styles.start}
-        disabled={status === 'busy' || (!inProgress && workout!.exercises.length === 0)}
+        // Démarrer needs the connection; Reprendre a session kept on this device doesn't.
+        disabled={status === 'busy' || (!inProgress && (!online || workout!.exercises.length === 0))}
         onClick={() => (inProgress ? navigate(sessionPath(inProgress.id)) : start(workout!.id))}
       >
         <Play />

@@ -23,4 +23,9 @@ export interface SessionSetDto {
   /** @nullable */
   reps: number | null;
   done: boolean;
+  /**
+   * When ✓ was tapped
+   * @nullable
+   */
+  doneAt: string | null;
 }

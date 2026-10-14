@@ -25,6 +25,12 @@
   background: var(--color-divider);
 }
 
+.iconButton:disabled {
+  color: var(--color-border-strong);
+  background: transparent;
+  cursor: default;
+}
+
 .accentButton {
   composes: iconButton;
   color: var(--color-accent);
