@@ -28,7 +28,8 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ```
 shared/                  @healthmanager/shared — pure TS, no deps (nutrients, per-portion ⇄ per-100 g, calendar/weeks, goals,
                          musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
-                         supersets: interleaveSets, blocks, superset context; assistance: negative weights, ASSIST_STEP, chartBarValue)
+                         supersets: interleaveSets, blocks, superset context; assistance: negative weights, ASSIST_STEP, chartBarValue;
+                         finances: financeTotals, categoryShare, restRingFraction, parseEurosToCents)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API
   prisma/                schema.prisma + migrations/
@@ -60,6 +61,8 @@ frontend/                React SPA
     modules/food/        Alimentation module: pages/, components/, scanner/, routes.ts
     modules/muscu/       Musculation module (/muscu/*): programs (one active) of séances in rotation, supersets; spec docs/specs/musculation.md
       offline/           the session in progress on the device (IndexedDB): bundle, images, pure session logic
+    modules/finance/     Finances module (/finances): Mon mois (a typical month of income/expense lines, Reste = Entrées − Dépenses),
+                         FinanceLineSheet (Ajouter / Modifier, modal routes); spec docs/specs/finances.md
 design/                  Claude Design handoff mockups (read-only)
 docs/specs/              feature specs
 .railway/railway.ts      Railway infrastructure as code (services, Postgres, variables, build/start/healthcheck)
@@ -127,7 +130,8 @@ After editing `shared/src`, rebuild it so the apps see the change.
 - **Domain maths live in `shared/`** (nutrient sums, week = Monday→Monday in Europe/Paris, goal for a date)
   and are used by both apps — never re-implement them in a component or a service.
 - Dates are Europe/Paris local `YYYY-MM-DD` strings (Postgres `date`), times are `HH:mm`. kcal are integers,
-  macros are grams to 0.1 g (`Decimal`); round only in the UI.
+  macros are grams to 0.1 g (`Decimal`); round only in the UI. Money is integer cents (`amountCents`), shown with
+  `formatEuros` ("850 €", "86,40 €"). An expense line has a category, an income none (API + DB `CHECK`).
 - **Desktop (≥ 1024 px)**: same routes and data; components switch layout with `useIsDesktop()`.
   Sheets use search params (`?ajout=…`, back button closes them); Nouveau repas, Mon objectif, Mes repas
   (Gérer) and Modifier le repas are modal routes opened with `state.background` (`ModalFrame`: centred dialog on desktop, bottom sheet on mobile). After a change

@@ -19,6 +19,7 @@ export const fr = {
   modules: {
     food: 'Alimentation',
     muscu: 'Musculation',
+    finance: 'Finances',
     switch: 'Changer de module',
   },
   muscu: {
@@ -374,5 +375,30 @@ export const fr = {
     proteinPerDay: 'Protéines par jour',
     fatPerDay: 'Lipides par jour',
     carbsPerDay: 'Glucides par jour, calculés',
+  },
+  finance: {
+    income: 'Entrées',
+    expenses: 'Dépenses',
+    rest: 'Reste',
+    restPerMonth: 'reste / mois',
+    add: 'Ajouter',
+    addTitle: 'Ajouter',
+    editTitle: 'Modifier',
+    kind: 'Type',
+    expense: 'Dépense',
+    incomeKind: 'Entrée',
+    name: 'Nom',
+    amount: 'Montant',
+    euro: '€',
+    category: 'Catégorie',
+    categories: {
+      housing: 'Logement',
+      subscriptions: 'Abonnements',
+      savings: 'Épargne',
+      other: 'Autre',
+    },
+    delete: 'Supprimer',
+    deleted: 'Ligne supprimée',
+    undo: 'Annuler',
   },
 } as const

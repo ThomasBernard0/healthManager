@@ -1,5 +1,6 @@
 export * from './barcode.js';
 export * from './calendar.js';
+export * from './finances.js';
 export * from './goals.js';
 export * from './muscu.js';
 export * from './nutrients.js';

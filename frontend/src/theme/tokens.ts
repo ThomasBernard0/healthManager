@@ -35,6 +35,10 @@ const light = {
   onCamera: '#FFFFFF',
   /** Behind text laid over a photo (muscle pills on an exercise image). */
   overlay: 'rgba(255, 255, 255, 0.85)',
+  /** Finances categories (Épargne uses the accent). */
+  financeHousing: '#3D6E9E',
+  financeSubscriptions: '#7E5BA6',
+  financeOther: '#7C867F',
 }
 
 /** Dark theme: same roles, values tuned for contrast on a dark ground. */
@@ -68,6 +72,9 @@ const dark: typeof light = {
   cameraFrame: 'rgba(255, 255, 255, 0.9)',
   onCamera: '#FFFFFF',
   overlay: 'rgba(15, 20, 17, 0.75)',
+  financeHousing: '#82AAD6',
+  financeSubscriptions: '#B79CDB',
+  financeOther: '#9AA59F',
 }
 
 export const tokens = {
@@ -204,6 +211,17 @@ export const tokens = {
     supersetImage: '96px',
     /** Lest | Aide control of a bodyweight exercise. */
     loadSegment: '30px',
+    /** Finances: Reste ring, desktop summary column, legend columns, category squares. */
+    ringFinance: '172px',
+    ringFinanceDesktop: '220px',
+    financeSummary: '420px',
+    financeSummaryMin: '340px',
+    financeColumn: '240px',
+    legendShare: '44px',
+    legendAmount: '84px',
+    categorySquare: '10px',
+    categorySquareSmall: '8px',
+    categoryPill: '36px',
   },
 } as const
 

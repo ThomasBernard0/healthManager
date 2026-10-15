@@ -1,5 +1,7 @@
 import {
+  eurosInput,
   formatDayTitle,
+  formatEuros,
   formatDecimal,
   formatInt,
   formatLongDate,
@@ -50,5 +52,16 @@ describe('week formats', () => {
     expect(formatWeekTitle('2026-09-28', '2026-10-05')).toBe('Semaine dernière')
     expect(formatWeekTitle('2026-10-12', '2026-10-05')).toBe('Semaine prochaine')
     expect(formatWeekTitle('2026-09-21', '2026-10-05')).toBe('Semaine du 21 septembre')
+  })
+
+  it('formats euros with decimals only when they are not zero', () => {
+    expect([85_000, 8_640, 146_260, 1_350].map((c) => nbsp(formatEuros(c)))).toEqual([
+      '850 €',
+      '86,40 €',
+      '1 462,60 €',
+      '13,50 €',
+    ])
+    expect(nbsp(formatEuros(-20_050))).toBe('−200,50 €')
+    expect([1_300, 8_640, 123_456].map(eurosInput)).toEqual(['13', '86,40', '1234,56'])
   })
 })

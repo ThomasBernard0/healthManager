@@ -9,19 +9,23 @@ interface RingProps {
   value: number
   /** null when no target is set: the ring stays empty. */
   target: number | null
+  /** Forces the "over" colour (Finances: negative Reste). Default: value > target. */
+  over?: boolean
   /** "desktop" is larger with a thinner stroke. */
   variant?: 'mobile' | 'desktop'
+  /** Overrides the size (Finances). */
+  className?: string
   children: ReactNode
 }
 
 /** Progress ring: fills with what was eaten; turns "over" colour past the target. */
-export function Ring({ value, target, variant = 'mobile', children }: RingProps) {
+export function Ring({ value, target, over, variant = 'mobile', className, children }: RingProps) {
   const fraction = target && target > 0 ? Math.min(Math.max(value / target, 0), 1) : 0
-  const over = target !== null && value > target
+  const isOver = over ?? (target !== null && value > target)
   const strokeWidth = variant === 'desktop' ? 12 : 14
 
   return (
-    <div className={`${styles.ring} ${variant === 'desktop' ? styles.desktop : ''}`}>
+    <div className={`${styles.ring} ${variant === 'desktop' ? styles.desktop : ''} ${className ?? ''}`}>
       <svg viewBox="0 0 160 160" className={styles.svg} aria-hidden="true">
         <circle cx="80" cy="80" r={R} className={styles.track} strokeWidth={strokeWidth} />
         {fraction > 0 && (
@@ -29,7 +33,7 @@ export function Ring({ value, target, variant = 'mobile', children }: RingProps)
             cx="80"
             cy="80"
             r={R}
-            className={over ? styles.over : styles.progress}
+            className={isOver ? styles.over : styles.progress}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={`${(fraction * CIRCUMFERENCE).toFixed(1)} ${CIRCUMFERENCE.toFixed(1)}`}

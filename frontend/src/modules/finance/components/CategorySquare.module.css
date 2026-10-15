@@ -1,0 +1,33 @@
+.square {
+  width: var(--size-category-square);
+  height: var(--size-category-square);
+  border-radius: var(--radius-bar);
+  flex-shrink: 0;
+}
+
+.small {
+  width: var(--size-category-square-small);
+  height: var(--size-category-square-small);
+  border-radius: var(--radius-xs);
+}
+
+.housing {
+  background: var(--color-finance-housing);
+}
+
+.subscriptions {
+  background: var(--color-finance-subscriptions);
+}
+
+.savings {
+  background: var(--color-accent);
+}
+
+.other {
+  background: var(--color-finance-other);
+}
+
+.rest {
+  background: var(--color-divider);
+  border: 1px solid var(--color-border-strong);
+}

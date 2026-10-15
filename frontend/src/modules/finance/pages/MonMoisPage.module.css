@@ -1,0 +1,384 @@
+/* Transcribed from design/finances/mobile-1-mon-mois.html and bureau-mon-mois.html */
+
+.page {
+  max-width: var(--size-mobile);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: var(--space-12) var(--space-20) calc(var(--size-fab-clearance) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-panel);
+  padding: var(--space-20);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.summaryTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.ring {
+  width: var(--size-ring-finance);
+  height: var(--size-ring-finance);
+}
+
+.ringDesktop {
+  width: var(--size-ring-finance-desktop);
+  height: var(--size-ring-finance-desktop);
+}
+
+.restAmount {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-20);
+  white-space: nowrap;
+}
+
+.ringDesktop .restAmount {
+  font-size: var(--font-size-30);
+}
+
+.negative {
+  color: var(--color-over);
+}
+
+.restLabel {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.ringDesktop .restLabel {
+  font-size: var(--font-size-13);
+}
+
+.figures {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+}
+
+.figureLabel {
+  font-size: var(--font-size-12);
+  color: var(--color-muted);
+}
+
+.figureValue {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-18);
+  white-space: nowrap;
+}
+
+/* Stacked bar: categories, then the remainder (decorative) */
+.bar {
+  display: flex;
+  height: var(--space-10);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  gap: var(--space-2);
+}
+
+.housing {
+  background: var(--color-finance-housing);
+}
+
+.subscriptions {
+  background: var(--color-finance-subscriptions);
+}
+
+.savings {
+  background: var(--color-accent);
+}
+
+.other {
+  background: var(--color-finance-other);
+}
+
+.remainder {
+  background: var(--color-divider);
+}
+
+/* Entrées / Dépenses */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-17);
+}
+
+.sectionTotal {
+  font-size: var(--font-size-14);
+  color: var(--color-muted);
+}
+
+.listCard {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: 0 var(--space-14);
+  display: flex;
+  flex-direction: column;
+}
+
+.expensesCard {
+  padding: var(--space-4) var(--space-14) var(--space-6);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-height: var(--size-input);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.line:hover {
+  color: var(--color-ink);
+}
+
+.line + .line {
+  border-top: 1px solid var(--color-divider);
+}
+
+.categoryLine {
+  min-height: var(--size-touch);
+  border-top: 1px solid var(--color-divider);
+}
+
+.lineName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.lineAmount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--color-reference);
+  flex-shrink: 0;
+}
+
+.category {
+  padding-bottom: var(--space-8);
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--space-40);
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-muted);
+}
+
+.categoryName {
+  flex: 1;
+}
+
+.fab {
+  position: fixed;
+  right: max(var(--space-20), calc((100vw - var(--size-mobile)) / 2 + var(--space-20)));
+  bottom: calc(var(--space-24) + env(safe-area-inset-bottom));
+  height: var(--size-fab);
+  padding: 0 var(--space-20);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  box-shadow: var(--shadow-fab);
+  z-index: 10;
+}
+
+.fab:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+/* Desktop */
+.desktop {
+  min-height: 100dvh;
+}
+
+.topBar {
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.barInner {
+  max-width: var(--size-header);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-24);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.addButton {
+  height: var(--size-desktop-control);
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-14);
+  text-decoration: none;
+}
+
+.addButton:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+.columns {
+  max-width: var(--size-content);
+  margin: 0 auto;
+  padding: var(--space-24);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-24);
+  align-items: stretch;
+}
+
+/* Left column: stretched to the bottom of the right one; its extra space goes around the ring. */
+.summaryColumn {
+  flex: 1 1 var(--size-finance-summary-min);
+  max-width: var(--size-finance-summary);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.summaryDesktop {
+  flex: 1;
+  padding: var(--space-28) var(--space-24) var(--space-24);
+  gap: var(--space-24);
+}
+
+.ringArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.figuresDesktop {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+
+.figuresDesktop .figureValue {
+  font-size: var(--font-size-20);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  min-height: var(--space-40);
+  font-size: var(--font-size-14);
+}
+
+.legendName {
+  flex: 1;
+  min-width: 0;
+}
+
+.legendShare {
+  width: var(--size-legend-share);
+  text-align: right;
+  color: var(--color-muted);
+}
+
+.legendAmount {
+  width: var(--size-legend-amount);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.legendRest {
+  border-top: 1px solid var(--color-divider);
+}
+
+.legendRest .legendName,
+.legendRest .legendAmount {
+  font-weight: var(--font-weight-semibold);
+}
+
+.listsColumn {
+  flex: 2 1 var(--size-table-column);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.listsColumn .h2 {
+  font-size: var(--font-size-18);
+}
+
+.listsColumn .listCard {
+  padding: var(--space-4) var(--space-18);
+}
+
+.listsColumn .expensesCard {
+  padding: var(--space-6) var(--space-18) var(--space-8);
+}
+
+.listsColumn .line {
+  min-height: var(--size-touch);
+  gap: var(--space-12);
+}
+
+.expenseColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--size-finance-column), 1fr));
+  column-gap: var(--space-32);
+  align-items: start;
+}
