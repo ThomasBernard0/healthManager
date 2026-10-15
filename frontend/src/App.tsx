@@ -10,6 +10,9 @@ import MealEditorPage from './modules/food/pages/MealEditorPage'
 import MealsPage from './modules/food/pages/MealsPage'
 import WeekPage from './modules/food/pages/WeekPage'
 import { GOAL_PATH, MEALS_PATH } from './modules/food/routes'
+import FinanceLineSheet from './modules/finance/components/FinanceLineSheet'
+import MonMoisPage from './modules/finance/pages/MonMoisPage'
+import { FINANCE_PATH, NEW_FINANCE_LINE_PATH } from './modules/finance/routes'
 import ExerciseEditPage from './modules/muscu/pages/ExerciseEditPage'
 import ExercisePage from './modules/muscu/pages/ExercisePage'
 import ExercisesPage from './modules/muscu/pages/ExercisesPage'
@@ -49,6 +52,9 @@ export default function App() {
           <Route path="/muscu/seance/:sessionId" element={<SessionPage />} />
           <Route path="/muscu/seance/:sessionId/:entryId" element={<SessionExercisePage />} />
           <Route path="/muscu/seance/:sessionId/superset/:entryId" element={<SessionSupersetPage />} />
+          <Route path={FINANCE_PATH} element={<MonMoisPage />} />
+          <Route path={NEW_FINANCE_LINE_PATH} element={<FinanceLineSheet />} />
+          <Route path={`${FINANCE_PATH}/:id`} element={<FinanceLineSheet />} />
           <Route path="*" element={<Navigate to={launchPath()} replace />} />
         </Routes>
         {background && (
@@ -82,6 +88,22 @@ export default function App() {
               element={
                 <ModalFrame label={fr.meal.editTitle}>
                   <MealEditorPage />
+                </ModalFrame>
+              }
+            />
+            <Route
+              path={NEW_FINANCE_LINE_PATH}
+              element={
+                <ModalFrame label={fr.finance.addTitle}>
+                  <FinanceLineSheet />
+                </ModalFrame>
+              }
+            />
+            <Route
+              path={`${FINANCE_PATH}/:id`}
+              element={
+                <ModalFrame label={fr.finance.editTitle}>
+                  <FinanceLineSheet />
                 </ModalFrame>
               }
             />

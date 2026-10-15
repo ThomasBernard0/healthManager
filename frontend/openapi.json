@@ -1529,6 +1529,132 @@
           "sessions"
         ]
       }
+    },
+    "/api/finance-lines": {
+      "get": {
+        "operationId": "FinanceLines_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinanceLineDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "finances"
+        ]
+      },
+      "post": {
+        "operationId": "FinanceLines_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFinanceLineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceLineDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An expense without a category, or an income with one"
+          }
+        },
+        "tags": [
+          "finances"
+        ]
+      }
+    },
+    "/api/finance-lines/{id}": {
+      "patch": {
+        "operationId": "FinanceLines_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFinanceLineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceLineDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An expense without a category, or an income with one"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finances"
+        ]
+      },
+      "delete": {
+        "operationId": "FinanceLines_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finances"
+        ]
+      }
     }
   },
   "info": {
@@ -3596,6 +3722,139 @@
         "required": [
           "exercises"
         ]
+      },
+      "FinanceKind": {
+        "type": "string",
+        "enum": [
+          "income",
+          "expense"
+        ]
+      },
+      "FinanceCategory": {
+        "type": "string",
+        "enum": [
+          "housing",
+          "subscriptions",
+          "savings",
+          "other"
+        ],
+        "description": "Set for an expense, null for an income"
+      },
+      "FinanceLineDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Loyer"
+          },
+          "amountCents": {
+            "type": "number",
+            "example": 85000,
+            "description": "Monthly amount, in cents"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Set for an expense, null for an income",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceCategory"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "amountCents",
+          "category"
+        ]
+      },
+      "CreateFinanceLineDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Loyer",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "Trimmed"
+          },
+          "amountCents": {
+            "type": "number",
+            "example": 85000,
+            "minimum": 1,
+            "maximum": 100000000,
+            "description": "Monthly, in cents"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Required for an expense; absent or null for an income",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceCategory"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "amountCents"
+        ]
+      },
+      "UpdateFinanceLineDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Loyer",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "Trimmed"
+          },
+          "amountCents": {
+            "type": "number",
+            "example": 85000,
+            "minimum": 1,
+            "maximum": 100000000,
+            "description": "Monthly, in cents"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Required for an expense; absent or null for an income",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceCategory"
+              }
+            ]
+          }
+        }
       }
     }
   },

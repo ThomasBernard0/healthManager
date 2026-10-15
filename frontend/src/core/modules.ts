@@ -1,7 +1,7 @@
 /**
  * The app's modules (top-bar switcher). The last one used is kept per device and opened at launch.
  */
-export type ModuleId = 'food' | 'muscu'
+export type ModuleId = 'food' | 'muscu' | 'finance'
 
 export interface AppModule {
   id: ModuleId
@@ -12,6 +12,7 @@ export interface AppModule {
 export const MODULES: AppModule[] = [
   { id: 'food', path: '/jour' },
   { id: 'muscu', path: '/muscu' },
+  { id: 'finance', path: '/finances' },
 ]
 
 const STORAGE_KEY = 'healthManager.module'

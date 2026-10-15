@@ -14,6 +14,7 @@ function renderAt(path: string) {
       <Routes>
         <Route path="/jour" element={<><ModuleSwitcher current="food" /><Where /></>} />
         <Route path="/muscu" element={<><ModuleSwitcher current="muscu" /><Where /></>} />
+        <Route path="/finances" element={<><ModuleSwitcher current="finance" /><Where /></>} />
         <Route path="*" element={<Navigate to={launchPath()} replace />} />
       </Routes>
     </MemoryRouter>,
@@ -30,7 +31,7 @@ describe('ModuleSwitcher', () => {
     expect(screen.queryByRole('menu')).toBeNull()
     await user.click(button)
     expect(button).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual(['Alimentation', 'Musculation'])
+    expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual(['Alimentation', 'Musculation', 'Finances'])
     await user.click(screen.getByRole('menuitem', { name: 'Musculation' }))
     expect(screen.getByTestId('where')).toHaveTextContent('/muscu')
     expect(screen.queryByRole('menu')).toBeNull()
@@ -52,6 +53,16 @@ describe('ModuleSwitcher', () => {
     setLastModule('muscu')
     renderAt('/')
     expect(screen.getByTestId('where')).toHaveTextContent('/muscu')
+  })
+
+  it('goes back to Finances at launch when it was the last module used', async () => {
+    const user = userEvent.setup()
+    renderAt('/jour')
+    await user.click(screen.getByRole('button', { name: /^Alimentation/ }))
+    await user.click(screen.getByRole('menuitem', { name: 'Finances' }))
+    expect(screen.getByTestId('where')).toHaveTextContent('/finances')
+    expect(getLastModule()).toBe('finance')
+    expect(launchPath()).toBe('/finances')
   })
 
   it('opens Alimentation at launch on a new device', () => {

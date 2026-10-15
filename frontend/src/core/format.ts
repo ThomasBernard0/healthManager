@@ -90,6 +90,22 @@ export function formatWeekTitle(monday: string, thisMonday: string): string {
   return fr.week.weekOf(formatDayMonth(monday))
 }
 
+const euros = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 })
+const eurosCents = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** The amount alone, decimals only when they are not zero: "850", "86,40", "1 462,60". */
+function eurosNumber(cents: number): string {
+  const abs = Math.abs(Math.round(cents))
+  return groupSpace(abs % 100 === 0 ? euros.format(abs / 100) : eurosCents.format(abs / 100))
+}
+
+/** Cents → "850 €", "86,40 €", "1 462,60 €"; a negative amount takes a "−". */
+export const formatEuros = (cents: number): string =>
+  `${cents < 0 ? '−' : ''}${eurosNumber(cents)} ${fr.finance.euro}`
+
+/** Cents → the value of an amount field ("13", "86,40"), without grouping. */
+export const eurosInput = (cents: number): string => eurosNumber(cents).replace(/\s/g, '')
+
 /** "2 portions" */
 export const formatPortions = (n: number): string => `${formatDecimal(n)} ${fr.food.portions(n)}`
 

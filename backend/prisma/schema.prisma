@@ -271,3 +271,27 @@ model SessionSet {
 
   @@unique([sessionExerciseId, index])
 }
+
+enum FinanceKind {
+  income
+  expense
+}
+
+enum FinanceCategory {
+  housing
+  subscriptions
+  savings
+  other
+}
+
+/// One line of the typical month (Finances). Amounts are monthly, in integer cents.
+model FinanceLine {
+  id          String           @id @default(uuid())
+  kind        FinanceKind
+  name        String
+  amountCents Int
+  /// Required for an expense, null for an income.
+  category    FinanceCategory?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
