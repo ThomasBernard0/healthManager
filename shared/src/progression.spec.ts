@@ -1,6 +1,7 @@
 import {
   ASSIST_STEP,
   DEFAULT_STEP,
+  harmonize,
   judge,
   nextTargets,
   preFatigue,
@@ -385,6 +386,105 @@ describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
       expect(weights(stepped)).toEqual([52.5, 52.5, 52.5]);
       expect(reps(stepped)).toEqual([6, 6, 6]);
     });
+  });
+});
+
+describe('harmonize a lone off-weight set (step 1, 4 × 8–12)', () => {
+  it('sets aside the one set at another weight; drop sets and a single weight are left as they are', () => {
+    const lone = harmonize(log([60, 60, 60, 50], [10, 10, 10, 12]).sets);
+    expect(lone.loneIndex).toBe(3);
+    expect(lone.commonWeight).toBe(60);
+    expect(lone.keptSets.map((s) => s.reps)).toEqual([10, 10, 10]);
+    expect(harmonize(log(60, [10, 10, 10, 10]).sets)).toMatchObject({ commonWeight: 60, loneIndex: null });
+    expect(harmonize(log([60, 57.5, 55], [10, 10, 10]).sets)).toMatchObject({ commonWeight: null, loneIndex: null });
+    expect(harmonize(log([60, 60, 50, 50], [10, 10, 10, 10]).sets)).toMatchObject({ commonWeight: null, loneIndex: null });
+    expect(harmonize(log([60, 55], [10, 10]).sets)).toMatchObject({ commonWeight: null, loneIndex: null });
+  });
+
+  it('Tractions: aide 32 × 5, then aide 41 × 10 · 10 · 10 → aide 41 × 10 · 10 · 10 · 10 (consolidate)', () => {
+    const last = log([-32, -41, -41, -41], [5, 10, 10, 10]);
+    // Judged on 41 × 10 · 10 · 10: 30 over 3 sets, not Up (≥ 33), not under the range (< 24).
+    expect(judge(last, null, 8, 12)).toBe('progress');
+    const t = next(last, { step: DEFAULT_STEP.bodyweight });
+    expect(weights(t)).toEqual([-41, -41, -41, -41]);
+    expect(reps(t)).toEqual([10, 10, 10, 10]);
+  });
+
+  it('60 × 10 · 10 · 10 then a last set at 50 × 12 → 60 × 10 · 10 · 10 · 10', () => {
+    const t = next(log([60, 60, 60, 50], [10, 10, 10, 12]));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([10, 10, 10, 10]);
+  });
+
+  it('barbell 60 × 8 then 50 × 12 · 12 · 12 → judged on the 50 kg sets (36 ≥ 33) → Up → 55 × 8 · 8 · 8 · 8', () => {
+    const last = log([60, 50, 50, 50], [8, 12, 12, 12]);
+    expect(judge(last, null, 8, 12)).toBe('up');
+    const t = next(last, { step: DEFAULT_STEP.barbell, known: [50, 55, 60] });
+    expect(weights(t)).toEqual([55, 55, 55, 55]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    // The lone weight stays known: with only 50 and 60 known, stepUp from 50 takes 60 (2 steps away).
+    expect(weights(next(last, { step: DEFAULT_STEP.barbell, known: [50, 60] }))).toEqual([60, 60, 60, 60]);
+  });
+
+  it('60 × 10 · 9 · 9 then 70 × 4 → 60 × 10 · 9 · 9 · 9 (the harmonized set gets the lowest)', () => {
+    const t = next(log([60, 60, 60, 70], [10, 9, 9, 4]));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([10, 9, 9, 9]);
+  });
+
+  it('the lone set first or in the middle keeps its place', () => {
+    const t = next(log([60, 62.5, 60, 60], [9, 8, 10, 10]));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([9, 9, 10, 10]);
+  });
+
+  it('drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, the shape is kept', () => {
+    const three = next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 3 });
+    expect(weights(three)).toEqual([60, 57.5, 55]);
+    expect(reps(three)).toEqual([11, 11, 11]);
+    const split = next(log([60, 60, 50, 50], [10, 10, 10, 10]));
+    expect(weights(split)).toEqual([60, 60, 50, 50]);
+    expect(reps(split)).toEqual([11, 11, 11, 11]);
+  });
+
+  it('a lone off-weight set on a 3-set exercise → every set at the common weight', () => {
+    const t = next(log([60, 60, 55], [10, 10, 12]), { setCount: 3 });
+    expect(weights(t)).toEqual([60, 60, 60]);
+    expect(reps(t)).toEqual([10, 10, 10]);
+  });
+
+  it('2 sets at 2 weights: a drop set, not harmonized (+1 each)', () => {
+    const t = next(log([60, 55], [10, 10]), { setCount: 2 });
+    expect(weights(t)).toEqual([60, 55]);
+    expect(reps(t)).toEqual([11, 11]);
+  });
+
+  it('retry: every set at the common weight with the common sets’ last targets, the harmonized one the lowest', () => {
+    // Kept 7 · 7 · 6 = 20 < 24 (all 4 sets: 32, not under the range).
+    const t = next(log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [9, 8, 8, 12] }));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([9, 8, 8, 8]);
+  });
+
+  it('the two-in-a-row drop counts the kept sets of each session', () => {
+    const harmonized = log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [8, 8, 8, 8] });
+    const t = next(harmonized, { previous: log(60, [7, 7, 6, 6]) });
+    expect(weights(t)).toEqual([57.5, 57.5, 57.5, 57.5]);
+    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(judge(log(60, [7, 7, 6, 6]), harmonized, 8, 12)).toBe('down');
+  });
+
+  it('with more pre-fatigue: a worse result is not a failure, and no +1 anyway', () => {
+    const last = log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [8, 8, 8, 8], preFatigue: 3 });
+    expect(judge(last, log(60, [7, 7, 6, 6]), 8, 12)).toBe('retry');
+    const t = next(log([60, 60, 60, 70], [10, 9, 9, 4]), { todayPreFatigue: 3 });
+    expect(reps(t)).toEqual([10, 9, 9, 9]);
+  });
+
+  it('the set count changed: the added sets copy the last target at the common weight', () => {
+    const t = next(log([60, 60, 60, 50], [10, 10, 10, 12]), { setCount: 5 });
+    expect(weights(t)).toEqual([60, 60, 60, 60, 60]);
+    expect(reps(t)).toEqual([10, 10, 10, 10, 10]);
   });
 });
 

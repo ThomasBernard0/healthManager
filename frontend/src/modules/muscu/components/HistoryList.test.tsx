@@ -11,7 +11,7 @@ const entry = (sessionId: string, date: string, easy: boolean): ExerciseHistoryE
   preFatigue: 0,
   inSuperset: false,
   volume: 1140,
-  heaviest: 60,
+  averageWeight: 60,
   barKind: 'volume',
   barValue: 1140,
 })
@@ -22,7 +22,7 @@ describe('HistoryList (desktop table), bodyweight exercise', () => {
       ...entry('s1', '2026-10-08', false),
       sets: [9, 9, 8, 8].map((reps) => ({ weight: -20, reps })),
       volume: -680,
-      heaviest: -20,
+      averageWeight: -20,
       barKind: 'reps',
       barValue: 34,
     }
