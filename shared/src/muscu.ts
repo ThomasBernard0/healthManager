@@ -62,6 +62,15 @@ export function groupSets(sets: SetResult[]): SetGroup[] {
 /** Σ weight × reps (kg). */
 export const volume = (sets: SetResult[]): number => sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
 
+/**
+ * Line of the Progression chart: the average weight weighted by reps, Σ weight × reps / Σ reps (signed: help < 0).
+ * Sets without any rep: the first set's weight.
+ */
+export function averageWeight(sets: SetResult[]): number {
+  const reps = sets.reduce((sum, s) => sum + s.reps, 0);
+  return reps === 0 ? (sets[0]?.weight ?? 0) : volume(sets) / reps;
+}
+
 /** What a chart bar of an exercise shows: its volume, or its total reps when the weight is not the whole load. */
 export const BAR_KINDS = ['volume', 'reps'] as const;
 export type BarKind = (typeof BAR_KINDS)[number];

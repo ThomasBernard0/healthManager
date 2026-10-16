@@ -51,17 +51,26 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 
 **First time** an exercise is done: no target. The user types weight and reps for each set; that session becomes the reference.
 
-**Afterwards**, targets for each set come from the last time the exercise was done (its sets, their weights and reps, and whether **Facile** was tapped). The session is judged on the **total reps**, not on the worst set, so a weaker last set (normal fatigue) neither blocks progress nor triggers a drop. With `N` = number of sets and `total` = Σ reps:
+**Afterwards**, targets for each set come from the last time the exercise was done (its sets, their weights and reps, and whether **Facile** was tapped). The session is judged on the **total reps**, not on the worst set, so a weaker last set (normal fatigue) neither blocks progress nor triggers a drop.
+
+**Step 1 — harmonize a lone off-weight set.** Before judging, look at the weights of last time's sets:
+- all at the same weight → nothing to do;
+- **all at the same weight except exactly one set** (heavier or lighter, in the range or not) → that set was an adjustment (wrong setting, fatigue drop), not a plan. It is set aside: the session is judged on the sets at the common weight only (`N` = their count, `total` = their reps), and next time **every set** gets the common weight. The off-weight set stays in the history and its weight stays a known weight;
+- no single common weight with one exception (e.g. 60 / 57,5 / 55, or 2 heavy + 2 light) → real drop sets: see "Drop sets" below.
+
+**Step 2 — judge and set targets.** With `N` = number of (kept) sets and `total` = Σ their reps:
 
 | Last time (first matching row wins) | Next time |
 |---|---|
 | **Up**: `total ≥ N × (repMax − 1)` (4 × 8–12 → ≥ 44), or **Facile** with `total ≥ N × repMin` | every set: `stepUp(weight)`; target reps = `repMin` |
 | **Down**: `total < N × repMin` (4 × 8–12 → < 32) in this session **and** the previous one, the second not explained by more pre-fatigue | every set: `stepDown(weight)`; target reps = `repMin` |
 | `total < N × repMin` (first time) | same weights; each set keeps **last time's target** (retried, never lowered to what was done) |
+| Otherwise, **after a harmonization** (step 1 set a set aside) — *consolidate* | every set at the common weight; target reps = the reps done on the common-weight sets, **no +1** (the set put back to the common weight gets the same target as the others: the lowest of their reps if they differ — see the example) |
 | Otherwise | same weights; each set: target reps = reps done + 1, capped at `repMax` |
 
 - The +1 per set capped at `repMax` rebalances reps by itself: strong sets stop at the top while weaker ones catch up, until the total reaches the Up threshold.
-- **Drop sets / different weights per set**: each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
+- Harmonization doesn't change Up, Down or retry: after a harmonization, Up still moves every set to `stepUp(common weight)` × `repMin`; Down to `stepDown(common weight)` × `repMin`; retry gives every set the common weight with the common sets' last targets.
+- **Drop sets / different weights per set** (no lone off-weight set, see step 1): each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
 - The number of sets is fixed by the exercise (Modifier l'exercice); the exercise screen has no "+ Série". If the set count changes, added sets copy the last set's target and removed sets are dropped from the next targets.
 - Changing the rep range: thresholds and targets use the new range from the next session on; weights are kept.
 - Exercises skipped in a session don't change their next target.
@@ -134,7 +143,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 ### Fiche exercice (mobile `muscu-4-fiche-exercice`, desktop `bureau-muscu-exercice`)
 - Name, equipment · workout · sets × rep range (from the exercise), pencil → Modifier l'exercice.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
-- **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = heaviest weight. No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
+- **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = **average weight weighted by reps** (Σ weight × reps / Σ reps over the done sets, signed for assistance). No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
 - **Bodyweight exercises** (mockup `aide-3-fiche-tractions`): bars = **total reps** (Σ reps, no weight), legend "Reps", callout "45 reps"; the line is the signed weight (help below, added load above) with a dashed line at 0 labelled "Poids du corps". Desktop history: the volume column becomes "Reps" for them.
 - **Historique**: date, sets in the compact format, "Facile" when it was tapped (desktop: table, one column per set + volume + Facile). A session done in a superset gets a small link icon next to the date (`aria-label="En superset"`).
 
@@ -207,6 +216,13 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 11. Session without connection (see the README of this handoff).
 
 ## 7. Acceptance checks
+
+- Tractions 4 × 8–12: aide 32 × 5, then aide 41 × 10 · 10 · 10 → harmonized, judged on 41 × 10 · 10 · 10 (total 30 over 3 sets: not Up ≥ 33, not < 24) → consolidate → **aide 41 × 10 · 10 · 10 · 10**.
+- 60 × 10 · 10 · 10 then a last set at 50 × 12 → **60 × 10 · 10 · 10 · 10**.
+- 60 × 8 then 50 × 12 · 12 · 12 (barbell) → judged on 50 × 12 · 12 · 12 (36 ≥ 33) → Up → **55 × 8 · 8 · 8 · 8**.
+- 60 × 10 · 9 · 9 then 70 × 4 → consolidate at 60 with targets 10 · 9 · 9 and 9 for the harmonized set → **60 × 10 · 9 · 9 · 9**.
+- Drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, shape kept as before.
+- Chart line for 32 × 5 + 41 × 10 · 10 · 10 (aide) = −(5 × 32 + 30 × 41) / 35 ≈ −39,7.
 
 - Démarrer online, then airplane mode: every exercise opens with its targets and image, sets are validated, Facile and Terminé work, the list shows ✓; a reload keeps everything.
 - Opening Développé couché after 3 sets of Dips offline gives the same targets as the server would (pre-fatigue computed on the phone).

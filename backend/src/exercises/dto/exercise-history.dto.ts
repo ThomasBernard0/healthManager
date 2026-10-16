@@ -25,8 +25,11 @@ export class ExerciseHistoryEntryDto {
   @ApiProperty({ example: 2160, description: 'Σ weight × reps (kg)' })
   volume: number;
 
-  @ApiProperty({ example: 60, description: 'Heaviest weight (kg); < 0: the least help (bodyweight exercises)' })
-  heaviest: number;
+  @ApiProperty({
+    example: 60,
+    description: 'Average weight weighted by reps, Σ weight × reps / Σ reps (kg); < 0: help (bodyweight exercises)',
+  })
+  averageWeight: number;
 
   @ApiProperty({
     enum: BAR_KINDS,

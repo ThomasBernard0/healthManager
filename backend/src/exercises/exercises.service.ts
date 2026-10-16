@@ -1,4 +1,4 @@
-import { barKind, chartBarValue, matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
+import { averageWeight, barKind, chartBarValue, matchesSearch, parisToday, searchKey, volume } from '@healthmanager/shared';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { num } from '../common/decimal.js';
 import type { Exercise, ExerciseImage, Program, Workout, WorkoutItem } from '../generated/prisma/client.js';
@@ -107,7 +107,7 @@ export class ExercisesService {
         preFatigue: e.preFatigue === null ? 0 : num(e.preFatigue),
         inSuperset: e.supersetGroup !== null,
         volume: volume(sets),
-        heaviest: Math.max(...sets.map((s) => s.weight)),
+        averageWeight: averageWeight(sets),
         barKind: barKind(equipment),
         barValue: chartBarValue(sets, equipment),
       };

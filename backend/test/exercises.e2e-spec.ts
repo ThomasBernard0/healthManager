@@ -236,7 +236,7 @@ describe('Exercises (e2e)', () => {
     await request(app.getHttpServer()).get(url).expect(404);
   });
 
-  it('returns the history: Paris date, sets, Facile, pre-fatigue, volume, heaviest weight', async () => {
+  it('returns the history: Paris date, sets, Facile, pre-fatigue, volume, average weight', async () => {
     const res = await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000001/history').expect(200);
     expect(res.body).toEqual([
       {
@@ -247,7 +247,7 @@ describe('Exercises (e2e)', () => {
         preFatigue: 3,
         inSuperset: true,
         volume: 2160,
-        heaviest: 60,
+        averageWeight: 60,
         barKind: 'volume',
         barValue: 2160,
       },
@@ -265,7 +265,8 @@ describe('Exercises (e2e)', () => {
         preFatigue: 0,
         inSuperset: false,
         volume: 2252.5,
-        heaviest: 57.5,
+        // (57,5 × 21 + 55 × 19) / 40 reps.
+        averageWeight: 56.3125,
         barKind: 'volume',
         barValue: 2252.5,
       },
@@ -273,7 +274,7 @@ describe('Exercises (e2e)', () => {
     await request(app.getHttpServer()).get('/api/exercises/00000000-0000-4000-8000-000000000099/history').expect(404);
   });
 
-  it('history of a bodyweight exercise: the bar is the total reps, the heaviest weight is the least help', async () => {
+  it('history of a bodyweight exercise: the bar is the total reps, the average weight is signed (help < 0)', async () => {
     prisma.rows.push({
       id: TRACTIONS,
       name: 'Tractions',
@@ -289,7 +290,7 @@ describe('Exercises (e2e)', () => {
     });
     const res = await request(app.getHttpServer()).get(`/api/exercises/${TRACTIONS}/history`).expect(200);
     expect(res.body).toHaveLength(1);
-    expect(res.body[0]).toMatchObject({ heaviest: -4.5, barKind: 'reps', barValue: 45, volume: -310.5 });
+    expect(res.body[0]).toMatchObject({ averageWeight: -6.9, barKind: 'reps', barValue: 45, volume: -310.5 });
   });
 
   it('rejects a muscle twice, no primary muscle, or unknown values', async () => {

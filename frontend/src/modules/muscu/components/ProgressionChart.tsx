@@ -16,8 +16,11 @@ const BAR_MAX = 72
 const LINE_TOP = 12
 const LINE_BOTTOM = 52
 
+/** Weight of the line: the average weighted by reps, rounded to 0,5 kg. */
+const lineWeight = (e: ExerciseHistoryEntryDto) => Math.round(e.averageWeight * 2) / 2
+
 /**
- * Progression: one bar per session = volume (Σ weight × reps), line = heaviest weight. No summary numbers:
+ * Progression: one bar per session = volume (Σ weight × reps), line = average weight weighted by reps. No summary numbers:
  * tapping (or hovering) a bar highlights it and shows its date, sets and volume above it.
  * Bodyweight exercises: bars = total reps, and the line is the signed weight (help below, added load above)
  * around a dashed line at 0, "Poids du corps".
@@ -41,7 +44,7 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
   const reps = entries.some((e) => e.barKind === 'reps')
   const maxBar = Math.max(1, ...entries.map((e) => e.barValue))
   // The 0 kg line of a bodyweight exercise is always in the plot.
-  const weights = [...entries.map((e) => e.heaviest), ...(reps ? [0] : [])]
+  const weights = [...entries.map(lineWeight), ...(reps ? [0] : [])]
   const minW = Math.min(...weights)
   const maxW = Math.max(...weights)
   const x = (i: number) => ((i + 0.5) / n) * 100
@@ -104,10 +107,10 @@ export function ProgressionChart({ entries, variant = 'mobile' }: ProgressionCha
         </div>
 
         <svg className={styles.line} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <polyline points={entries.map((e, i) => `${x(i)},${y(e.heaviest)}`).join(' ')} vectorEffect="non-scaling-stroke" />
+          <polyline points={entries.map((e, i) => `${x(i)},${y(lineWeight(e))}`).join(' ')} vectorEffect="non-scaling-stroke" />
         </svg>
         {n > 0 && (
-          <span className={styles.dot} style={{ left: `${x(n - 1)}%`, top: `${y(entries[n - 1].heaviest)}%` }} />
+          <span className={styles.dot} style={{ left: `${x(n - 1)}%`, top: `${y(lineWeight(entries[n - 1]))}%` }} />
         )}
 
         {shown !== null && (

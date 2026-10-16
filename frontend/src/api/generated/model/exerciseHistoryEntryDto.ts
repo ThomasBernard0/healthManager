@@ -21,8 +21,8 @@ export interface ExerciseHistoryEntryDto {
   inSuperset: boolean;
   /** Σ weight × reps (kg) */
   volume: number;
-  /** Heaviest weight (kg); < 0: the least help (bodyweight exercises) */
-  heaviest: number;
+  /** Average weight weighted by reps, Σ weight × reps / Σ reps (kg); < 0: help (bodyweight exercises) */
+  averageWeight: number;
   /** What the chart bar shows: volume, or total reps for a bodyweight exercise */
   barKind: BarKind;
   /** Value of the chart bar: Σ weight × reps (kg) or Σ reps */

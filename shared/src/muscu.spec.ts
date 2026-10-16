@@ -1,4 +1,5 @@
 import {
+  averageWeight,
   barKind,
   blockStatus,
   chartBarValue,
@@ -78,6 +79,14 @@ describe('assistance (bodyweight exercises)', () => {
 
   it('a 0 kg session is not a zero bar', () => {
     expect(chartBarValue([9, 8, 8, 8].map((reps) => ({ weight: 0, reps })), 'bodyweight')).toBe(33);
+  });
+
+  it('chart line: the average weight weighted by reps, signed for help', () => {
+    const tractions = [{ weight: -32, reps: 5 }, ...[10, 10, 10].map((reps) => ({ weight: -41, reps }))];
+    expect(averageWeight(tractions)).toBeCloseTo(-(5 * 32 + 30 * 41) / 35);
+    expect(averageWeight(tractions)).toBeCloseTo(-39.71, 2);
+    expect(averageWeight([{ weight: 60, reps: 10 }, { weight: 50, reps: 10 }])).toBe(55);
+    expect(averageWeight([{ weight: 60, reps: 0 }])).toBe(60);
   });
 });
 
