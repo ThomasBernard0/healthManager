@@ -399,14 +399,15 @@ describe('harmonize a lone off-weight set (step 1, 4 × 7–10)', () => {
     expect(harmonize(log([60, 55], [10, 10]).sets)).toMatchObject({ commonWeight: null, loneIndex: null });
   });
 
-  it('Tractions: aide 32 × 5, then aide 41 × 10 · 10 · 10 → judged on 41 × 10 · 10 · 10 (30 ≥ 28) → Up', () => {
+  it('Tractions: aide 32 × 5, then aide 41 × 10 · 10 · 10 → judged on 41 × 10 · 10 · 10 (30 ≥ 28) → Up → aide 32 × 7 · 7 · 7 · 7', () => {
     const last = log([-32, -41, -41, -41], [5, 10, 10, 10]);
     expect(judge(last, null, 7, 10)).toBe('up');
-    const t = next(last, { step: DEFAULT_STEP.bodyweight, known: [-41] });
-    expect(weights(t)).toEqual([-36.5, -36.5, -36.5, -36.5]);
+    // The lone weight stays known: −32 is exactly 2 assist steps above −41, so stepUp takes it.
+    const t = next(last, { step: DEFAULT_STEP.bodyweight });
+    expect(weights(t)).toEqual([-32, -32, -32, -32]);
     expect(reps(t)).toEqual([7, 7, 7, 7]);
-    // The lone weight stays known: with −32 known (2 assist steps away), stepUp takes it.
-    expect(weights(next(last, { step: DEFAULT_STEP.bodyweight, known: [-41, -32] }))).toEqual([-32, -32, -32, -32]);
+    // With −32 not known: one assist step.
+    expect(weights(next(last, { step: DEFAULT_STEP.bodyweight, known: [-41] }))).toEqual([-36.5, -36.5, -36.5, -36.5]);
   });
 
   it('60 × 9 · 9 · 8 then a last set at 50 × 10 → harmonized (26 < 28, ≥ 21) → 60 × 9 · 9 · 8 · 8', () => {
