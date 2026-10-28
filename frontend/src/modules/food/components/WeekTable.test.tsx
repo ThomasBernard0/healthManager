@@ -32,4 +32,25 @@ describe('WeekTable', () => {
     expect(cells(rows[1])).toEqual(['Lun 28', '2 000', '130', '66', '214', '−200'])
     expect(cells(rows[8]).slice(0, 5)).toEqual(['Semaine', '14 000', '910', '462', '1 498'])
   })
+
+  it('shows a day over its target as a neutral "+N"; only the week row can say "dépassé de"', () => {
+    const days = WEEK.days.map((d, i) => (i === 2 ? { ...d, eaten: n(2380), left: n(-180) } : d))
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <WeekTable week={{ ...WEEK, days }} />
+      </MemoryRouter>,
+    )
+    const rows = () => screen.getAllByRole('row')
+    expect(cells(rows()[3]).at(-1)).toBe('+180')
+    expect(cells(rows()[8]).at(-1)).toBe('1 400 restantes')
+    expect(container.querySelectorAll('[class*="over" i]')).toHaveLength(0)
+
+    rerender(
+      <MemoryRouter>
+        <WeekTable week={{ ...WEEK, days, left: n(-300) }} />
+      </MemoryRouter>,
+    )
+    expect(cells(rows()[8]).at(-1)).toBe('dépassé de 300')
+    expect(container.querySelectorAll('[class*="over" i]')).toHaveLength(1)
+  })
 })

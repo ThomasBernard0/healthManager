@@ -136,7 +136,8 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
     meal?.manualTotals ? toFields(meal.manualTotals) : (draft?.manual ?? EMPTY_FIELDS),
   )
   const [override, setOverride] = useState<NutrientFields | null>(meal?.override ? toFields(meal.override) : null)
-  const [saveToMeals, setSaveToMeals] = useState(true)
+  // Unchecked by default; checked when coming from Saisie rapide's "Plutôt l'enregistrer" (asked to save).
+  const [saveToMeals, setSaveToMeals] = useState(draft !== undefined)
   const [favorite, setFavorite] = useState(meal?.isFavorite ?? false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   // The barcode scanner is a phone feature (camera): no Scanner button on desktop.

@@ -50,7 +50,7 @@ No meal-time categories: a day is one list of meals, ordered by time.
 - **Changing the goal** takes effect **immediately**: it creates a new Goal with `validFrom` = today (saving again the same day replaces it). Today and future days use the new goal; past days keep theirs.
 - **Day:** left = dailyKcal − Σ snapshots of the date. Same for each macro.
 - **Week:** weekly target = sum of the daily target of each of its 7 days (= dailyKcal × 7 when the goal did not change that week); left = weekly target − Σ the week. Same for each macro.
-- Over target shows the words "dépassé de N" in orange #B4510F, never colour alone.
+- Over target shows the words "dépassé de N" in orange #B4510F, never colour alone. **Orange is only for the day ring (today over its own target) and the week (the week total over the weekly target)**: a single day over its target inside a week is never orange anywhere in the week views (bars, mini chart, table), since other days compensate.
 - Store kcal as integers and macros to 0.1 g; round only in the UI.
 
 ## 4. Screens (see `design/`)
@@ -65,7 +65,7 @@ Bottom sheet (dialog on desktop). A search bar over **one single list, "Mes repa
 
 ### 3 · Nouveau repas
 
-Two modes. Par ingrédients: add foods from search or with the **Scanner** button (camera barcode scan → Open Food Facts → ask grams; phone only: no Scanner on desktop), set grams or portions; each ingredient row shows its own kcal and P/L/G, and the meal total (kcal + P/L/G) is their sum, computed live. Macros always come from the ingredient (per 100 g): a food not in the database is created once as "Mon aliment" (see 3c), then reused. Saisir les totaux: type kcal, protein, fat, carbs. Either way the total can be overridden. The mode is chosen when the meal is created; editing a saved meal shows its mode but cannot switch it (that would drop its ingredients or its typed totals). Toggles: enregistrer dans mes repas (checked by default), favori (unchecked by default). Primary action: save and log it to today, at the current time (no time field). Opens as a modal over the page (bottom sheet on mobile, dialog on desktop).
+Two modes. Par ingrédients: add foods from search or with the **Scanner** button (camera barcode scan → Open Food Facts → ask grams; phone only: no Scanner on desktop), set grams or portions; each ingredient row shows its own kcal and P/L/G, and the meal total (kcal + P/L/G) is their sum, computed live. Macros always come from the ingredient (per 100 g): a food not in the database is created once as "Mon aliment" (see 3c), then reused. Saisir les totaux: type kcal, protein, fat, carbs. Either way the total can be overridden. The mode is chosen when the meal is created; editing a saved meal shows its mode but cannot switch it (that would drop its ingredients or its typed totals). Toggles: enregistrer dans mes repas (**unchecked by default**: the primary action then reads "Ajouter à aujourd'hui"; checked → "Enregistrer et ajouter à aujourd'hui"), favori (unchecked by default). Primary action: save and log it to today, at the current time (no time field). Opens as a modal over the page (bottom sheet on mobile, dialog on desktop).
 
 ### 3c · Mon aliment (`design/meal/mobile-3c-aliment-pour-100g`, `mobile-3c-aliment-par-portion`, `mobile-3c-quantite-portions`)
 Create or edit an ingredient. Fields, top to bottom: **Nom**, a segmented control **Pour 100 g | Par portion**, then:
@@ -82,7 +82,7 @@ For a one-time meal (restaurant, a pastry at a friend's). Fields: name (optional
 
 ### 4 · Semaine (Semaine view)
 
-Same ring, but for the week: kcal left this week, eaten, weekly target (sum of the 7 daily targets). Per-day bars against the daily target line (over = orange), average kcal and average P/L/G per day. Tap a bar to open that day. Arrows browse past weeks.
+Same ring, but for the week: kcal left this week, eaten, weekly target (sum of the 7 daily targets). Header like Jour: the module switcher ("Alimentation" + chevron) on top, then the week switcher and the Jour | Semaine toggle. Per-day bars against the daily target line (dashed); a day over its target just goes above the line, **same colour as the others, no "dépassé de" list**. Average tiles show their goal: "2 017 / 2 200 kcal", "131 / 160 g" (Protéines, Lipides, Glucides in that order); averages are never orange. Only the week ring turns orange ("dépassé de N") when the week total exceeds the weekly target. Tap a bar to open that day. Arrows browse past weeks.
 
 ### 5 · Mon objectif
 
@@ -90,7 +90,7 @@ Daily kcal stepper (±50), daily protein, carbs, fat in grams. Opened only from 
 
 ### 6 · Desktop (≥ 1024 px)
 
-Same routes and data, different layout. Top bar: title, date (or week) switcher with "Aujourd'hui" shortcut, Jour/Semaine toggle (no Objectifs button; same pencil icons as mobile). **Jour:** a centred column (max 1120 px): a wide summary band (ring, eaten, objectif du jour, compact macro bars, and at the right end a mini week chart with the week total and kcal left, which opens Semaine) above the full-width "Repas du jour" list with time and aligned P/L/G/kcal columns, a ⋯ menu per entry and an "Ajouter" button in its header. Everything on the page follows the selected day. "Ajouter" opens a centred dialog with the same content as mobile Ajouter un repas (Nouveau repas, Saisie rapide, search with "/" shortcut, Mes repas list) and logs to the day being viewed. **Semaine:** ring + 4 average tiles, then the per-day chart with values beside a table (kcal, P, L, G, écart) with a week total row. Nouveau repas and Mon objectif open as centred dialogs (max 560 px). Below 1024 px the columns wrap and the mobile layout applies.
+Same routes and data, different layout. Top bar: title, date (or week) switcher with "Aujourd'hui" shortcut, Jour/Semaine toggle (no Objectifs button; same pencil icons as mobile). **Jour:** a centred column (max 1120 px): a wide summary band (ring, eaten, objectif du jour, compact macro bars, and at the right end a mini week chart with the week total and kcal left, which opens Semaine) above the full-width "Repas du jour" list with time and aligned P/L/G/kcal columns, a ⋯ menu per entry and an "Ajouter" button in its header. Everything on the page follows the selected day. "Ajouter" opens a centred dialog with the same content as mobile Ajouter un repas (Nouveau repas, Saisie rapide, search with "/" shortcut, Mes repas list) and logs to the day being viewed. **Semaine:** ring + 4 average tiles (each with its goal, as on mobile), then the per-day chart with values beside a table (kcal, P, L, G, écart) with a week total row. Day rows show the écart as a neutral signed number ("+180", "−150", grey); only the week row may show "dépassé de N" in orange. The mini week chart of **Jour** desktop has the same dashed daily-target line and no orange bars. Nouveau repas and Mon objectif open as centred dialogs (max 560 px). Below 1024 px the columns wrap and the mobile layout applies.
 
 ## 5. Visual language
 
@@ -128,6 +128,11 @@ Space Grotesk for numbers and headings, IBM Plex Sans for text. White cards, 16�
 - A meal logged Sunday 23:30 counts in that week; Monday 00:10 counts in the next one.
 - Week total equals the sum of its seven days.
 - No English text visible anywhere in the UI.
+- Week with Wed +180 and Sat +290 over their day targets but the week under its target: no orange anywhere on Semaine (mobile, desktop) nor on the Jour desktop mini chart; the ring shows kcal left.
+- Same week with the total over the weekly target: the ring and the desktop week row show "dépassé de N" in orange; the day bars stay neutral.
+- Average tiles read "value / goal" (kcal, Protéines, Lipides, Glucides).
+- Nouveau repas opens with "Enregistrer dans mes repas" unchecked and the button "Ajouter à aujourd'hui".
+- Semaine on mobile shows the module switcher at the top, like Jour.
 - Jambon created Par portion, 40 g, 45 kcal · P 8,4 · L 1,2 · G 0,4 → stored per 100 g as 113 kcal · P 21 · L 3 · G 1 with `portionGrams` 40.
 - Adding it to a meal opens at "1 portion"; 2 portions → 80 g, 90 kcal · P 17 · L 2 · G 1; "En grammes" shows 80 g.
 - A food created Pour 100 g has no portion and no En portions | En grammes control.

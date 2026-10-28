@@ -9,16 +9,18 @@ interface WeekChartProps {
   /** Days before it (the first day with data) can't be opened. */
   earliest: string
   onOpenDay: (date: string) => void
-  /** desktop: taller, value above each bar, "Lun…Dim" labels (the table beside it says "dépassé de"). */
+  /** desktop: taller, value above each bar, "Lun…Dim" labels. */
   variant?: 'mobile' | 'desktop'
 }
 
-/** Bar per day against that day's target (dashed); over target = over colour + "dépassé de N". */
+/**
+ * Bar per day against that day's target (dashed). A day over its target just goes above the line,
+ * same colour: other days compensate, only the week can be over.
+ */
 export function WeekChart({ days, today, earliest, onOpenDay, variant = 'mobile' }: WeekChartProps) {
   const desktop = variant === 'desktop'
   const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0])) * (desktop ? 1.2 : 1.12)
   const pct = (kcal: number) => `${(kcal / max) * 100}%`
-  const overDays = days.filter((d) => d.left && d.left.kcal < 0)
   const labels = desktop ? fr.desktop.shortDays : fr.week.initials
 
   return (
@@ -40,8 +42,7 @@ export function WeekChart({ days, today, earliest, onOpenDay, variant = 'mobile'
           )}
         </svg>
         {days.map((d) => {
-          const over = d.left !== null && d.left.kcal < 0
-          const cls = over ? styles.over : d.date === today ? styles.current : styles.bar
+          const cls = d.date === today ? styles.current : styles.bar
           return (
             <button
               key={d.date}
@@ -53,7 +54,7 @@ export function WeekChart({ days, today, earliest, onOpenDay, variant = 'mobile'
             >
               <span className={styles.stack} style={{ height: pct(d.eaten.kcal) }}>
                 {desktop && d.eaten.kcal > 0 && (
-                  <span className={over ? styles.valueOver : styles.value}>{formatInt(d.eaten.kcal)}</span>
+                  <span className={styles.value}>{formatInt(d.eaten.kcal)}</span>
                 )}
                 {d.eaten.kcal > 0 && <span className={cls} />}
               </span>
@@ -68,15 +69,6 @@ export function WeekChart({ days, today, earliest, onOpenDay, variant = 'mobile'
           </span>
         ))}
       </div>
-      {!desktop && overDays.length > 0 && (
-        <ul className={styles.overList}>
-          {overDays.map((d) => (
-            <li key={d.date}>
-              {formatShortDay(d.date)} · {fr.over(formatInt(-(d.left?.kcal ?? 0)))}
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   )
 }

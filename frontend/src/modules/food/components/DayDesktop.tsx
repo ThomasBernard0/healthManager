@@ -117,7 +117,7 @@ function MiniWeek({ data, week }: { data: DaySummaryDto; week: WeekSummaryDto | 
   const { eaten, target, left } = data.week
   const over = left !== null && left.kcal < 0
   const days = week?.days ?? []
-  const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0]))
+  const max = Math.max(1, ...days.flatMap((d) => [d.eaten.kcal, d.target?.kcal ?? 0])) * 1.12
 
   return (
     <Link to={weekPath(data.week.monday)} className={styles.week} aria-label={fr.desktop.seeWeek}>
@@ -133,18 +133,39 @@ function MiniWeek({ data, week }: { data: DaySummaryDto; week: WeekSummaryDto | 
         {formatInt(eaten.kcal)}{' '}
         <span className={styles.weekTarget}>/ {target ? formatInt(target.kcal) : fr.common.noValue}</span>
       </div>
+      {/* Each day's target dashed, as on Semaine; a day over it is never orange (only the week can be). */}
       <div className={styles.miniChart} aria-hidden="true">
-        {days.map((d, i) => {
-          const isOver = d.left !== null && d.left.kcal < 0
-          const isToday = d.date === data.today
-          const cls = isOver ? styles.miniOver : isToday ? styles.miniCurrent : styles.miniBar
-          return (
+        <div className={styles.miniBars}>
+          <svg className={styles.miniTargets} viewBox="0 0 700 100" preserveAspectRatio="none">
+            {days.map((d, i) =>
+              d.target ? (
+                <line
+                  key={d.date}
+                  x1={i * 100}
+                  x2={(i + 1) * 100}
+                  y1={100 - (d.target.kcal / max) * 100}
+                  y2={100 - (d.target.kcal / max) * 100}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ) : null,
+            )}
+          </svg>
+          {days.map((d) => (
             <div key={d.date} className={styles.miniDay}>
-              <div className={cls} style={{ height: `${(d.eaten.kcal / max) * 100}%` }} />
-              <span className={isToday ? styles.miniTodayLabel : styles.miniLabel}>{fr.week.initials[i]}</span>
+              <div
+                className={d.date === data.today ? styles.miniCurrent : styles.miniBar}
+                style={{ height: `${(d.eaten.kcal / max) * 100}%` }}
+              />
             </div>
-          )
-        })}
+          ))}
+        </div>
+        <div className={styles.miniLabels}>
+          {days.map((d, i) => (
+            <span key={d.date} className={d.date === data.today ? styles.miniTodayLabel : styles.miniLabel}>
+              {fr.week.initials[i]}
+            </span>
+          ))}
+        </div>
       </div>
     </Link>
   )

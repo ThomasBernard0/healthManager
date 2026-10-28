@@ -4,6 +4,7 @@ import { summaryWeek } from '../../../api/generated/endpoints/summary/summary'
 import type { WeekSummaryDto } from '../../../api/generated/model'
 import { formatInt, formatWeekRange, formatWeekTitle } from '../../../core/format'
 import { ChevronLeft, ChevronRight, Pencil } from '../../../core/ui/icons'
+import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import { Ring } from '../../../core/ui/Ring'
 import form from '../../../core/ui/form.module.css'
 import { useDataVersion } from '../../../core/dataVersion'
@@ -52,12 +53,19 @@ function Week({ monday }: { monday: string }) {
       </button>
     </div>
   )
+  // The goal of an average is the week's average daily goal (weekly target ÷ 7: a goal changed mid-week counts).
+  const goal = data?.target ?? null
   const tiles = data && (
     <div className={styles.tiles}>
-      <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
-      <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />
-      <Tile label={fr.week.fatPerDay} value={`${formatInt(data.average.fat)} ${fr.common.grams}`} />
-      <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
+      <Tile label={fr.week.averageKcal} value={data.average.kcal} goal={goal && goal.kcal / 7} unit={fr.common.kcal} />
+      <Tile
+        label={fr.week.proteinPerDay}
+        value={data.average.protein}
+        goal={goal && goal.protein / 7}
+        unit={fr.common.grams}
+      />
+      <Tile label={fr.week.fatPerDay} value={data.average.fat} goal={goal && goal.fat / 7} unit={fr.common.grams} />
+      <Tile label={fr.week.carbsPerDay} value={data.average.carbs} goal={goal && goal.carbs / 7} unit={fr.common.grams} />
     </div>
   )
 
@@ -110,6 +118,7 @@ function Week({ monday }: { monday: string }) {
   return (
     <div className={styles.page}>
       <header className={styles.top}>
+        <ModuleSwitcher current="food" />
         <div className={styles.switcher}>
           <button
             type="button"
@@ -153,12 +162,7 @@ function Week({ monday }: { monday: string }) {
             today={today}
             earliest={data.earliestDate}
             onOpenDay={(date) => navigate(dayPath(date))} />
-          <div className={styles.tiles}>
-            <Tile label={fr.week.averageKcal} value={`${formatInt(data.average.kcal)} ${fr.common.kcal}`} />
-            <Tile label={fr.week.proteinPerDay} value={`${formatInt(data.average.protein)} ${fr.common.grams}`} />
-            <Tile label={fr.week.fatPerDay} value={`${formatInt(data.average.fat)} ${fr.common.grams}`} />
-            <Tile label={fr.week.carbsPerDay} value={`${formatInt(data.average.carbs)} ${fr.common.grams}`} />
-          </div>
+          {tiles}
         </>
       )}
     </div>
@@ -219,11 +223,15 @@ function WeekRingCard({
   )
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
+/** An average per day and its goal: never orange (only the week can be over). */
+function Tile({ label, value, goal, unit }: { label: string; value: number; goal: number | null; unit: string }) {
   return (
     <div className={styles.tile}>
       <div className={styles.statLabel}>{label}</div>
-      <div className={styles.statValue}>{value}</div>
+      <div className={styles.statValue}>
+        {formatInt(value)}{' '}
+        {goal === null ? unit : <span className={styles.tileGoal}>{fr.week.ofGoal(formatInt(goal), unit)}</span>}
+      </div>
     </div>
   )
 }

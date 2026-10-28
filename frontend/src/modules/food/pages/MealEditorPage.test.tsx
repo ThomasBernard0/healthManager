@@ -87,6 +87,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
     expect(text(document.body)).toContain('1 portion')
     expect(text(document.body)).toContain('465 kcal')
 
+    await user.click(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' }))
     await user.click(screen.getByRole('button', { name: 'Enregistrer et ajouter au 4 octobre' }))
     expect(mealsCreate).toHaveBeenCalledWith({
       name: 'Salade de pâtes',
@@ -114,6 +115,7 @@ describe('MealEditorPage (Nouveau repas)', () => {
     const kcal = screen.getByLabelText('Calories')
     await user.clear(kcal)
     await user.type(kcal, '200')
+    await user.click(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' }))
     await user.click(screen.getByRole('button', { name: /^Enregistrer et ajouter/ }))
     expect(vi.mocked(mealsCreate).mock.calls[0][0].override).toEqual({ kcal: 200, protein: 5.8, carbs: 30.5, fat: 0.9 })
   })
@@ -206,18 +208,42 @@ describe('MealEditorPage (Nouveau repas)', () => {
     await user.click(screen.getByRole('radio', { name: 'Saisir les totaux' }))
     await user.type(screen.getByLabelText('Calories'), '900')
     await user.type(screen.getByLabelText('Protéines en grammes'), '35')
-    await user.click(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' }))
     await user.click(screen.getByRole('button', { name: 'Ajouter au 4 octobre' }))
     expect(mealsCreate).not.toHaveBeenCalled()
     expect(logEntriesCreateQuick).toHaveBeenCalledWith(
       expect.objectContaining({ date: '2026-10-04', label: 'Brunch', kcal: 900, protein: 35, carbs: 0, fat: 0 }),
     )
   })
-  it('starts a new meal saved to Mes repas but not as a favourite, with no time field', () => {
+  it('starts a new meal not saved to Mes repas nor favourite, with no time field', async () => {
+    const user = userEvent.setup()
     renderEditor()
-    expect(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Favori' })).not.toBeChecked()
+    const save = screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' })
+    expect(save).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Ajouter au 4 octobre' })).toBeInTheDocument()
     expect(document.querySelector('input[type="time"]')).toBeNull()
+    await user.click(save)
+    expect(screen.getByRole('checkbox', { name: 'Favori' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Enregistrer et ajouter au 4 octobre' })).toBeInTheDocument()
+  })
+
+  it('arrives with "Enregistrer dans mes repas" checked from Saisie rapide’s "Plutôt l’enregistrer"', () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/repas/nouveau',
+            search: '?date=2026-10-04',
+            state: { draft: { name: 'Brunch', manual: { kcal: '900', protein: '35', fat: '', carbs: '' } } },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/repas/nouveau" element={<MealEditorPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('checkbox', { name: 'Enregistrer dans mes repas' })).toBeChecked()
+    expect(screen.getByLabelText('Nom')).toHaveValue('Brunch')
   })
 
   it('deletes a saved meal for good, after confirming', async () => {
