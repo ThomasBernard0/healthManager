@@ -142,6 +142,12 @@ a.stat:hover {
   gap: var(--space-2);
 }
 
+.tileGoal {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-muted);
+}
+
 /* Desktop (design/bureau-semaine.html) */
 .desktopPage {
   min-height: 100dvh;
@@ -183,6 +189,10 @@ a.stat:hover {
 
 .desktopTiles .statValue {
   font-size: var(--font-size-24);
+}
+
+.desktopTiles .tileGoal {
+  font-size: var(--font-size-15);
 }
 
 .desktopChart {

@@ -44,7 +44,7 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
                 <td>{formatInt(d.eaten.fat)}</td>
                 <td>{formatInt(d.eaten.carbs)}</td>
                 <td>
-                  <Gap left={d.left?.kcal ?? null} remainingStyle={isToday ? 'muted' : 'signed'} hidden={isFuture} />
+                  <DayGap left={d.left?.kcal ?? null} isToday={isToday} hidden={isFuture} />
                 </td>
               </tr>
             )
@@ -56,7 +56,7 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
             <td>{formatInt(week.eaten.fat)}</td>
             <td>{formatInt(week.eaten.carbs)}</td>
             <td>
-              <Gap left={week.left?.kcal ?? null} remainingStyle="accent" />
+              <WeekGap left={week.left?.kcal ?? null} />
             </td>
           </tr>
         </tbody>
@@ -66,24 +66,23 @@ export function WeekTable({ week }: { week: WeekSummaryDto }) {
 }
 
 /**
- * Écart: over target → "dépassé de N" (over colour, words not colour alone);
- * under → "−N" for a finished day, "N restantes" for today and the week.
+ * A day's écart is neutral, never orange (other days compensate): "+N" over, "−N" under,
+ * "N restantes" for today while under.
  */
-function Gap({
-  left,
-  remainingStyle,
-  hidden = false,
-}: {
-  left: number | null
-  remainingStyle: 'signed' | 'muted' | 'accent'
-  hidden?: boolean
-}) {
+function DayGap({ left, isToday, hidden }: { left: number | null; isToday: boolean; hidden: boolean }) {
   if (left === null || hidden) return <span className={styles.muted}>{fr.common.noValue}</span>
+  const text =
+    left < 0
+      ? fr.desktop.gapOver(formatInt(-left))
+      : isToday
+        ? fr.desktop.remaining(formatInt(left))
+        : fr.desktop.gapUnder(formatInt(left))
+  return <span className={styles.muted}>{text}</span>
+}
+
+/** The week's écart: over the weekly target → "dépassé de N" (over colour, words not colour alone). */
+function WeekGap({ left }: { left: number | null }) {
+  if (left === null) return <span className={styles.muted}>{fr.common.noValue}</span>
   if (left < 0) return <span className={styles.over}>{fr.over(formatInt(-left))}</span>
-  if (remainingStyle === 'signed') return <span className={styles.under}>−{formatInt(left)}</span>
-  return (
-    <span className={remainingStyle === 'accent' ? styles.under : styles.muted}>
-      {fr.desktop.remaining(formatInt(left))}
-    </span>
-  )
+  return <span className={styles.under}>{fr.desktop.remaining(formatInt(left))}</span>
 }

@@ -62,7 +62,6 @@
 }
 
 .bar,
-.over,
 .current {
   flex: 1;
   width: 100%;
@@ -71,10 +70,6 @@
 
 .bar {
   background: var(--color-accent);
-}
-
-.over {
-  background: var(--color-over);
 }
 
 .current {
@@ -93,18 +88,6 @@
 .todayLabel {
   font-weight: var(--font-weight-semibold);
   color: var(--color-ink);
-}
-
-.overList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4) var(--space-12);
-  font-size: var(--font-size-12);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-over);
 }
 
 /* Desktop (design/bureau-semaine.html): taller chart, value above each bar, "Lun…Dim". */
@@ -127,8 +110,7 @@
   font-size: var(--font-size-13);
 }
 
-.value,
-.valueOver {
+.value {
   position: absolute;
   bottom: calc(100% + var(--space-4));
   left: 0;
@@ -136,13 +118,5 @@
   text-align: center;
   font-size: var(--font-size-12);
   white-space: nowrap;
-}
-
-.value {
   color: var(--color-muted);
-}
-
-.valueOver {
-  color: var(--color-over);
-  font-weight: var(--font-weight-semibold);
 }

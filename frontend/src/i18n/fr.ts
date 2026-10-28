@@ -267,6 +267,9 @@ export const fr = {
     options: (name: string) => `Options pour ${name}`,
     seeWeek: 'Voir la semaine',
     remaining: (n: string) => `${n} restantes`,
+    /** A day's écart in the week table (neutral: only the week can be "dépassé de"). */
+    gapOver: (n: string) => `+${n}`,
+    gapUnder: (n: string) => `−${n}`,
     inProgress: 'en cours',
     searchKey: '/',
     table: { day: 'Jour', kcal: 'kcal', p: 'P', g: 'G', l: 'L', gap: 'Écart', week: 'Semaine' },
@@ -293,6 +296,8 @@ export const fr = {
     proteinPerDay: 'Protéines / jour',
     carbsPerDay: 'Glucides / jour',
     fatPerDay: 'Lipides / jour',
+    /** After an average tile's value: "2 017 / 2 200 kcal". */
+    ofGoal: (goal: string, unit: string) => `/ ${goal} ${unit}`,
     openDay: (day: string, kcal: string) => `${day} : ${kcal} kcal`,
     /** Weekday initials, Monday first. */
     initials: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
