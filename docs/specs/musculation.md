@@ -4,7 +4,7 @@ Second module of healthManager, next to Alimentation. Same stack, same conventio
 
 Supersets (§5) and sets/rep range on the exercise are part of this spec; it replaces `musculation-superset.md`.
 
-**Context:** one user, about 15 exercises, 3 fixed sessions in rotation of ~5 exercises × 4 sets (Push A → Pull → Push B → …), machines and free weights, rep ranges mostly 8–12. Sessions are grouped in **programs** (e.g. a summer program and a winter one); only one is active at a time and its sessions are the rotation. No rest timer. Sport never changes food targets.
+**Context:** one user, about 15 exercises, 3 fixed sessions in rotation of ~5 exercises × 4 sets (Push A → Pull → Push B → …), machines and free weights, rep ranges mostly 7–10 (isolation exercises 9–12). Sessions are grouped in **programs** (e.g. a summer program and a winter one); only one is active at a time and its sessions are the rotation. No rest timer. Sport never changes food targets.
 
 ## 1. Navigation
 
@@ -17,7 +17,7 @@ Supersets (§5) and sets/rep range on the exercise are part of this spec; it rep
 // Exercise — my exercises (created in the app, editable)
 Exercise { id, name, equipment: "barbell" | "dumbbell" | "machine" | "cable" | "bodyweight",
            primaryMuscles: Muscle[], secondaryMuscles: Muscle[],
-           sets /* default 4 */, repMin /* default 8 */, repMax /* default 12 */,
+           sets /* default 4 */, repMin /* default 7 */, repMax /* default 10 */,
            image? /* uploaded picture, stored in the database */, archived }
 
 // Program — a group of workouts; exactly one is active
@@ -62,9 +62,9 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 
 | Last time (first matching row wins) | Next time |
 |---|---|
-| **Up**: `total ≥ N × (repMax − 1)` (4 × 8–12 → ≥ 44), or **Facile** with `total ≥ N × repMin` | every set: `stepUp(weight)`; target reps = `repMin` |
-| **Down**: `total < N × repMin` (4 × 8–12 → < 32) in this session **and** the previous one, the second not explained by more pre-fatigue | every set: `stepDown(weight)`; target reps = `repMin` |
-| `total < N × repMin` (first time) | same weights; each set keeps **last time's target** (retried, never lowered to what was done) |
+| **Up**: `total ≥ N × repMax − 2` (4 × 7–10 → ≥ 38, 3 × 9–12 → ≥ 34: at most 2 reps missing in total), or **Facile** with `total ≥ N × repMin` | every set: `stepUp(weight)`; target reps = `repMin` |
+| **Down**: `total < N × repMin` (4 × 7–10 → < 28) in this session **and** the previous one, the second not explained by more pre-fatigue | every set: `stepDown(weight)`; target reps = `repMin` |
+| `total < N × repMin` (first time) | same weights; each set keeps **last time's target** (retried, never lowered to what was done), clamped to the current range |
 | Otherwise, **after a harmonization** (step 1 set a set aside) — *consolidate* | every set at the common weight; target reps = the reps done on the common-weight sets, **no +1** (the set put back to the common weight gets the same target as the others: the lowest of their reps if they differ — see the example) |
 | Otherwise | same weights; each set: target reps = reps done + 1, capped at `repMax` |
 
@@ -72,7 +72,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 - Harmonization doesn't change Up, Down or retry: after a harmonization, Up still moves every set to `stepUp(common weight)` × `repMin`; Down to `stepDown(common weight)` × `repMin`; retry gives every set the common weight with the common sets' last targets.
 - **Drop sets / different weights per set** (no lone off-weight set, see step 1): each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
 - The number of sets is fixed by the exercise (Modifier l'exercice); the exercise screen has no "+ Série". If the set count changes, added sets copy the last set's target and removed sets are dropped from the next targets.
-- Changing the rep range: thresholds and targets use the new range from the next session on; weights are kept.
+- Changing the rep range: thresholds and targets use the new range from the next session on; weights are kept. Every target is clamped to the current `[repMin, repMax]` (a retried target of 11 on a range now 7–10 becomes 10). Reps done above the new max simply make the total reach the Up threshold, so the first session after narrowing a range usually steps up — no weight needs to be changed by hand.
 - Exercises skipped in a session don't change their next target.
 - An exercise **stopped early** (not every set done) doesn't move it either: next time its targets are retried (never up, never down), and it never counts as one of the two sessions in a row for a drop.
 - No 1RM formula: increments must match real plates and machine stacks.
@@ -93,20 +93,26 @@ Bodyweight exercises (pull-ups, dips…) can be done with help from an assisted 
 - Step: from a negative weight, **4.5** (assisted machines are 10 lb stacks), and `stepUp` never goes above 0 (help ends at bodyweight, it never jumps straight to added load). From 0 or more, the bodyweight step (2.5, added load).
 - `stepDown` never goes below 0 from 0 or more: the app never proposes help on its own. Help comes back only when the user selects **Aide** in a session; from there, help is lowered as usual.
 - Learned weights work as before on the signed values (known −4.5 when stepping up from −9 → −4.5).
-- Example: −9 × 12·11·11·10 (total 44) → −4.5 × 8·8·8·8; −4.5 × 12·12·11·10 → 0 × 8·8·8·8 (bodyweight); 0 × 12·12·12·9 → 2.5 × 8·8·8·8.
+- Example (4 × 7–10): −9 × 10·10·10·8 (total 38) → −4.5 × 7·7·7·7; −4.5 × 10·10·10·9 → 0 × 7·7·7·7 (bodyweight); 0 × 10·10·9·9 → 2.5 × 7·7·7·7.
+
+### Tonnage
+- Tonnage of a set = weight × reps, **× 2 for `dumbbell` exercises** (one dumbbell in each hand; the weight typed stays the weight of one dumbbell, and the progression keeps using it). Done sets of finished sessions only.
+- `bodyweight` exercises are **ignored entirely**: no tonnage on their page, not counted in the total.
+- Accueil: all-time total of every non-bodyweight exercise, plus the part done this week (Monday→Monday, Europe/Paris, by session date).
+- Display: ≥ 1 000 kg → tonnes with one decimal ("48,6 t", "1,0 t"); below → kg ("850 kg"); "+0 kg" weeks show "+0 kg".
+- The volume bars of the exercise chart use the same weight × reps (× 2 for dumbbells), so the chart and the tonnage agree.
+- Pure functions in `shared/` (e.g. `setTonnage`, `formatTonnage`).
 
 ### Order and skipped exercises (fatigue)
 Exercises can be done in any order and some can be skipped, so the same exercise is not always done in the same state.
 - The app records the real order (time of the first set of each exercise).
 - **Pre-fatigue** of an exercise = sets already done earlier in the same session that hit its muscles: an earlier exercise sharing one of its primary muscles counts 1 per set if that muscle is primary there, ½ if secondary. Example: bench press after 3 sets of dips → 3; after curls → 0; with dips skipped → 0.
-- The rules always compare with the **last** time the exercise was done (no data is thrown away), and pre-fatigue only adjusts them, asymmetrically:
-  - more pre-fatigue than last time and the result is worse → not a failure: weights unchanged, not counted toward the two-sessions-in-a-row drop;
-  - more pre-fatigue and the result is as good or better → counts normally;
-  - less pre-fatigue and a success → counts normally (a later harder session simply keeps the weight).
-- When an exercise is opened with more pre-fatigue than last time, today's target reps = last reps (no +1).
+- The rules always compare with the **last** time the exercise was done (no data is thrown away). Pre-fatigue **only protects against going down**:
+  - more pre-fatigue than last time and the result is under the range → not a failure: weights unchanged, not counted toward the two-sessions-in-a-row drop;
+  - it never blocks the +1 nor Up: today's targets are computed the same way whatever today's pre-fatigue.
 - No fatigue percentage or coefficient.
 - In a superset, `doneAt` of each set tells which sets of the partner came earlier; partners on independent muscles add 0.
-- **Superset context** (asymmetric, same idea): last time done **solo**, this time **in a superset** (shorter rest) and the result is worse → not a failure (weights unchanged, not counted toward the drop); successes count normally. Opened in a superset after a solo session → today's target reps = last reps (no +1). Superset back to solo needs no special case.
+- No superset special case: an exercise done in a superset is judged exactly like a solo one (only pre-fatigue from the partner's earlier sets applies).
 - Not displayed: pre-fatigue only feeds the rules above (no battery icon, no "{muscle} déjà travaillé" tag).
 
 ### Showing target vs done
@@ -118,6 +124,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Accueil (mobile `muscu-1-accueil`, desktop `bureau-muscu-accueil`)
 - **Prochaine séance** card: workout name, its exercise names (desktop: each with its target), date of the last time, big **Démarrer**.
+- **Tonnage soulevé** (right under Prochaine séance, mobile and desktop left column; mockups updated): a small card with a dumbbell icon, "Tonnage soulevé" and the all-time total ("48,6 t"), and on the right "+2,4 t / cette semaine" (current Monday→Monday week, Europe/Paris). See "Tonnage" below.
 - **Mes programmes** (where Mes séances was):
   - the **active program** on top: its name with an "Actif" tag (→ its Programme page), then its workouts in rotation order with exercise count and last date, the next one tagged "Suivante" (tap → edit), then a last row **"+ Nouvelle séance" inside the same card** (divider above, dashed "+" badge in the position column, accent text; added to the active program — mockup `muscu-1b-mes-programmes`);
   - the **other programs** below: name and workout count (→ its Programme page) and an **Activer** button (asks "Activer « X » ?" first);
@@ -133,7 +140,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 - **Offline** (see "Session without connection" below; mockup `muscu-2b-seance-liste-sans-connexion`): a crossed-cloud icon (`role="img"`, `aria-label="Pas de connexion"`, warning colour) at the right of the header; the close button and **Terminer la séance** are disabled (Terminer keeps its label, with the crossed cloud before it). Everything else works.
 
 ### Exercice en cours (mobile `muscu-3-exercice-en-cours`)
-- Back arrow → list (progress kept). Image, name, "4 × 8–12" — **not a link** (no Fiche exercice during a session). Identical with or without connection.
+- Back arrow → list (progress kept). Image, name, "4 × 7–10" — **not a link** (no Fiche exercice during a session). Identical with or without connection.
 - Bodyweight exercises only: a segmented **Lest | Aide** control at the top of the set card (mockups `aide-1-tractions-avec-aide`, `aide-2-aide-a-zero`). No setting on the exercise: the session opens in **Aide** when today's targets are negative, else in **Lest**. In Aide the weight column is titled "Aide kg" and every number (targets, inputs, Dernière fois) is shown and typed **positive**; the app stores the negative value. Switching mode during a session flips the sign of the sets already logged for that exercise. One mode per exercise per session.
 - Set rows: Objectif | kg | Reps | ✓ (see 3, "Showing target vs done"). All rows have the same height; weight and reps are typed manually (no − / + buttons). Sets are done **in order**: only the next set has inputs, later ones are locked (their target, read-only); any validated set can be reopened to fix it.
 - "Dernière fois · date": sets in the compact format below.
@@ -142,6 +149,7 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 
 ### Fiche exercice (mobile `muscu-4-fiche-exercice`, desktop `bureau-muscu-exercice`)
 - Name, equipment · workout · sets × rep range (from the exercise), pencil → Modifier l'exercice.
+- **Tonnage of the exercise** (not for bodyweight exercises): a small box at the right of the name, "12,4 t" / "soulevées" (mobile: same line as the name; desktop: in the header, just before the pencil). Bodyweight exercises (with or without assistance) show nothing.
 - One image of the exercise with the muscles as pills overlaid at its bottom: primary filled accent, secondary outlined. No muscle map, no next-target block.
 - **Progression**: one combined chart per session over the last 12 weeks — bars = volume (Σ weight × reps), line = **average weight weighted by reps** (Σ weight × reps / Σ reps over the done sets, signed for assistance). No summary numbers. Tapping a bar highlights it and shows a small callout above it: date, sets (compact format), volume. Tap elsewhere to hide.
 - **Bodyweight exercises** (mockup `aide-3-fiche-tractions`): bars = **total reps** (Σ reps, no weight), legend "Reps", callout "45 reps"; the line is the signed weight (help below, added load above) with a dashed line at 0 labelled "Poids du corps". Desktop history: the volume column becomes "Reps" for them.
@@ -164,12 +172,12 @@ Exercises can be done in any order and some can be skipped, so the same exercise
 Consecutive sets at the same weight are grouped: "60 kg × 10 · 9 · 9 · 8". Bodyweight exercises: negative → "Aide 20 kg × 9 · 9 · 8 · 8", 0 → "Poids du corps × 9 · 8 · 8 · 8", positive → "5 kg × …" as usual. A weight change starts a new line (mobile) or group: "57,5 kg × 11 · 10" / "55 kg × 10 · 9". Keeps 4–5 sets readable on a phone.
 
 ### Modifier l'exercice (mobile `muscu-7-modifier-exercice`)
-- Name; **Séries et répétitions**: three number inputs Séries × Min – Max (defaults 4 × 8–12; API rejects `sets < 1`, `repMin < 1`, `repMin > repMax`); muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
+- Name; **Séries et répétitions**: three number inputs Séries × Min – Max (defaults 4 × 7–10; API rejects `sets < 1`, `repMin < 1`, `repMin > repMax`); muscles as toggle pills (tap: none → secondary (outlined) → primary (filled) → none), legend Principal / Secondaire; image (change / take photo). Enregistrer. No weight settings (weights are learned).
 
 ### Session without connection
 The gym has no network. Only **Démarrer**, **Terminer la séance** and **Quitter la séance** (close) need the connection; everything in between runs on the phone.
-- **Démarrer** (online): the server creates the session and returns a **session bundle**: the session, and for each exercise everything needed to compute today's targets on the phone — the exercise (name, equipment, muscles, sets, rep range, image), its last and previous logs (sets, pre-fatigue, inSuperset, completed, easy), its known weights and step, plus the superset groups. The images are downloaded once at that moment and kept with the bundle.
-- **During the session** (no API call at all): opening an exercise computes its targets with the same `shared/` functions as the server (`preFatigue` from the sets already done in this session, `nextTargets`, superset context, assistance). Validating a set, reopening it, Facile, Lest | Aide, "Terminer l'exercice plus tôt" and Terminé only update the local copy. Each set keeps its `doneAt` (phone clock).
+- **Démarrer** (online): the server creates the session and returns a **session bundle**: the session, and for each exercise everything needed to compute today's targets on the phone — the exercise (name, equipment, muscles, sets, rep range, image), its last and previous logs (sets, pre-fatigue, completed, easy), its known weights and step, plus the superset groups. The images are downloaded once at that moment and kept with the bundle.
+- **During the session** (no API call at all): opening an exercise computes its targets with the same `shared/` functions as the server (`preFatigue` from the sets already done in this session, `nextTargets`, assistance). Validating a set, reopening it, Facile, Lest | Aide, "Terminer l'exercice plus tôt" and Terminé only update the local copy. Each set keeps its `doneAt` (phone clock).
 - **Local copy**: one active session only, stored on the device (IndexedDB), written after every change, so closing the tab, a reload, a lock or a restart lose nothing. At Démarrer the app calls `navigator.storage.persist()` (best effort). The Séance screens read the local copy, never the API.
 - **Terminer la séance** (online): one request with the whole session (every exercise: sets with targets, weight, reps, done, doneAt; easy; completed; Lest | Aide sign). The server stores it, recomputes pre-fatigue from `doneAt` as today, marks the session finished. The local copy is deleted only after a success. Idempotent: sending the same session again after a lost response returns success, not 409.
 - **Quitter la séance** (online): deletes the session on the server, then the local copy.
@@ -184,7 +192,7 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - Exactly **2 adjacent** items of a workout share a `supersetGroup` (opaque id). Unlinking clears it on both. The API rejects a group of ≠ 2 items or non-adjacent items (400).
 - Each exercise keeps its own sets and rep range (from the exercise), e.g. A 4 × 12–15, B 4 × 10–12.
 - **Order**: `interleaveSets(a, b)` alternates while both have sets left, then the rest of the longer one (A1 B1 A2 B2 A3 A4). Pure function in `shared/`.
-- **Progression** unchanged: each exercise is judged on its own sets; superset context and pre-fatigue as in §3.
+- **Progression** unchanged: each exercise is judged on its own sets; pre-fatigue as in §3 (no superset special case).
 - The session snapshots the group on each `SessionExercise`; if the partner is skipped, the exercise counts as solo.
 
 ### Modifier la séance (`superset-1-modifier-seance`)
@@ -213,14 +221,20 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 8. Supersets: schema, link/unlink, list card, Superset en cours, superset context.
 9. Sets and rep range on the exercise.
 10. Assistance on bodyweight exercises.
-11. Session without connection (see the README of this handoff).
+11. Session without connection.
+12. Rep ranges 7–10 / 9–12, Up at N × max − 2, pre-fatigue only against Down, no superset rule, tonnage (see the README of this handoff).
 
 ## 7. Acceptance checks
 
-- Tractions 4 × 8–12: aide 32 × 5, then aide 41 × 10 · 10 · 10 → harmonized, judged on 41 × 10 · 10 · 10 (total 30 over 3 sets: not Up ≥ 33, not < 24) → consolidate → **aide 41 × 10 · 10 · 10 · 10**.
-- 60 × 10 · 10 · 10 then a last set at 50 × 12 → **60 × 10 · 10 · 10 · 10**.
-- 60 × 8 then 50 × 12 · 12 · 12 (barbell) → judged on 50 × 12 · 12 · 12 (36 ≥ 33) → Up → **55 × 8 · 8 · 8 · 8**.
-- 60 × 10 · 9 · 9 then 70 × 4 → consolidate at 60 with targets 10 · 9 · 9 and 9 for the harmonized set → **60 × 10 · 9 · 9 · 9**.
+- Tonnage: barbell 60 × 10·10·10·8 → 2 280 kg; dumbbells 14 × 10·10·9·9 → 2 × 14 × 38 = 1 064 kg; tractions (bodyweight, assisted or not) → not counted, no box on their page.
+- Accueil total = Σ of every non-bodyweight exercise's tonnage; "cette semaine" counts only sessions since Monday 00:00 (Europe/Paris).
+- 48 600 kg shows "48,6 t"; 850 kg shows "850 kg".
+- Dumbbell exercise chart: bars = weight × reps × 2.
+
+- Tractions 4 × 7–10: aide 32 × 5, then aide 41 × 10 · 10 · 10 → harmonized, judged on 41 × 10 · 10 · 10 (total 30 over 3 sets ≥ 3 × 10 − 2 = 28) → Up → **aide 36,5 × 7 · 7 · 7 · 7**.
+- 4 × 7–10: 60 × 9 · 9 · 8 then a last set at 50 × 10 → harmonized (26 < 28, ≥ 21) → consolidate → **60 × 9 · 9 · 8 · 8**.
+- 60 × 8 then 50 × 10 · 10 · 10 (barbell, 7–10) → judged on 50 × 10 · 10 · 10 (30 ≥ 28) → Up → **55 × 7 · 7 · 7 · 7**.
+- 60 × 9 · 8 · 8 then 70 × 4 (7–10) → 25 < 28 → consolidate at 60 with targets 9 · 8 · 8 and 8 for the harmonized set → **60 × 9 · 8 · 8 · 8**.
 - Drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, shape kept as before.
 - Chart line for 32 × 5 + 41 × 10 · 10 · 10 (aide) = −(5 × 32 + 30 × 41) / 35 ≈ −39,7.
 
@@ -232,19 +246,21 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 
 - After finishing Push A, Accueil proposes Pull; after Push B, it proposes Push A.
 - Exercises can be done in any order from the list; skipped ones keep their target.
-- 4 × 8–12, 50 kg, done 12·12·12·8 (total 44) → next time one step up, targets × 8·8·8·8.
-- Done 11·11·11·10 (total 43) → 50 × 12·12·12·11; done as targeted (total 47) → step up the time after.
-- Done 12·12·12·7 (total 43) → 50 × 12·12·12·8; never counts toward a drop.
-- Target 50 × 10·10·10·10, done 10·10·10·8 → 50 × 11·11·11·9.
-- Done 7·7·6·6 (total 26, < 32) the first time → targets retried: 50 × last targets.
-- Reps rebalance: 10·10·10·8 → 11·11·11·9 → 12·12·12·10 (total 46) → next weight (Facile never tapped, targets met).
-- 57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, with or without Facile.
-- Done 9·9·8·7 (total 33, ≥ 32) "Facile" → step up.
-- Done 7·7·6·6 (total 26) twice in a row, same pre-fatigue → every weight one step down, targets × 8; the second time with more pre-fatigue → no drop.
+- 4 × 7–10, 50 kg, done 10·10·10·8 (total 38) → next time one step up, targets × 7·7·7·7.
+- Done 10·10·9·8 (total 37) → 50 × 10·10·10·9; done as targeted (total 39) → step up the time after.
+- Done 10·10·10·6 (total 36) → 50 × 10·10·10·7; never counts toward a drop.
+- Target 50 × 8·8·8·8, done 8·8·8·7 → 50 × 9·9·9·8.
+- Done 7·7·6·6 (total 26, < 28) the first time → targets retried: 50 × last targets.
+- Reps rebalance: 8·8·8·7 → 9·9·9·8 → 10·10·10·9 (total 39) → next weight (Facile never tapped, targets met).
+- 57,5 × 10·10·9·9 (total 38) → 60 × 7·7·7·7, with or without Facile.
+- Done 8·7·7·6 (total 28, ≥ 28) "Facile" → step up.
+- Done 7·6·6·6 (total 25) twice in a row, same pre-fatigue → every weight one step down, targets × 7; the second time with more pre-fatigue → no drop.
+- Target 50 × 8·8·8·8, done 8·8·8·8 with more pre-fatigue than last time (exercise moved later in the session) → 50 × 9·9·9·9: pre-fatigue never blocks the +1.
+- 3 × 9–12: done 12·11·11 (total 34 ≥ 34) → Up × 9·9·9; done 12·11·10 (33) → 12·12·11.
 - Dumbbells 10 kg "Facile", user logs 12,5 → next time a step up from 10 kg gives 12,5.
 - Known weights {8, 30}: stepping up from 8 (machine) gives 12,5, not 30.
-- Barbell 60 kg × 12·12·12·8, no known weight above → 65 × 8·8·8·8.
-- Drop set 60×12 · 57,5×12 · 55×12 → 62,5 · 60 · 57,5.
+- Barbell 60 kg × 10·10·10·8 (7–10), no known weight above → 65 × 7·7·7·7.
+- Drop set 60×10 · 57,5×10 · 55×10 (3 × 7–10, total 30 ≥ 28) → 62,5 · 60 · 57,5, targets × 7.
 - ✓ on an empty row records the target; a set done under target shows its reps in orange.
 - Reloading the page in the middle of a session keeps every validated set.
 - Existing workouts end up in one active program, "Mon programme", and the next workout doesn't change.
@@ -256,10 +272,12 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - Linking two 4-set exercises gives A1 B1 A2 B2 A3 B3 A4 B4; 4 + 3 sets → A1 B1 A2 B2 A3 B3 A4.
 - Unlinking keeps both exercises, their targets and their order; the API rejects a group of 3 items or two non-adjacent items.
 - The list shows one card for a superset; it gets ✓ only when both exercises are done.
-- Exercise done solo last time at 25 kg × 11·10·10·9: in a superset today its targets are 25 × 11·10·10·9; done 10·9·9·8 → weight stays 25 kg, no drop strike.
+- Exercise done solo last time at 25 kg × 9·9·8·8: in a superset today its targets are 25 × 10·10·9·9 (no special case).
 - The same exercise in two workouts shows the same "sets × range" in both.
-- Changing Rowing from 4 × 8–12 to 3 × 8–12: the next session has 3 sets; past sessions still show 4 sets in history and chart volume.
-- Changing a range to 6–10 with 3 sets: Up threshold 27 reps, Down threshold 18; weights unchanged.
+- Changing Rowing from 4 × 7–10 to 3 × 7–10: the next session has 3 sets; past sessions still show 4 sets in history and chart volume.
+- Changing a range to 6–10 with 3 sets: Up threshold 28 reps, Down threshold 18; weights unchanged.
+- Range migration (8–12 → 7–10): last time 60 × 12·12·11·10 → total 45 ≥ 38 → **65 × 7·7·7·7**; last time 60 × 8·8·8·8 → 32 → **60 × 9·9·9·9**; a retried target of 11 → 10.
+- Range migration (10–15 → 9–12, 4 sets): last time 20 × 15·15·14·13 → 57 ≥ 46 → **22,5 × 9·9·9·9**.
 - Tractions, Aide 20 × 9·9·8·8 (total 34) → targets Aide 20 × 10·10·9·9; inputs show 20, the API stores −20.
 - Aide 4,5 × 12·12·11·10 → next session opens in Lest with targets 0 × 8·8·8·8; from 0 × 7·7·6·6 twice → stays 0 (no help proposed).
 - Selecting Aide mid-session on a set logged 10 → stored −10. Sending −10 for a barbell exercise → 400.

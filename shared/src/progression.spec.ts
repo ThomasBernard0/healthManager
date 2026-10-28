@@ -9,6 +9,7 @@ import {
   stepDown,
   stepUp,
   targetsFromHistory,
+  upThreshold,
   type ExerciseLog,
   type NextTargetsInput,
   type SessionEntry,
@@ -20,7 +21,7 @@ function log(
   weight: number | number[],
   reps: number[],
   easy = false,
-  options: { targets?: number[]; preFatigue?: number; complete?: boolean; inSuperset?: boolean } = {},
+  options: { targets?: number[]; preFatigue?: number; complete?: boolean } = {},
 ): ExerciseLog {
   return {
     sets: reps.map((r, i) => {
@@ -30,21 +31,19 @@ function log(
     easy,
     preFatigue: options.preFatigue ?? 0,
     complete: options.complete ?? true,
-    inSuperset: options.inSuperset ?? false,
   };
 }
 
-/** 4 × 8–12 on a cable (2.5 kg step), nothing else known. */
+/** 4 × 7–10 on a cable (2.5 kg step), nothing else known. */
 const next = (last: ExerciseLog | null, extra: Partial<NextTargetsInput> = {}) =>
   nextTargets({
     last,
     previous: null,
     setCount: 4,
-    repMin: 8,
-    repMax: 12,
+    repMin: 7,
+    repMax: 10,
     known: last ? last.sets.map((s) => s.weight) : [],
     step: DEFAULT_STEP.cable,
-    todayPreFatigue: 0,
     ...extra,
   });
 
@@ -85,7 +84,7 @@ describe('stepUp / stepDown (available weights, learned)', () => {
 
 describe('assistance: negative weights on bodyweight exercises', () => {
   const step = DEFAULT_STEP.bodyweight;
-  /** Tractions, 4 × 8–12. */
+  /** Tractions, 4 × 7–10. */
   const pullUps = (last: ExerciseLog, extra: Partial<NextTargetsInput> = {}) => next(last, { step, ...extra });
 
   it('steps by 4,5 while the weight is negative', () => {
@@ -116,22 +115,22 @@ describe('assistance: negative weights on bodyweight exercises', () => {
     expect(stepUp(-20, [-20, -9], step)).toBe(-15.5);
   });
 
-  it('−9 × 12·11·11·10 (total 44) → −4,5 × 8·8·8·8', () => {
-    const t = pullUps(log(-9, [12, 11, 11, 10]));
+  it('−9 × 10·10·10·8 (total 38) → −4,5 × 7·7·7·7', () => {
+    const t = pullUps(log(-9, [10, 10, 10, 8]));
     expect(weights(t)).toEqual([-4.5, -4.5, -4.5, -4.5]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
-  it('−4,5 × 12·12·11·10 → 0 × 8·8·8·8 (bodyweight)', () => {
-    const t = pullUps(log(-4.5, [12, 12, 11, 10]));
+  it('−4,5 × 10·10·10·9 → 0 × 7·7·7·7 (bodyweight)', () => {
+    const t = pullUps(log(-4.5, [10, 10, 10, 9]));
     expect(weights(t)).toEqual([0, 0, 0, 0]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
-  it('0 × 12·12·12·9 → 2,5 × 8·8·8·8', () => {
-    const t = pullUps(log(0, [12, 12, 12, 9]));
+  it('0 × 10·10·9·9 → 2,5 × 7·7·7·7', () => {
+    const t = pullUps(log(0, [10, 10, 9, 9]));
     expect(weights(t)).toEqual([2.5, 2.5, 2.5, 2.5]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
   it('Aide 20 × 9·9·8·8 (total 34) → Aide 20 × 10·10·9·9', () => {
@@ -142,9 +141,9 @@ describe('assistance: negative weights on bodyweight exercises', () => {
 
   it('0 × 7·7·6·6 twice → stays 0 (no help proposed); under the range twice with help → more help', () => {
     const twice = (weight: number) =>
-      pullUps(log(weight, [7, 7, 6, 6], false, { targets: [8, 8, 8, 8] }), { previous: log(weight, [7, 7, 6, 6]) });
+      pullUps(log(weight, [7, 7, 6, 6], false, { targets: [7, 7, 7, 7] }), { previous: log(weight, [7, 7, 6, 6]) });
     expect(weights(twice(0))).toEqual([0, 0, 0, 0]);
-    expect(reps(twice(0))).toEqual([8, 8, 8, 8]);
+    expect(reps(twice(0))).toEqual([7, 7, 7, 7]);
     expect(weights(twice(-9))).toEqual([-13.5, -13.5, -13.5, -13.5]);
   });
 });
@@ -182,214 +181,213 @@ describe('pre-fatigue', () => {
   });
 });
 
-describe('judge and nextTargets (double progression, 4 × 8–12)', () => {
+describe('judge and nextTargets (double progression, 4 × 7–10)', () => {
+  it('Up threshold: N × repMax − 2 (4 × 7–10 → 38, 3 × 9–12 → 34)', () => {
+    expect(upThreshold(4, 10)).toBe(38);
+    expect(upThreshold(3, 12)).toBe(34);
+    expect(judge(log(50, [10, 10, 10, 8]), null, 7, 10)).toBe('up');
+    expect(judge(log(50, [10, 10, 9, 8]), null, 7, 10)).toBe('progress');
+  });
+
   it('first time: no target', () => {
     expect(next(null)).toBeNull();
   });
 
-  it('50 kg, done 12·12·12·8 (total 44) → one step up, targets × 8·8·8·8', () => {
-    const t = next(log(50, [12, 12, 12, 8]));
+  it('50 kg, done 10·10·10·8 (total 38) → one step up, targets × 7·7·7·7', () => {
+    const t = next(log(50, [10, 10, 10, 8]));
     expect(weights(t)).toEqual([52.5, 52.5, 52.5, 52.5]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
-  it('barbell 60 kg, done 12·12·12·8, no known weight above → 65 × 8·8·8·8', () => {
-    const t = next(log(60, [12, 12, 12, 8]), { step: DEFAULT_STEP.barbell });
+  it('barbell 60 kg, done 10·10·10·8, no known weight above → 65 × 7·7·7·7', () => {
+    const t = next(log(60, [10, 10, 10, 8]), { step: DEFAULT_STEP.barbell });
     expect(weights(t)).toEqual([65, 65, 65, 65]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
-  it('done 11·11·11·10 (total 43) → 50 × 12·12·12·11; done as targeted (47) → step up the time after', () => {
-    const t = next(log(50, [11, 11, 11, 10]));
+  it('done 10·10·9·8 (total 37) → 50 × 10·10·10·9; done as targeted (39) → step up the time after', () => {
+    const t = next(log(50, [10, 10, 9, 8]));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
-    expect(reps(t)).toEqual([12, 12, 12, 11]);
-    expect(judge(log(50, [12, 12, 12, 11], false, { targets: [12, 12, 12, 11] }), null, 8, 12)).toBe('up');
+    expect(reps(t)).toEqual([10, 10, 10, 9]);
+    expect(judge(log(50, [10, 10, 10, 9], false, { targets: [10, 10, 10, 9] }), null, 7, 10)).toBe('up');
   });
 
-  it('done 12·12·12·7 (total 43) → 50 × 12·12·12·8; never counts toward a drop', () => {
-    const last = log(50, [12, 12, 12, 7]);
-    expect(reps(next(last))).toEqual([12, 12, 12, 8]);
-    expect(judge(last, log(50, [7, 7, 6, 6]), 8, 12)).toBe('progress');
+  it('done 10·10·10·6 (total 36) → 50 × 10·10·10·7; never counts toward a drop', () => {
+    const last = log(50, [10, 10, 10, 6]);
+    expect(reps(next(last))).toEqual([10, 10, 10, 7]);
+    expect(judge(last, log(50, [7, 6, 6, 6]), 7, 10)).toBe('progress');
   });
 
-  it('target 50 × 10·10·10·10, done 10·10·10·8 → 50 × 11·11·11·9', () => {
-    const t = next(log(50, [10, 10, 10, 8], false, { targets: [10, 10, 10, 10] }));
+  it('target 50 × 8·8·8·8, done 8·8·8·7 → 50 × 9·9·9·8', () => {
+    const t = next(log(50, [8, 8, 8, 7], false, { targets: [8, 8, 8, 8] }));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
-    expect(reps(t)).toEqual([11, 11, 11, 9]);
+    expect(reps(t)).toEqual([9, 9, 9, 8]);
   });
 
-  it('reps rebalance: 10·10·10·8 → 11·11·11·9 → 12·12·12·10 (total 46) → next weight', () => {
-    const second = next(log(50, [10, 10, 10, 8]))!;
-    expect(reps(second)).toEqual([11, 11, 11, 9]);
+  it('reps rebalance: 8·8·8·7 → 9·9·9·8 → 10·10·10·9 (total 39) → next weight', () => {
+    const second = next(log(50, [8, 8, 8, 7]))!;
+    expect(reps(second)).toEqual([9, 9, 9, 8]);
     const third = next(log(50, reps(second), false, { targets: reps(second) }))!;
-    expect(reps(third)).toEqual([12, 12, 12, 10]);
+    expect(reps(third)).toEqual([10, 10, 10, 9]);
     const fourth = next(log(50, reps(third), false, { targets: reps(third) }));
     expect(weights(fourth)).toEqual([52.5, 52.5, 52.5, 52.5]);
-    expect(reps(fourth)).toEqual([8, 8, 8, 8]);
+    expect(reps(fourth)).toEqual([7, 7, 7, 7]);
   });
 
-  it('57,5 × 12·12·11·10 (total 45) → 60 × 8·8·8·8, with or without Facile', () => {
+  it('57,5 × 10·10·9·9 (total 38) → 60 × 7·7·7·7, with or without Facile', () => {
     for (const easy of [true, false]) {
-      const t = next(log(57.5, [12, 12, 11, 10], easy));
+      const t = next(log(57.5, [10, 10, 9, 9], easy));
       expect(weights(t)).toEqual([60, 60, 60, 60]);
-      expect(reps(t)).toEqual([8, 8, 8, 8]);
+      expect(reps(t)).toEqual([7, 7, 7, 7]);
     }
   });
 
-  it('done 9·9·8·7 (total 33, ≥ 32) "Facile" → step up', () => {
-    expect(judge(log(50, [9, 9, 8, 7], true), null, 8, 12)).toBe('up');
-    expect(weights(next(log(50, [9, 9, 8, 7], true)))).toEqual([52.5, 52.5, 52.5, 52.5]);
+  it('done 8·7·7·6 (total 28, ≥ 28) "Facile" → step up', () => {
+    expect(judge(log(50, [8, 7, 7, 6], true), null, 7, 10)).toBe('up');
+    expect(weights(next(log(50, [8, 7, 7, 6], true)))).toEqual([52.5, 52.5, 52.5, 52.5]);
     // Without Facile: the usual +1.
-    expect(judge(log(50, [9, 9, 8, 7]), null, 8, 12)).toBe('progress');
+    expect(judge(log(50, [8, 7, 7, 6]), null, 7, 10)).toBe('progress');
   });
 
-  it('"Facile" under the range (total 26 < 32): no step up, targets retried', () => {
-    expect(judge(log(50, [7, 7, 6, 6], true, { targets: [8, 8, 8, 8] }), null, 8, 12)).toBe('retry');
+  it('"Facile" under the range (total 25 < 28): no step up, targets retried', () => {
+    expect(judge(log(50, [7, 6, 6, 6], true, { targets: [7, 7, 7, 7] }), null, 7, 10)).toBe('retry');
   });
 
-  it('done 7·7·6·6 (total 26) twice in a row, same pre-fatigue → every weight one step down, targets × 8', () => {
-    const previous = log(50, [7, 7, 6, 6], false, { preFatigue: 2 });
-    const last = log(50, [7, 7, 6, 6], false, { preFatigue: 2, targets: [8, 8, 8, 8] });
+  it('done 7·6·6·6 (total 25) twice in a row, same pre-fatigue → every weight one step down, targets × 7', () => {
+    const previous = log(50, [7, 6, 6, 6], false, { preFatigue: 2 });
+    const last = log(50, [7, 6, 6, 6], false, { preFatigue: 2, targets: [8, 8, 8, 8] });
     const t = next(last, { previous });
     expect(weights(t)).toEqual([47.5, 47.5, 47.5, 47.5]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
   });
 
   it('…the second time with more pre-fatigue → no drop (weights unchanged, target retried)', () => {
-    const previous = log(50, [7, 7, 6, 6], false, { preFatigue: 0 });
-    const last = log(50, [7, 7, 6, 6], false, { preFatigue: 3, targets: [8, 8, 8, 8] });
-    expect(judge(last, previous, 8, 12)).toBe('retry');
+    const previous = log(50, [7, 6, 6, 6], false, { preFatigue: 0 });
+    const last = log(50, [7, 6, 6, 6], false, { preFatigue: 3, targets: [8, 8, 8, 8] });
+    expect(judge(last, previous, 7, 10)).toBe('retry');
     const t = next(last, { previous });
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([8, 8, 8, 8]);
   });
 
-  it('done 7·7·6·6 (total 26, < 32) the first time: same weights, last time’s target (never lowered to what was done)', () => {
+  it('done 7·7·6·6 (total 26, < 28) the first time: same weights, last time’s target (never lowered to what was done)', () => {
     const t = next(log(50, [7, 7, 6, 6], false, { targets: [9, 9, 9, 8] }));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([9, 9, 9, 8]);
   });
 
-  it('more pre-fatigue today than last time: target reps = last reps (no +1)', () => {
-    expect(reps(next(log(50, [10, 10, 10, 8]), { todayPreFatigue: 3 }))).toEqual([10, 10, 10, 8]);
+  it('target 8·8·8·8 done with more pre-fatigue than last time → 9·9·9·9: pre-fatigue never blocks the +1', () => {
+    const previous = log(50, [8, 8, 8, 7], false, { preFatigue: 0 });
+    const last = log(50, [8, 8, 8, 8], false, { preFatigue: 3, targets: [8, 8, 8, 8] });
+    expect(reps(next(last, { previous }))).toEqual([9, 9, 9, 9]);
   });
 
   it('more pre-fatigue and a result as good or better counts normally (step up)', () => {
-    expect(judge(log(50, [12, 12, 11, 10], false, { preFatigue: 4 }), log(50, [7, 7, 6, 6]), 8, 12)).toBe('up');
+    expect(judge(log(50, [10, 10, 9, 9], false, { preFatigue: 4 }), log(50, [7, 7, 6, 6]), 7, 10)).toBe('up');
   });
 
-  it('drop set 60×12 · 57,5×12 · 55×12 → 62,5 · 60 · 57,5 (the shape is kept)', () => {
-    const t = next(log([60, 57.5, 55], [12, 12, 12]), { setCount: 3, repMin: 8, repMax: 12 });
-    expect(weights(t)).toEqual([62.5, 60, 57.5]);
-    expect(reps(t)).toEqual([8, 8, 8]);
-  });
-
-  it('stopped early: retried, never a step up (2 sets of 12 out of 4)', () => {
-    const last = log(50, [12, 12], true, { targets: [10, 10], complete: false });
-    expect(judge(last, null, 8, 12)).toBe('retry');
-    const t = next(last);
+  it('every target is clamped to [repMin, repMax]: a retried 11 on 7–10 becomes 10', () => {
+    const t = next(log(50, [7, 6, 6, 6], false, { targets: [11, 11, 10, 10] }));
     expect(weights(t)).toEqual([50, 50, 50, 50]);
     expect(reps(t)).toEqual([10, 10, 10, 10]);
+    // …and a +1 under a raised minimum comes up to it (3 × 9–12, done 10·10·7 = 27, not under the range).
+    expect(reps(next(log(50, [10, 10, 7]), { setCount: 3, repMin: 9, repMax: 12 }))).toEqual([11, 11, 9]);
+  });
+
+  it('drop set 60×10 · 57,5×10 · 55×10 (3 × 7–10, total 30 ≥ 28) → 62,5 · 60 · 57,5, targets × 7', () => {
+    const t = next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 3 });
+    expect(weights(t)).toEqual([62.5, 60, 57.5]);
+    expect(reps(t)).toEqual([7, 7, 7]);
+  });
+
+  it('stopped early: retried, never a step up (2 sets of 10 out of 4)', () => {
+    const last = log(50, [10, 10], true, { targets: [9, 9], complete: false });
+    expect(judge(last, null, 7, 10)).toBe('retry');
+    const t = next(last);
+    expect(weights(t)).toEqual([50, 50, 50, 50]);
+    expect(reps(t)).toEqual([9, 9, 9, 9]);
   });
 
   it('stopped early under the range: no step down, and it never counts as one of the two in a row', () => {
-    const early = log(50, [6, 5], false, { targets: [8, 8], complete: false });
-    const bad = log(50, [7, 7, 6, 6], false, { targets: [8, 8, 8, 8] });
-    expect(judge(early, bad, 8, 12)).toBe('retry');
-    expect(judge(bad, early, 8, 12)).toBe('retry');
+    const early = log(50, [6, 5], false, { targets: [7, 7], complete: false });
+    const bad = log(50, [7, 6, 6, 6], false, { targets: [7, 7, 7, 7] });
+    expect(judge(early, bad, 7, 10)).toBe('retry');
+    expect(judge(bad, early, 7, 10)).toBe('retry');
   });
 
-  describe('superset context (4 × 10–12 at 25 kg)', () => {
-    const range = { repMin: 10, repMax: 12 };
-    const solo = log(25, [11, 10, 10, 9]);
-    const targets = [11, 10, 10, 9];
-    const inSuperset = (done: number[]) => log(25, done, false, { targets, inSuperset: true });
+  it('3 × 9–12: done 12·11·11 (total 34 ≥ 34) → Up × 9·9·9; done 12·11·10 (33) → 12·12·11', () => {
+    const scheme = { setCount: 3, repMin: 9, repMax: 12 };
+    const up = next(log(20, [12, 11, 11]), scheme);
+    expect(weights(up)).toEqual([22.5, 22.5, 22.5]);
+    expect(reps(up)).toEqual([9, 9, 9]);
+    const t = next(log(20, [12, 11, 10]), scheme);
+    expect(weights(t)).toEqual([20, 20, 20]);
+    expect(reps(t)).toEqual([12, 12, 11]);
+  });
 
-    it('done solo last time 25 × 11·10·10·9, in a superset today: targets 25 × 11·10·10·9 (no +1)', () => {
-      const t = next(solo, { ...range, todayInSuperset: true });
-      expect(weights(t)).toEqual([25, 25, 25, 25]);
-      expect(reps(t)).toEqual(targets);
-      // Solo again: the usual +1.
-      expect(reps(next(solo, range))).toEqual([12, 11, 11, 10]);
-    });
-
-    it('…done 10·9·9·8 in the superset: the weight stays 25 kg, the targets are retried', () => {
-      const worse = inSuperset([10, 9, 9, 8]);
-      expect(judge(worse, solo, 10, 12)).toBe('retry');
-      const t = next(worse, { ...range, previous: solo, todayInSuperset: true });
-      expect(weights(t)).toEqual([25, 25, 25, 25]);
-      expect(reps(t)).toEqual(targets);
-    });
-
-    it('…and that session does not count toward the two-in-a-row drop', () => {
-      const first = inSuperset([10, 9, 9, 8]);
-      const second = inSuperset([10, 9, 9, 8]);
-      // Under the range twice in a row, but the first one was the first time in a superset.
-      expect(judge(second, first, 10, 12, solo)).toBe('retry');
-      // A third one in a row: now two sessions count.
-      expect(judge(inSuperset([10, 9, 9, 8]), second, 10, 12, first)).toBe('down');
-    });
-
-    it('under the range solo, then in a superset: not a failure either', () => {
-      const badSolo = log(25, [9, 9, 9, 8], false, { targets });
-      expect(judge(inSuperset([9, 9, 8, 8]), badSolo, 10, 12)).toBe('retry');
-      // Both solo: the usual drop.
-      expect(judge(log(25, [9, 9, 8, 8], false, { targets }), badSolo, 10, 12)).toBe('down');
-    });
-
-    it('a success in a superset counts normally', () => {
-      expect(judge(inSuperset([12, 11, 11, 11]), solo, 10, 12)).toBe('up');
-      expect(reps(next(inSuperset([11, 10, 10, 10]), { ...range, previous: solo, todayInSuperset: true }))).toEqual([
-        12, 11, 11, 11,
-      ]);
-    });
-
-    it('from a superset back to solo: no special case', () => {
-      const last = inSuperset([11, 10, 10, 9]);
-      expect(reps(next(last, range))).toEqual([12, 11, 11, 10]);
-      const bad = inSuperset([9, 9, 8, 8]);
-      expect(judge(log(25, [9, 9, 8, 8], false, { targets }), bad, 10, 12, bad)).toBe('down');
-    });
+  it('no superset special case: done solo at 25 × 9·9·8·8, the next targets are 25 × 10·10·9·9 wherever it is done', () => {
+    const t = next(log(25, [9, 9, 8, 8]));
+    expect(weights(t)).toEqual([25, 25, 25, 25]);
+    expect(reps(t)).toEqual([10, 10, 9, 9]);
+    // Under the range twice in a row (the second time in a superset): the usual drop.
+    expect(judge(log(25, [7, 6, 6, 6]), log(25, [7, 6, 6, 6]), 7, 10)).toBe('down');
   });
 
   describe('the scheme of the exercise changed', () => {
     it('more sets: the added ones copy the last set’s target', () => {
-      const last = log(50, [10, 10, 10, 8]);
-      const t = next(last, { setCount: 5 });
+      const t = next(log(50, [8, 8, 8, 7]), { setCount: 5 });
       expect(weights(t)).toEqual([50, 50, 50, 50, 50]);
-      expect(reps(t)).toEqual([11, 11, 11, 9, 9]);
+      expect(reps(t)).toEqual([9, 9, 9, 8, 8]);
       // Drop set: the added set takes the last (lightest) weight.
-      expect(weights(next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 4 }))).toEqual([60, 57.5, 55, 55]);
+      expect(weights(next(log([60, 57.5, 55], [8, 8, 8]), { setCount: 4 }))).toEqual([60, 57.5, 55, 55]);
     });
 
-    it('4 × 8–12 → 3 × 8–12: the next session has 3 sets, the removed one is dropped', () => {
-      const t = next(log(50, [10, 10, 10, 8]), { setCount: 3 });
+    it('4 × 7–10 → 3 × 7–10: the next session has 3 sets, the removed one is dropped', () => {
+      const t = next(log(50, [8, 8, 8, 7]), { setCount: 3 });
       expect(weights(t)).toEqual([50, 50, 50]);
-      expect(reps(t)).toEqual([11, 11, 11]);
-      // The last session is still judged on its own 4 sets (44 → up).
-      const up = next(log(50, [12, 12, 12, 8]), { setCount: 3 });
+      expect(reps(t)).toEqual([9, 9, 9]);
+      // The last session is still judged on its own 4 sets (38 → up).
+      const up = next(log(50, [10, 10, 10, 8]), { setCount: 3 });
       expect(weights(up)).toEqual([52.5, 52.5, 52.5]);
-      expect(reps(up)).toEqual([8, 8, 8]);
+      expect(reps(up)).toEqual([7, 7, 7]);
     });
 
-    it('range changed to 6–10 with 3 sets: Up threshold 27 reps, Down threshold 18, weights unchanged', () => {
+    it('range changed to 6–10 with 3 sets: Up threshold 28 reps, Down threshold 18, weights unchanged', () => {
       const scheme = { setCount: 3, repMin: 6, repMax: 10 };
-      expect(judge(log(50, [9, 9, 9]), null, 6, 10)).toBe('up');
-      expect(judge(log(50, [9, 9, 8]), null, 6, 10)).toBe('progress');
+      expect(judge(log(50, [10, 9, 9]), null, 6, 10)).toBe('up');
+      expect(judge(log(50, [9, 9, 9]), null, 6, 10)).toBe('progress');
       expect(judge(log(50, [6, 6, 6]), log(50, [6, 6, 5]), 6, 10)).toBe('progress');
       expect(judge(log(50, [6, 6, 5]), log(50, [6, 6, 5]), 6, 10)).toBe('down');
-      // Same weights, +1 capped at the new maximum; a session done in 8–12 is judged with the new range.
       const t = next(log(50, [9, 8, 8]), scheme);
       expect(weights(t)).toEqual([50, 50, 50]);
       expect(reps(t)).toEqual([10, 9, 9]);
-      const stepped = next(log(50, [11, 11, 10]), scheme);
+      const stepped = next(log(50, [10, 10, 8]), scheme);
       expect(weights(stepped)).toEqual([52.5, 52.5, 52.5]);
       expect(reps(stepped)).toEqual([6, 6, 6]);
+    });
+
+    it('range migration 8–12 → 7–10: 60 × 12·12·11·10 (45 ≥ 38) → 65 × 7·7·7·7; 60 × 8·8·8·8 → 60 × 9·9·9·9; a retried 11 → 10', () => {
+      const barbell = { step: DEFAULT_STEP.barbell };
+      const up = next(log(60, [12, 12, 11, 10], false, { targets: [12, 12, 11, 10] }), barbell);
+      expect(weights(up)).toEqual([65, 65, 65, 65]);
+      expect(reps(up)).toEqual([7, 7, 7, 7]);
+      const plusOne = next(log(60, [8, 8, 8, 8], false, { targets: [8, 8, 8, 8] }), barbell);
+      expect(weights(plusOne)).toEqual([60, 60, 60, 60]);
+      expect(reps(plusOne)).toEqual([9, 9, 9, 9]);
+      const retried = next(log(60, [7, 6, 6, 6], false, { targets: [11, 11, 11, 11] }), barbell);
+      expect(weights(retried)).toEqual([60, 60, 60, 60]);
+      expect(reps(retried)).toEqual([10, 10, 10, 10]);
+    });
+
+    it('range migration 10–15 → 9–12 (4 sets): 20 × 15·15·14·13 (57 ≥ 46) → 22,5 × 9·9·9·9', () => {
+      const t = next(log(20, [15, 15, 14, 13], false, { targets: [15, 15, 14, 13] }), { repMin: 9, repMax: 12 });
+      expect(weights(t)).toEqual([22.5, 22.5, 22.5, 22.5]);
+      expect(reps(t)).toEqual([9, 9, 9, 9]);
     });
   });
 });
 
-describe('harmonize a lone off-weight set (step 1, 4 × 8–12)', () => {
+describe('harmonize a lone off-weight set (step 1, 4 × 7–10)', () => {
   it('sets aside the one set at another weight; drop sets and a single weight are left as they are', () => {
     const lone = harmonize(log([60, 60, 60, 50], [10, 10, 10, 12]).sets);
     expect(lone.loneIndex).toBe(3);
@@ -401,90 +399,91 @@ describe('harmonize a lone off-weight set (step 1, 4 × 8–12)', () => {
     expect(harmonize(log([60, 55], [10, 10]).sets)).toMatchObject({ commonWeight: null, loneIndex: null });
   });
 
-  it('Tractions: aide 32 × 5, then aide 41 × 10 · 10 · 10 → aide 41 × 10 · 10 · 10 · 10 (consolidate)', () => {
+  it('Tractions: aide 32 × 5, then aide 41 × 10 · 10 · 10 → judged on 41 × 10 · 10 · 10 (30 ≥ 28) → Up', () => {
     const last = log([-32, -41, -41, -41], [5, 10, 10, 10]);
-    // Judged on 41 × 10 · 10 · 10: 30 over 3 sets, not Up (≥ 33), not under the range (< 24).
-    expect(judge(last, null, 8, 12)).toBe('progress');
-    const t = next(last, { step: DEFAULT_STEP.bodyweight });
-    expect(weights(t)).toEqual([-41, -41, -41, -41]);
-    expect(reps(t)).toEqual([10, 10, 10, 10]);
+    expect(judge(last, null, 7, 10)).toBe('up');
+    const t = next(last, { step: DEFAULT_STEP.bodyweight, known: [-41] });
+    expect(weights(t)).toEqual([-36.5, -36.5, -36.5, -36.5]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
+    // The lone weight stays known: with −32 known (2 assist steps away), stepUp takes it.
+    expect(weights(next(last, { step: DEFAULT_STEP.bodyweight, known: [-41, -32] }))).toEqual([-32, -32, -32, -32]);
   });
 
-  it('60 × 10 · 10 · 10 then a last set at 50 × 12 → 60 × 10 · 10 · 10 · 10', () => {
-    const t = next(log([60, 60, 60, 50], [10, 10, 10, 12]));
+  it('60 × 9 · 9 · 8 then a last set at 50 × 10 → harmonized (26 < 28, ≥ 21) → 60 × 9 · 9 · 8 · 8', () => {
+    const last = log([60, 60, 60, 50], [9, 9, 8, 10]);
+    expect(judge(last, null, 7, 10)).toBe('progress');
+    const t = next(last);
     expect(weights(t)).toEqual([60, 60, 60, 60]);
-    expect(reps(t)).toEqual([10, 10, 10, 10]);
+    expect(reps(t)).toEqual([9, 9, 8, 8]);
   });
 
-  it('barbell 60 × 8 then 50 × 12 · 12 · 12 → judged on the 50 kg sets (36 ≥ 33) → Up → 55 × 8 · 8 · 8 · 8', () => {
-    const last = log([60, 50, 50, 50], [8, 12, 12, 12]);
-    expect(judge(last, null, 8, 12)).toBe('up');
+  it('barbell 60 × 8 then 50 × 10 · 10 · 10 → judged on the 50 kg sets (30 ≥ 28) → Up → 55 × 7 · 7 · 7 · 7', () => {
+    const last = log([60, 50, 50, 50], [8, 10, 10, 10]);
+    expect(judge(last, null, 7, 10)).toBe('up');
     const t = next(last, { step: DEFAULT_STEP.barbell, known: [50, 55, 60] });
     expect(weights(t)).toEqual([55, 55, 55, 55]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
     // The lone weight stays known: with only 50 and 60 known, stepUp from 50 takes 60 (2 steps away).
     expect(weights(next(last, { step: DEFAULT_STEP.barbell, known: [50, 60] }))).toEqual([60, 60, 60, 60]);
   });
 
-  it('60 × 10 · 9 · 9 then 70 × 4 → 60 × 10 · 9 · 9 · 9 (the harmonized set gets the lowest)', () => {
-    const t = next(log([60, 60, 60, 70], [10, 9, 9, 4]));
-    expect(weights(t)).toEqual([60, 60, 60, 60]);
-    expect(reps(t)).toEqual([10, 9, 9, 9]);
-  });
-
-  it('the lone set first or in the middle keeps its place', () => {
-    const t = next(log([60, 62.5, 60, 60], [9, 8, 10, 10]));
-    expect(weights(t)).toEqual([60, 60, 60, 60]);
-    expect(reps(t)).toEqual([9, 9, 10, 10]);
-  });
-
-  it('drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, the shape is kept', () => {
-    const three = next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 3 });
-    expect(weights(three)).toEqual([60, 57.5, 55]);
-    expect(reps(three)).toEqual([11, 11, 11]);
-    const split = next(log([60, 60, 50, 50], [10, 10, 10, 10]));
-    expect(weights(split)).toEqual([60, 60, 50, 50]);
-    expect(reps(split)).toEqual([11, 11, 11, 11]);
-  });
-
-  it('a lone off-weight set on a 3-set exercise → every set at the common weight', () => {
-    const t = next(log([60, 60, 55], [10, 10, 12]), { setCount: 3 });
-    expect(weights(t)).toEqual([60, 60, 60]);
-    expect(reps(t)).toEqual([10, 10, 10]);
-  });
-
-  it('2 sets at 2 weights: a drop set, not harmonized (+1 each)', () => {
-    const t = next(log([60, 55], [10, 10]), { setCount: 2 });
-    expect(weights(t)).toEqual([60, 55]);
-    expect(reps(t)).toEqual([11, 11]);
-  });
-
-  it('retry: every set at the common weight with the common sets’ last targets, the harmonized one the lowest', () => {
-    // Kept 7 · 7 · 6 = 20 < 24 (all 4 sets: 32, not under the range).
-    const t = next(log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [9, 8, 8, 12] }));
+  it('60 × 9 · 8 · 8 then 70 × 4 (25 < 28) → 60 × 9 · 8 · 8 · 8 (the harmonized set gets the lowest)', () => {
+    const t = next(log([60, 60, 60, 70], [9, 8, 8, 4]));
     expect(weights(t)).toEqual([60, 60, 60, 60]);
     expect(reps(t)).toEqual([9, 8, 8, 8]);
   });
 
-  it('the two-in-a-row drop counts the kept sets of each session', () => {
-    const harmonized = log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [8, 8, 8, 8] });
-    const t = next(harmonized, { previous: log(60, [7, 7, 6, 6]) });
-    expect(weights(t)).toEqual([57.5, 57.5, 57.5, 57.5]);
-    expect(reps(t)).toEqual([8, 8, 8, 8]);
-    expect(judge(log(60, [7, 7, 6, 6]), harmonized, 8, 12)).toBe('down');
+  it('the lone set first or in the middle keeps its place', () => {
+    const t = next(log([60, 62.5, 60, 60], [8, 7, 9, 9]));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([8, 8, 9, 9]);
   });
 
-  it('with more pre-fatigue: a worse result is not a failure, and no +1 anyway', () => {
-    const last = log([60, 60, 60, 50], [7, 7, 6, 12], false, { targets: [8, 8, 8, 8], preFatigue: 3 });
-    expect(judge(last, log(60, [7, 7, 6, 6]), 8, 12)).toBe('retry');
-    const t = next(log([60, 60, 60, 70], [10, 9, 9, 4]), { todayPreFatigue: 3 });
-    expect(reps(t)).toEqual([10, 9, 9, 9]);
+  it('drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, the shape is kept', () => {
+    const three = next(log([60, 57.5, 55], [8, 8, 8]), { setCount: 3 });
+    expect(weights(three)).toEqual([60, 57.5, 55]);
+    expect(reps(three)).toEqual([9, 9, 9]);
+    const split = next(log([60, 60, 50, 50], [8, 8, 8, 8]));
+    expect(weights(split)).toEqual([60, 60, 50, 50]);
+    expect(reps(split)).toEqual([9, 9, 9, 9]);
+  });
+
+  it('a lone off-weight set on a 3-set exercise → every set at the common weight', () => {
+    const t = next(log([60, 60, 55], [8, 8, 10]), { setCount: 3 });
+    expect(weights(t)).toEqual([60, 60, 60]);
+    expect(reps(t)).toEqual([8, 8, 8]);
+  });
+
+  it('2 sets at 2 weights: a drop set, not harmonized (+1 each)', () => {
+    const t = next(log([60, 55], [8, 8]), { setCount: 2 });
+    expect(weights(t)).toEqual([60, 55]);
+    expect(reps(t)).toEqual([9, 9]);
+  });
+
+  it('retry: every set at the common weight with the common sets’ last targets, the harmonized one the lowest', () => {
+    // Kept 6 · 6 · 6 = 18 < 21 (all 4 sets: 30, not under the range).
+    const t = next(log([60, 60, 60, 50], [6, 6, 6, 12], false, { targets: [8, 7, 7, 12] }));
+    expect(weights(t)).toEqual([60, 60, 60, 60]);
+    expect(reps(t)).toEqual([8, 7, 7, 7]);
+  });
+
+  it('the two-in-a-row drop counts the kept sets of each session', () => {
+    const harmonized = log([60, 60, 60, 50], [6, 6, 6, 12], false, { targets: [7, 7, 7, 7] });
+    const t = next(harmonized, { previous: log(60, [6, 6, 6, 6]) });
+    expect(weights(t)).toEqual([57.5, 57.5, 57.5, 57.5]);
+    expect(reps(t)).toEqual([7, 7, 7, 7]);
+    expect(judge(log(60, [6, 6, 6, 6]), harmonized, 7, 10)).toBe('down');
+  });
+
+  it('with more pre-fatigue: a worse result is not a failure', () => {
+    const last = log([60, 60, 60, 50], [6, 6, 6, 12], false, { targets: [7, 7, 7, 7], preFatigue: 3 });
+    expect(judge(last, log(60, [6, 6, 6, 6]), 7, 10)).toBe('retry');
   });
 
   it('the set count changed: the added sets copy the last target at the common weight', () => {
-    const t = next(log([60, 60, 60, 50], [10, 10, 10, 12]), { setCount: 5 });
+    const t = next(log([60, 60, 60, 50], [8, 8, 8, 10]), { setCount: 5 });
     expect(weights(t)).toEqual([60, 60, 60, 60, 60]);
-    expect(reps(t)).toEqual([10, 10, 10, 10, 10]);
+    expect(reps(t)).toEqual([8, 8, 8, 8, 8]);
   });
 });
 
@@ -516,22 +515,19 @@ describe('sessionPreFatigue (order of the session)', () => {
 
 describe('targetsFromHistory', () => {
   const { bench } = DIPS_THEN_BENCH;
-  const targets = (todayPreFatigue: number) =>
-    targetsFromHistory(bench.history, {
+
+  it('Développé couché: the +1, done first or after 3 sets of Dips', () => {
+    const t = targetsFromHistory(bench.history, {
       setCount: bench.sets,
       repMin: bench.repMin,
       repMax: bench.repMax,
       known: bench.known,
       step: DEFAULT_STEP[bench.equipment],
-      todayPreFatigue,
     });
-
-  it('Développé couché after 3 sets of Dips: no +1; done first: +1', () => {
-    expect(targets(3)).toEqual(DIPS_THEN_BENCH.benchAfterDips);
-    expect(targets(0)).toEqual(DIPS_THEN_BENCH.benchFirst);
+    expect(t).toEqual(DIPS_THEN_BENCH.benchTargets);
   });
 
   it('no history: no target', () => {
-    expect(targetsFromHistory([], { setCount: 4, repMin: 8, repMax: 12, known: [], step: 5, todayPreFatigue: 0 })).toBeNull();
+    expect(targetsFromHistory([], { setCount: 4, repMin: 7, repMax: 10, known: [], step: 5 })).toBeNull();
   });
 });

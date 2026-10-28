@@ -28,7 +28,8 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ```
 shared/                  @healthmanager/shared — pure TS, no deps (nutrients, per-portion ⇄ per-100 g, calendar/weeks, goals,
                          musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
-                         supersets: interleaveSets, blocks, superset context; assistance: negative weights, ASSIST_STEP, chartBarValue;
+                         supersets: interleaveSets, blocks; assistance: negative weights, ASSIST_STEP, chartBarValue;
+                         tonnage: setTonnage (× 2 dumbbells, bodyweight 0), tonnageDisplay;
                          finances: financeTotals, categoryShare, restRingFraction, parseEurosToCents)
   src/                   built to dist/ by each app's `postinstall` (linked as `file:../shared`)
 backend/                 NestJS API

@@ -77,9 +77,33 @@ export type BarKind = (typeof BAR_KINDS)[number];
 
 export const barKind = (equipment: Equipment): BarKind => (equipment === 'bodyweight' ? 'reps' : 'volume');
 
-/** Value of a chart bar: Σ weight × reps, or Σ reps for a bodyweight exercise (0 kg or help is not a zero bar). */
+/**
+ * Tonnage of a set (kg): weight × reps, × 2 for dumbbells (the weight typed is one dumbbell), 0 for a bodyweight
+ * exercise (they are never counted).
+ */
+export function setTonnage(weight: number, reps: number, equipment: Equipment): number {
+  if (equipment === 'bodyweight') return 0;
+  return weight * reps * (equipment === 'dumbbell' ? 2 : 1);
+}
+
+/** Σ setTonnage over the sets of an exercise. */
+export const tonnage = (sets: SetResult[], equipment: Equipment): number =>
+  sets.reduce((sum, s) => sum + setTonnage(s.weight, s.reps, equipment), 0);
+
+/** How a tonnage reads: tonnes with one decimal from 1 000 kg ("48,6 t"), else whole kg ("850 kg"). */
+export interface TonnageDisplay {
+  value: number;
+  unit: 't' | 'kg';
+}
+
+export function tonnageDisplay(kg: number): TonnageDisplay {
+  const rounded = Math.round(kg);
+  return rounded >= 1000 ? { value: Math.round(rounded / 100) / 10, unit: 't' } : { value: rounded, unit: 'kg' };
+}
+
+/** Value of a chart bar: the tonnage (× 2 for dumbbells), or Σ reps for a bodyweight exercise (0 kg or help is not a zero bar). */
 export const chartBarValue = (sets: SetResult[], equipment: Equipment): number =>
-  barKind(equipment) === 'reps' ? sets.reduce((sum, s) => sum + s.reps, 0) : volume(sets);
+  barKind(equipment) === 'reps' ? sets.reduce((sum, s) => sum + s.reps, 0) : tonnage(sets, equipment);
 
 /** How a weight reads: help from an assisted machine (< 0), the body alone (0 on a bodyweight exercise), or a load. */
 export type LoadKind = 'assist' | 'bodyweight' | 'load';

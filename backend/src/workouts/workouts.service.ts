@@ -59,8 +59,6 @@ export class WorkoutsService {
               setCount: i.exercise.sets,
               repMin: i.exercise.repMin,
               repMax: i.exercise.repMax,
-              todayPreFatigue: 0,
-              todayInSuperset: i.supersetGroup !== null,
             }),
           ),
         )

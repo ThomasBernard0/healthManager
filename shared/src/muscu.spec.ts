@@ -7,7 +7,10 @@ import {
   interleaveSets,
   loadKind,
   nextWorkout,
+  setTonnage,
   toBlocks,
+  tonnage,
+  tonnageDisplay,
   unlinkSuperset,
   validSupersetGroups,
   volume,
@@ -156,5 +159,34 @@ describe('superset blocks', () => {
     expect(blockStatus(['done', 'todo'])).toBe('inProgress');
     expect(blockStatus(['todo', 'todo'])).toBe('todo');
     expect(blockStatus(['done'])).toBe('done');
+  });
+});
+
+describe('tonnage', () => {
+  const sets = (weight: number, reps: number[]) => reps.map((r) => ({ weight, reps: r }));
+
+  it('weight × reps; × 2 for dumbbells; bodyweight never counts', () => {
+    expect(setTonnage(60, 10, 'barbell')).toBe(600);
+    expect(setTonnage(14, 10, 'dumbbell')).toBe(280);
+    expect(setTonnage(-20, 9, 'bodyweight')).toBe(0);
+    expect(setTonnage(5, 9, 'bodyweight')).toBe(0);
+  });
+
+  it('barbell 60 × 10·10·10·8 → 2 280 kg; dumbbells 14 × 10·10·9·9 → 1 064 kg; tractions → 0', () => {
+    expect(tonnage(sets(60, [10, 10, 10, 8]), 'barbell')).toBe(2280);
+    expect(tonnage(sets(14, [10, 10, 9, 9]), 'dumbbell')).toBe(1064);
+    expect(tonnage(sets(-20, [9, 9, 8, 8]), 'bodyweight')).toBe(0);
+  });
+
+  it('display: tonnes with one decimal from 1 000 kg, else whole kg', () => {
+    expect(tonnageDisplay(48600)).toEqual({ value: 48.6, unit: 't' });
+    expect(tonnageDisplay(1000)).toEqual({ value: 1, unit: 't' });
+    expect(tonnageDisplay(999.6)).toEqual({ value: 1, unit: 't' });
+    expect(tonnageDisplay(850)).toEqual({ value: 850, unit: 'kg' });
+    expect(tonnageDisplay(0)).toEqual({ value: 0, unit: 'kg' });
+  });
+
+  it('the chart bars of a dumbbell exercise use the same weight × reps × 2', () => {
+    expect(chartBarValue(sets(14, [10, 10, 9, 9]), 'dumbbell')).toBe(1064);
   });
 });

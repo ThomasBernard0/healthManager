@@ -26,6 +26,7 @@ import type {
   WorkoutSummaryDto,
 } from '../../../api/generated/model'
 import { sessionsCurrent, sessionsStart } from '../../../api/generated/endpoints/sessions/sessions'
+import { tonnageSummary } from '../../../api/generated/endpoints/tonnage/tonnage'
 import { ToastProvider } from '../../../core/ui/Toast'
 import HomePage from './HomePage'
 import ProgramPage from './ProgramPage'
@@ -52,6 +53,10 @@ vi.mock('../../../api/generated/endpoints/programs/programs', () => ({
 }))
 vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({ exercisesList: vi.fn(), exercisesCreate: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/sessions/sessions', () => ({ sessionsCurrent: vi.fn(), sessionsStart: vi.fn() }))
+// Any page that lands on the Accueil: a default that resetAllMocks keeps.
+vi.mock('../../../api/generated/endpoints/tonnage/tonnage', () => ({
+  tonnageSummary: vi.fn(() => Promise.resolve({ totalKg: 0, weekKg: 0 })),
+}))
 
 const ex = (id: string, name: string, primary: ExerciseDto['primaryMuscles'] = ['back']): ExerciseDto => ({
   id,
@@ -140,6 +145,7 @@ function renderAt(path: string) {
 describe('Accueil', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    vi.mocked(tonnageSummary).mockResolvedValue({ totalKg: 48600, weekKg: 2400 })
     vi.mocked(sessionsCurrent).mockResolvedValue({ session: null })
     vi.mocked(exercisesList).mockResolvedValue([])
     vi.mocked(programsList).mockResolvedValue([PUSH_PULL])
@@ -159,6 +165,11 @@ describe('Accueil', () => {
     expect(within(next).getByText('Pull')).toBeInTheDocument()
     expect(within(next).getByText('Dernière : lun 28 sept')).toBeInTheDocument()
     expect(within(next).getByText('Tirage vertical prise large, Rowing barre')).toBeInTheDocument()
+    // Tonnage soulevé, right under it: all time and this week.
+    const tonnage = await screen.findByRole('region', { name: 'Tonnage soulevé' })
+    expect(tonnage).toHaveTextContent('48,6 t')
+    expect(tonnage).toHaveTextContent('+2,4 tcette semaine')
+    expect(next.nextElementSibling).toBe(tonnage)
 
     const rows = screen
       .getAllByRole('link')
@@ -360,7 +371,7 @@ describe('Modifier la séance', () => {
   })
 
   it('creates a custom exercise (with its sets × rep range) from the picker and adds it to the séance', async () => {
-    const pullover = { ...ex('po', 'Pull-over', ['back']), equipment: 'dumbbell' as const, sets: 3 }
+    const pullover = { ...ex('po', 'Pull-over', ['back']), equipment: 'dumbbell' as const, sets: 3, repMin: 7, repMax: 10 }
     vi.mocked(exercisesList).mockResolvedValue([CURL])
     vi.mocked(exercisesCreate).mockResolvedValue(pullover)
     const user = userEvent.setup()
@@ -384,10 +395,10 @@ describe('Modifier la séance', () => {
       primaryMuscles: ['back'],
       secondaryMuscles: [],
       sets: 3,
-      repMin: 8,
-      repMax: 12,
+      repMin: 7,
+      repMax: 10,
     })
-    expect((await screen.findByText('Pull-over')).closest('li')).toHaveTextContent('3 × 8–12')
+    expect((await screen.findByText('Pull-over')).closest('li')).toHaveTextContent('3 × 7–10')
     expect(screen.queryByRole('dialog')).toBeNull()
     // Many typed/clicked steps: room for a loaded CI machine.
   }, 15000)

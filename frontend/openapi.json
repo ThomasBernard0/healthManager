@@ -1655,6 +1655,37 @@
           "finances"
         ]
       }
+    },
+    "/api/tonnage": {
+      "get": {
+        "operationId": "Tonnage_summary",
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TonnageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "tonnage"
+        ]
+      }
     }
   },
   "info": {
@@ -2983,13 +3014,13 @@
           },
           "repMin": {
             "type": "number",
-            "example": 8,
+            "example": 7,
             "minimum": 1,
             "maximum": 100
           },
           "repMax": {
             "type": "number",
-            "example": 12,
+            "example": 10,
             "minimum": 1,
             "maximum": 100,
             "description": "≥ repMin"
@@ -3497,9 +3528,6 @@
           "complete": {
             "type": "boolean",
             "description": "Every planned set was done (false: stopped early)"
-          },
-          "inSuperset": {
-            "type": "boolean"
           }
         },
         "required": [
@@ -3507,8 +3535,7 @@
           "sets",
           "easy",
           "preFatigue",
-          "complete",
-          "inSuperset"
+          "complete"
         ]
       },
       "SessionBundleExerciseDto": {
@@ -3855,6 +3882,25 @@
             ]
           }
         }
+      },
+      "TonnageDto": {
+        "type": "object",
+        "properties": {
+          "totalKg": {
+            "type": "number",
+            "example": 48600,
+            "description": "kg, all time"
+          },
+          "weekKg": {
+            "type": "number",
+            "example": 2400,
+            "description": "kg, sessions of the current week (Monday → Monday, Europe/Paris)"
+          }
+        },
+        "required": [
+          "totalKg",
+          "weekKg"
+        ]
       }
     }
   },

@@ -164,3 +164,9 @@ export const CloudOff = (p: IconProps) => (
     <path d="M20.7 17.3A4 4 0 0 0 17.5 11h-1A7 7 0 0 0 9.9 6.4" />
   </Icon>
 )
+
+export const Dumbbell = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+  </Icon>
+)

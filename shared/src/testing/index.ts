@@ -35,8 +35,8 @@ export const DIPS_THEN_BENCH = {
     primaryMuscles: ['chest'],
     secondaryMuscles: ['triceps'],
     sets: 3,
-    repMin: 8,
-    repMax: 12,
+    repMin: 7,
+    repMax: 10,
     history: [],
     known: [],
   } satisfies FixtureExercise,
@@ -46,48 +46,31 @@ export const DIPS_THEN_BENCH = {
     primaryMuscles: ['chest'],
     secondaryMuscles: ['triceps', 'shoulders_front'],
     sets: 4,
-    repMin: 8,
-    repMax: 12,
+    repMin: 7,
+    repMax: 10,
     history: [
       {
         date: '2026-10-01',
-        sets: [set(60, 10, 9), set(60, 10, 9), set(60, 9, 9), set(60, 9, 8)],
+        sets: [set(60, 9, 9), set(60, 9, 9), set(60, 8, 8), set(60, 8, 7)],
         easy: false,
         preFatigue: 0,
         complete: true,
-        inSuperset: false,
       },
       {
         date: '2026-09-28',
-        sets: [set(60, 9, 8), set(60, 9, 8), set(60, 9, 8), set(60, 8, 8)],
+        sets: [set(60, 8, 7), set(60, 8, 7), set(60, 8, 7), set(60, 7, 7)],
         easy: false,
         preFatigue: 0,
         complete: true,
-        inSuperset: false,
-      },
-      {
-        date: '2026-09-24',
-        sets: [set(57.5, 12), set(57.5, 11), set(57.5, 11), set(57.5, 11)],
-        easy: true,
-        preFatigue: 0,
-        complete: true,
-        inSuperset: false,
       },
     ],
     known: [57.5, 60],
   } satisfies FixtureExercise,
-  /** Bench targets once 3 sets of Dips are done: more pre-fatigue than last time, so no +1. */
-  benchAfterDips: [
+  /** Bench targets (total 34 → +1), done first or after 3 sets of Dips: pre-fatigue never blocks the +1. */
+  benchTargets: [
     { weight: 60, reps: 10 },
     { weight: 60, reps: 10 },
     { weight: 60, reps: 9 },
     { weight: 60, reps: 9 },
-  ] satisfies Target[],
-  /** Bench targets done first. */
-  benchFirst: [
-    { weight: 60, reps: 11 },
-    { weight: 60, reps: 11 },
-    { weight: 60, reps: 10 },
-    { weight: 60, reps: 10 },
   ] satisfies Target[],
 };

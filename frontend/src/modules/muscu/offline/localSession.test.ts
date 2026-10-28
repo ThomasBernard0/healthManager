@@ -56,9 +56,9 @@ function afterDips(): LocalSession {
 }
 
 describe('targets on the phone (same as the server for the same history)', () => {
-  it('Développé couché done first, then after 3 sets of Dips', () => {
-    expect(targets(fromBundle(BUNDLE), 'bench')).toEqual(DIPS_THEN_BENCH.benchFirst)
-    expect(targets(afterDips(), 'bench')).toEqual(DIPS_THEN_BENCH.benchAfterDips)
+  it('Développé couché done first, then after 3 sets of Dips: the same targets (pre-fatigue never blocks the +1)', () => {
+    expect(targets(fromBundle(BUNDLE), 'bench')).toEqual(DIPS_THEN_BENCH.benchTargets)
+    expect(targets(afterDips(), 'bench')).toEqual(DIPS_THEN_BENCH.benchTargets)
   })
 
   it('first time (no history): no target', () => {
@@ -69,9 +69,9 @@ describe('targets on the phone (same as the server for the same history)', () =>
     let s = saveSet(fromBundle(BUNDLE), 'bench', 0, { weight: null, reps: null, done: true }, at(0))
     expect(s.exercises[1].preFatigue).toBe(0)
     for (const i of [0, 1, 2]) s = saveSet(s, 'dips', i, { weight: 0, reps: 10, done: true }, at(5 + i))
-    expect(targets(s, 'bench')).toEqual(DIPS_THEN_BENCH.benchFirst)
+    expect(targets(s, 'bench')).toEqual(DIPS_THEN_BENCH.benchTargets)
     // ✓ on an empty row recorded the target.
-    expect(s.exercises[1].sets[0]).toMatchObject({ weight: 60, reps: 11, done: true, doneAt: at(0).toISOString() })
+    expect(s.exercises[1].sets[0]).toMatchObject({ weight: 60, reps: 10, done: true, doneAt: at(0).toISOString() })
   })
 
   it('a bundle with an exercise already started keeps its stored targets', () => {
@@ -119,7 +119,7 @@ describe('sets, Facile, Terminé on the local copy', () => {
 })
 
 describe('superset', () => {
-  it('finds the partner; in a superset after a solo session, no +1', () => {
+  it('finds the partner; in a superset, the usual targets (no special case)', () => {
     const paired: SessionBundleDto = {
       ...BUNDLE,
       exercises: [bundleExercise('dips', DIPS_THEN_BENCH.dips, 'g'), bundleExercise('bench', DIPS_THEN_BENCH.bench, 'g')],

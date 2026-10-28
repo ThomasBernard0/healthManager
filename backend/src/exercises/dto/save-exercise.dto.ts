@@ -35,13 +35,13 @@ export class SaveExerciseDto {
   @Max(MAX_SETS)
   sets: number;
 
-  @ApiProperty({ example: 8, minimum: 1, maximum: MAX_REPS })
+  @ApiProperty({ example: 7, minimum: 1, maximum: MAX_REPS })
   @IsInt()
   @Min(1)
   @Max(MAX_REPS)
   repMin: number;
 
-  @ApiProperty({ example: 12, minimum: 1, maximum: MAX_REPS, description: '≥ repMin' })
+  @ApiProperty({ example: 10, minimum: 1, maximum: MAX_REPS, description: '≥ repMin' })
   @IsInt()
   @Min(1)
   @Max(MAX_REPS)

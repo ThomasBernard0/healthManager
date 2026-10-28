@@ -8,6 +8,7 @@ import {
   formatSessionDate,
   formatSets,
   formatTargets,
+  formatTonnage,
   muscleSummary,
   primarySubtitle,
 } from './format'
@@ -95,5 +96,14 @@ describe('history dates', () => {
     expect(formatChartDate('2026-08-10')).toBe('10 août')
     expect(formatChartDate('2026-09-07')).toBe('7 sept')
     expect(formatHistoryDay('2026-09-28')).toBe('lun 28')
+  })
+})
+
+describe('formatTonnage', () => {
+  it('tonnes with one decimal from 1 000 kg, else kg', () => {
+    expect(formatTonnage(48600)).toBe('48,6 t')
+    expect(formatTonnage(1000)).toBe('1,0 t')
+    expect(formatTonnage(850)).toBe('850 kg')
+    expect(formatTonnage(0)).toBe('0 kg')
   })
 })

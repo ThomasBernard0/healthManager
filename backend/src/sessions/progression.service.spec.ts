@@ -52,7 +52,6 @@ describe('ProgressionService.targets (same history as the phone: the shared fixt
   const rows = bench.history.map((log, i) => ({
     easy: log.easy,
     preFatigue: log.preFatigue,
-    supersetGroup: log.inSuperset ? 'g' : null,
     session: { finishedAt: new Date(`${log.date}T17:00:00Z`) },
     sets: log.sets.map((s, index) => ({ index, done: true, ...s, id: `${i}-${index}` })),
   }));
@@ -61,23 +60,20 @@ describe('ProgressionService.targets (same history as the phone: the shared fixt
     sessionSet: { findMany: () => Promise.resolve(bench.known.map((weight) => ({ weight }))) },
   };
   const service = new ProgressionService(prisma as unknown as PrismaService);
-  const targets = (todayPreFatigue: number) =>
+  const targets = () =>
     service.targets({
       exerciseId: 'bench',
       equipment: bench.equipment,
       setCount: bench.sets,
       repMin: bench.repMin,
       repMax: bench.repMax,
-      todayPreFatigue,
-      todayInSuperset: false,
     });
 
   it('gives the history the bundle sends', async () => {
     expect(await service.history('bench')).toEqual(bench.history);
   });
 
-  it('Développé couché after 3 sets of Dips, and done first', async () => {
-    expect(await targets(3)).toEqual(DIPS_THEN_BENCH.benchAfterDips);
-    expect(await targets(0)).toEqual(DIPS_THEN_BENCH.benchFirst);
+  it('Développé couché: the same targets as the phone', async () => {
+    expect(await targets()).toEqual(DIPS_THEN_BENCH.benchTargets);
   });
 });

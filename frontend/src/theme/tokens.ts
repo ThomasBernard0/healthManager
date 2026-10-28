@@ -222,6 +222,8 @@ export const tokens = {
     categorySquare: '10px',
     categorySquareSmall: '8px',
     categoryPill: '36px',
+    /** Icon square of the Tonnage soulevé card. */
+    statIcon: '40px',
   },
 } as const
 

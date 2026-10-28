@@ -88,6 +88,14 @@ export const fr = {
       myPrograms: 'Mes programmes',
       newProgram: '+ Nouveau programme',
     },
+    tonnage: {
+      title: 'Tonnage soulevé',
+      thisWeek: 'cette semaine',
+      lifted: 'soulevées',
+      units: { t: 't', kg: 'kg' },
+      /** "+2,4 t" */
+      added: (value: string) => `+${value}`,
+    },
     program: {
       title: 'Programme',
       newTitle: 'Nouveau programme',

@@ -111,9 +111,6 @@ export class ExerciseLogDto {
 
   @ApiProperty({ description: 'Every planned set was done (false: stopped early)' })
   complete: boolean;
-
-  @ApiProperty()
-  inSuperset: boolean;
 }
 
 /** An exercise of the session, with everything the phone needs to compute its targets. */
