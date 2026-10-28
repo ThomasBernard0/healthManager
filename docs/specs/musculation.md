@@ -231,7 +231,7 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 - 48 600 kg shows "48,6 t"; 850 kg shows "850 kg".
 - Dumbbell exercise chart: bars = weight × reps × 2.
 
-- Tractions 4 × 7–10: aide 32 × 5, then aide 41 × 10 · 10 · 10 → harmonized, judged on 41 × 10 · 10 · 10 (total 30 over 3 sets ≥ 3 × 10 − 2 = 28) → Up → **aide 36,5 × 7 · 7 · 7 · 7**.
+- Tractions 4 × 7–10: aide 32 × 5, then aide 41 × 10 · 10 · 10 → harmonized, judged on 41 × 10 · 10 · 10 (total 30 over 3 sets ≥ 3 × 10 − 2 = 28) → Up → **aide 32 × 7 · 7 · 7 · 7** (32 is a known weight, exactly 2 assist steps above 41: stepUp takes it; with 32 not known it would be aide 36,5).
 - 4 × 7–10: 60 × 9 · 9 · 8 then a last set at 50 × 10 → harmonized (26 < 28, ≥ 21) → consolidate → **60 × 9 · 9 · 8 · 8**.
 - 60 × 8 then 50 × 10 · 10 · 10 (barbell, 7–10) → judged on 50 × 10 · 10 · 10 (30 ≥ 28) → Up → **55 × 7 · 7 · 7 · 7**.
 - 60 × 9 · 8 · 8 then 70 × 4 (7–10) → 25 < 28 → consolidate at 60 with targets 9 · 8 · 8 and 8 for the harmonized set → **60 × 9 · 8 · 8 · 8**.
