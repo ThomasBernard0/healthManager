@@ -78,7 +78,6 @@ function entry({ lastTime, ...spec }: Spec): LocalEntry {
             easy: false,
             preFatigue: 0,
             complete: true,
-            inSuperset: false,
           },
         ]
       : lastTime === null

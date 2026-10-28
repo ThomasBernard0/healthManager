@@ -11,6 +11,7 @@ import {
   exercisesUpdate,
   exercisesHistory,
 } from '../../../api/generated/endpoints/exercises/exercises'
+import { tonnageSummary } from '../../../api/generated/endpoints/tonnage/tonnage'
 import { addDays, parisToday } from '@healthmanager/shared'
 import type { ExerciseDto, ExerciseHistoryEntryDto } from '../../../api/generated/model'
 import ExerciseEditPage from './ExerciseEditPage'
@@ -26,6 +27,10 @@ vi.mock('../../../api/generated/endpoints/exercises/exercises', () => ({
   exercisesImage: vi.fn(),
   exercisesSetImage: vi.fn(),
   exercisesRemoveImage: vi.fn(),
+}))
+// Saving opens the Fiche: a default that resetAllMocks keeps.
+vi.mock('../../../api/generated/endpoints/tonnage/tonnage', () => ({
+  tonnageSummary: vi.fn(() => Promise.resolve({ totalKg: 0, weekKg: 0 })),
 }))
 vi.mock('../resizeImage', () => ({ resizeImage: vi.fn(async (file: Blob) => file) }))
 
@@ -89,6 +94,7 @@ describe('Fiche exercice', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     vi.mocked(exercisesHistory).mockResolvedValue([])
+    vi.mocked(tonnageSummary).mockResolvedValue({ totalKg: 12400, weekKg: 0 })
   })
 
   it('shows Progression (last 12 weeks) and Historique; tapping a bar shows date, sets and volume', async () => {
@@ -103,6 +109,10 @@ describe('Fiche exercice', () => {
     const user = userEvent.setup()
     renderAt('/muscu/exercices/r1')
     const chart = await screen.findByRole('group', { name: 'Charge et volume par séance' })
+    // Its tonnage, next to the name.
+    expect(await screen.findByText('12,4 t')).toBeInTheDocument()
+    expect(screen.getByText('soulevées')).toBeInTheDocument()
+    expect(tonnageSummary).toHaveBeenCalledWith({ exerciseId: 'r1' })
     const bars = within(chart).getAllByRole('button')
     expect(bars).toHaveLength(2)
 
@@ -161,6 +171,8 @@ describe('Fiche exercice', () => {
       expect(within(card).getByText('Reps')).toBeInTheDocument()
       expect(within(card).queryByText('Volume')).toBeNull()
       expect(within(chart).getByText('Poids du corps')).toBeInTheDocument()
+      // No tonnage for a bodyweight exercise.
+      expect(screen.queryByText('soulevées')).toBeNull()
 
       const bars = within(chart).getAllByRole('button')
       expect(bars.map((b) => b.getAttribute('aria-label')!.replace(/^.* : /, ''))).toEqual(['44 reps', '45 reps', '33 reps'])
@@ -216,10 +228,10 @@ describe('Créer / Modifier l’exercice', () => {
     renderAt('/muscu/exercices/nouveau')
     const save = await screen.findByRole('button', { name: 'Enregistrer' })
     expect(save).toBeDisabled()
-    // 4 × 8–12 by default.
+    // 4 × 7–10 by default.
     expect(screen.getByRole('textbox', { name: 'Nombre de séries' })).toHaveValue('4')
-    expect(screen.getByRole('textbox', { name: 'Répétitions minimum' })).toHaveValue('8')
-    expect(screen.getByRole('textbox', { name: 'Répétitions maximum' })).toHaveValue('12')
+    expect(screen.getByRole('textbox', { name: 'Répétitions minimum' })).toHaveValue('7')
+    expect(screen.getByRole('textbox', { name: 'Répétitions maximum' })).toHaveValue('10')
 
     await user.type(screen.getByRole('textbox', { name: 'Nom' }), 'Pull-over')
     await user.click(screen.getByRole('button', { name: 'Haltères' }))
@@ -239,8 +251,8 @@ describe('Créer / Modifier l’exercice', () => {
       primaryMuscles: ['back'],
       secondaryMuscles: ['chest'],
       sets: 4,
-      repMin: 8,
-      repMax: 12,
+      repMin: 7,
+      repMax: 10,
     })
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/muscu/exercices/new1'))
   })

@@ -12,8 +12,46 @@
   gap: var(--space-12);
 }
 
-.desktopHeader > :last-child {
+.desktopHeader > :last-child,
+.desktopHeader > .lifted {
   margin-left: auto;
+}
+
+.desktopHeader > .lifted + :last-child {
+  margin-left: 0;
+}
+
+/* Mobile: the name, with the tonnage at its right. */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.titleRow > .heading {
+  flex: 1;
+}
+
+.lifted {
+  flex-shrink: 0;
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.liftedValue {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-18);
+  line-height: 1.2;
+}
+
+.liftedLabel {
+  font-size: var(--font-size-11);
+  color: var(--color-muted);
 }
 
 .name {

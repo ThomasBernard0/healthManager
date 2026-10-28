@@ -53,7 +53,7 @@ const toDraft = (e: ExerciseDto): Draft => ({
 })
 
 /** A new exercise: 4 × 8–12. */
-const NEW_DRAFT: Draft = { name: '', equipment: null, roles: {}, sets: '4', repMin: '8', repMax: '12' }
+const NEW_DRAFT: Draft = { name: '', equipment: null, roles: {}, sets: '4', repMin: '7', repMax: '10' }
 
 interface ExerciseFormProps {
   /** null: a new exercise. */

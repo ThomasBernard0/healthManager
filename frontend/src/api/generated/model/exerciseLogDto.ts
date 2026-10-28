@@ -16,5 +16,4 @@ export interface ExerciseLogDto {
   preFatigue: number;
   /** Every planned set was done (false: stopped early) */
   complete: boolean;
-  inSuperset: boolean;
 }

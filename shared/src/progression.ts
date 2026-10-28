@@ -113,8 +113,6 @@ export interface ExerciseLog {
   preFatigue: number;
   /** Every planned set was done (false: the exercise was stopped early). */
   complete: boolean;
-  /** Done in a superset (shorter rest than solo). */
-  inSuperset: boolean;
 }
 
 export interface Target {
@@ -157,42 +155,27 @@ const kept = (log: ExerciseLog) => harmonize(log.sets).keptSets;
 const total = (log: ExerciseLog) => kept(log).reduce((sum, s) => sum + s.reps, 0);
 const belowMin = (log: ExerciseLog, repMin: number) => total(log) < kept(log).length * repMin;
 
-/**
- * Superset context (asymmetric, like pre-fatigue): a session in a superset right after a solo one has
- * less rest, so a worse result there is not a failure. Superset → solo needs no special case.
- */
-export function harderInSuperset(log: { inSuperset: boolean }, before: { inSuperset: boolean } | null): boolean {
-  return log.inSuperset && before !== null && !before.inSuperset;
-}
+/** Up threshold: at most 2 reps missing in total (4 × 7–10 → 38, 3 × 9–12 → 34). */
+export const upThreshold = (sets: number, repMax: number) => sets * repMax - 2;
 
 /**
  * How the last session went (first matching row wins), judged on the total reps of its kept sets
  * (harmonize) so a weaker last set neither blocks progress nor triggers a drop. `previous` is the
- * session before it, and `beforePrevious` the one before that (it tells whether `previous` was a first
- * time in a superset).
+ * session before it. Pre-fatigue only protects against going down.
  */
-export function judge(
-  last: ExerciseLog,
-  previous: ExerciseLog | null,
-  repMin: number,
-  repMax: number,
-  beforePrevious: ExerciseLog | null = null,
-): Verdict {
+export function judge(last: ExerciseLog, previous: ExerciseLog | null, repMin: number, repMax: number): Verdict {
   // Stopped early: not a real attempt at the targets, so they are simply retried.
   if (!last.complete) return 'retry';
   const n = kept(last).length;
   const sum = total(last);
-  if (sum >= n * (repMax - 1) || (last.easy && sum >= n * repMin)) return 'up';
+  if (sum >= upThreshold(n, repMax) || (last.easy && sum >= n * repMin)) return 'up';
   // Two sessions in a row under the range, the second not explained by more pre-fatigue.
-  // A previous session stopped early never counts as one of the two, nor does a session done in a
-  // superset right after a solo one.
+  // A previous session stopped early never counts as one of the two.
   if (
     belowMin(last, repMin) &&
     previous?.complete &&
     belowMin(previous, repMin) &&
-    !(last.preFatigue > previous.preFatigue) &&
-    !harderInSuperset(last, previous) &&
-    !harderInSuperset(previous, beforePrevious)
+    !(last.preFatigue > previous.preFatigue)
   ) {
     return 'down';
   }
@@ -205,8 +188,6 @@ export interface NextTargetsInput {
   last: ExerciseLog | null;
   /** The time before. */
   previous: ExerciseLog | null;
-  /** The time before `previous` (default: none). */
-  beforePrevious?: ExerciseLog | null;
   /** Sets of the exercise now. */
   setCount: number;
   repMin: number;
@@ -214,30 +195,24 @@ export interface NextTargetsInput {
   /** Distinct weights already logged for the exercise. */
   known: number[];
   step: number;
-  /** Pre-fatigue of the exercise now. */
-  todayPreFatigue: number;
-  /** The exercise is in a superset now (default: solo). */
-  todayInSuperset?: boolean;
 }
 
 /**
  * Targets of each set, from the last time the exercise was done. Each set keeps its own weight and all
  * move together (drop sets keep their shape), except a lone off-weight set: it is put back to the common
  * weight with the lowest target of the others, and the rest is consolidated (same reps, no +1) instead of
- * progressing. null: first time, the user types everything.
+ * progressing. Every target is clamped to [repMin, repMax] (the range may have changed since); today's
+ * pre-fatigue doesn't matter. null: first time, the user types everything.
  */
 export function nextTargets(input: NextTargetsInput): Target[] | null {
-  const { last, previous, setCount, repMin, repMax, known, step, todayPreFatigue } = input;
+  const { last, previous, setCount, repMin, repMax, known, step } = input;
   if (!last || last.sets.length === 0) return null;
 
-  const verdict = judge(last, previous, repMin, repMax, input.beforePrevious ?? null);
+  const verdict = judge(last, previous, repMin, repMax);
   const { keptSets, loneIndex } = harmonize(last.sets);
-  // Harder today than last time (more pre-fatigue, or a superset after a solo session): no +1.
-  // After a harmonization, consolidate: no +1 either.
-  const noPlusOne =
-    loneIndex !== null ||
-    todayPreFatigue > last.preFatigue ||
-    harderInSuperset({ inSuperset: input.todayInSuperset ?? false }, last);
+  // After a harmonization, consolidate: no +1.
+  const noPlusOne = loneIndex !== null;
+  const clamp = (reps: number) => Math.min(Math.max(reps, repMin), repMax);
   const targets = keptSets.map((s): Target => {
     switch (verdict) {
       case 'up':
@@ -246,9 +221,9 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
         return { weight: stepDown(s.weight, known, step), reps: repMin };
       case 'retry':
         // Retried, never lowered to what was done.
-        return { weight: s.weight, reps: s.targetReps ?? s.reps };
+        return { weight: s.weight, reps: clamp(s.targetReps ?? s.reps) };
       case 'progress':
-        return { weight: s.weight, reps: noPlusOne ? s.reps : Math.min(s.reps + 1, repMax) };
+        return { weight: s.weight, reps: clamp(noPlusOne ? s.reps : s.reps + 1) };
     }
   });
   // The lone set gets the common weight and the same target as the others (the lowest when they differ).
@@ -260,15 +235,7 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
   return Array.from({ length: setCount }, (_, i) => targets[Math.min(i, targets.length - 1)]);
 }
 
-/** nextTargets from the history of an exercise: its last finished sessions, most recent first (up to three). */
-export function targetsFromHistory(
-  history: ExerciseLog[],
-  input: Omit<NextTargetsInput, 'last' | 'previous' | 'beforePrevious'>,
-): Target[] | null {
-  return nextTargets({
-    ...input,
-    last: history[0] ?? null,
-    previous: history[1] ?? null,
-    beforePrevious: history[2] ?? null,
-  });
+/** nextTargets from the history of an exercise: its last finished sessions, most recent first (two are enough). */
+export function targetsFromHistory(history: ExerciseLog[], input: Omit<NextTargetsInput, 'last' | 'previous'>): Target[] | null {
+  return nextTargets({ ...input, last: history[0] ?? null, previous: history[1] ?? null });
 }

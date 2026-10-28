@@ -75,6 +75,8 @@ export * from './sessionSetDto';
 export * from './setFavoriteDto';
 export * from './setResultDto';
 export * from './startSessionDto';
+export * from './tonnageDto';
+export * from './tonnageSummaryParams';
 export * from './updateFinanceLineDto';
 export * from './updateFinanceLineDtoCategory';
 export * from './updateFoodDto';

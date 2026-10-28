@@ -60,8 +60,8 @@ model Exercise {
   secondaryMuscles Muscle[]
   /// Sets and rep range, the same in every workout (snapshotted by each session).
   sets             Int               @default(4)
-  repMin           Int               @default(8)
-  repMax           Int               @default(12)
+  repMin           Int               @default(7)
+  repMax           Int               @default(10)
   archived         Boolean           @default(false)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt

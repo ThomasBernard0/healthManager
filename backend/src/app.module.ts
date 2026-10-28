@@ -16,6 +16,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { ProgramsModule } from './programs/programs.module.js';
 import { SessionsModule } from './sessions/sessions.module.js';
 import { SummaryModule } from './summary/summary.module.js';
+import { TonnageModule } from './tonnage/tonnage.module.js';
 import { WorkoutsModule } from './workouts/workouts.module.js';
 
 // Built SPA (frontend/dist), served so production is a single service.
@@ -53,6 +54,7 @@ const HASHED_ASSET = /[\\/]assets[\\/]/;
     WorkoutsModule,
     SessionsModule,
     FinancesModule,
+    TonnageModule,
   ],
 })
 export class AppModule {}

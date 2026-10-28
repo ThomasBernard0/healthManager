@@ -1,6 +1,6 @@
 import type { ExerciseDto, Muscle } from '../../api/generated/model'
-import { groupSets, loadKind, toUtcDate, type SetResult } from '@healthmanager/shared'
-import { formatDecimal, formatShortDay } from '../../core/format'
+import { groupSets, loadKind, toUtcDate, tonnageDisplay, type SetResult } from '@healthmanager/shared'
+import { formatDecimal, formatInt, formatOneDecimal, formatShortDay } from '../../core/format'
 import { fr } from '../../i18n/fr'
 
 const shortLabel = (m: Muscle): string => (m.startsWith('shoulders_') ? fr.muscu.shoulders : fr.muscu.muscles[m])
@@ -89,3 +89,9 @@ export const formatChartDate = (date: string): string =>
 
 /** "lun 28" (history rows on mobile). */
 export const formatHistoryDay = (date: string): string => noDot(shortWeekdayDay.format(toUtcDate(date)).replace('.', ''))
+
+/** Tonnage: "48,6 t" from 1 000 kg, else "850 kg". */
+export function formatTonnage(kg: number): string {
+  const { value, unit } = tonnageDisplay(kg)
+  return `${unit === 't' ? formatOneDecimal(value) : formatInt(value)} ${fr.muscu.tonnage.units[unit]}`
+}

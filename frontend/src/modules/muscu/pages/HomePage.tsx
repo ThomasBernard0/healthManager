@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { exercisesList } from '../../../api/generated/endpoints/exercises/exercises'
 import { programsList } from '../../../api/generated/endpoints/programs/programs'
 import { sessionsCurrent } from '../../../api/generated/endpoints/sessions/sessions'
+import { tonnageSummary } from '../../../api/generated/endpoints/tonnage/tonnage'
 import { workoutsList } from '../../../api/generated/endpoints/workouts/workouts'
-import type { ExerciseDto, ProgramSummaryDto, WorkoutSummaryDto } from '../../../api/generated/model'
+import type { ExerciseDto, ProgramSummaryDto, TonnageDto, WorkoutSummaryDto } from '../../../api/generated/model'
 import { useDataVersion } from '../../../core/dataVersion'
-import { ChevronRight, Play, Plus } from '../../../core/ui/icons'
+import { ChevronRight, Dumbbell, Play, Plus } from '../../../core/ui/icons'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
 import form from '../../../core/ui/form.module.css'
 import { useAsync } from '../../../core/useAsync'
@@ -17,7 +18,7 @@ import { fr } from '../../../i18n/fr'
 import { ExerciseRow } from '../components/ExerciseRow'
 import { MuscuLayout } from '../components/MuscuLayout'
 import { NewProgramSheet, ProgramRows, WorkoutRows } from '../components/ProgramLists'
-import { formatSessionDate, formatTargets } from '../format'
+import { formatSessionDate, formatTargets, formatTonnage } from '../format'
 import { useLocalSession } from '../offline/store'
 import { NEW_WORKOUT_PATH, programPath, sessionPath } from '../routes'
 import { useStartSession } from '../useStartSession'
@@ -49,6 +50,7 @@ export default function HomePage() {
   // Wait for both, so Démarrer never starts a second session.
   const ready = workouts.data && local !== undefined && (local || current.data)
   const exercises = useAsync(() => exercisesList(), `exercises#${version}`)
+  const tonnage = useAsync(() => tonnageSummary(), `tonnage#${version}`)
   const mine = exercises.data ?? []
 
   const failed = [workouts, programs].find((r) => r.status === 'error' && !r.data)
@@ -79,6 +81,7 @@ export default function HomePage() {
             {/* Left: what to do next, then the programs. Right: my exercises. */}
             <div className={`${styles.column} ${styles.stack}`}>
               {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} desktop />}
+              {tonnage.data && <TonnageCard tonnage={tonnage.data} />}
               <MyPrograms programs={programs.data!} workouts={workouts.data!} />
             </div>
             <div className={styles.column}>
@@ -98,6 +101,7 @@ export default function HomePage() {
       {loaded && (
         <>
           {ready && (inProgress || next) && <NextCard workout={next} inProgress={inProgress} />}
+          {tonnage.data && <TonnageCard tonnage={tonnage.data} />}
           <MyExercises exercises={mine} />
           <MyPrograms programs={programs.data!} workouts={workouts.data!} />
         </>
@@ -246,6 +250,26 @@ function NextCard({ workout, inProgress, desktop = false }: NextCardProps) {
         <Play />
         {inProgress ? fr.muscu.session.resume : fr.muscu.home.start}
       </button>
+    </section>
+  )
+}
+
+/** Tonnage soulevé: all time, and this week on the right (bodyweight exercises not counted). */
+function TonnageCard({ tonnage }: { tonnage: TonnageDto }) {
+  return (
+    <section className={styles.tonnageCard} aria-label={fr.muscu.tonnage.title}>
+      <span className={styles.tonnageIcon}>
+        <Dumbbell />
+      </span>
+      <div className={styles.tonnageText}>
+        <span className={styles.tonnageLabel}>{fr.muscu.tonnage.title}</span>
+        <span className={styles.tonnageTotal}>{formatTonnage(tonnage.totalKg)}</span>
+      </div>
+      <span className={styles.tonnageWeek}>
+        {fr.muscu.tonnage.added(formatTonnage(tonnage.weekKg))}
+        <br />
+        {fr.muscu.tonnage.thisWeek}
+      </span>
     </section>
   )
 }

@@ -56,15 +56,13 @@ function fatigueOf(session: { exercises: SessionBundleExerciseDto[] }, entry: Se
   return sessionPreFatigue(toEntry(entry), session.exercises.map(toEntry)).value
 }
 
-function targetsOf(entry: SessionBundleExerciseDto, todayPreFatigue: number) {
+function targetsOf(entry: SessionBundleExerciseDto) {
   return targetsFromHistory(entry.history, {
     setCount: entry.sets.length,
     repMin: entry.repMin,
     repMax: entry.repMax,
     known: entry.knownWeights,
     step: entry.step,
-    todayPreFatigue,
-    todayInSuperset: entry.supersetGroup !== null,
   })
 }
 
@@ -94,7 +92,7 @@ export function partnerOf<E extends { id: string; supersetGroup: string | null }
 export function exerciseView(session: LocalSession, entryId: string): ExerciseView | null {
   const entry = session.exercises.find((e) => e.id === entryId)
   if (!entry) return null
-  const live = entry.preFatigue === null ? targetsOf(entry, fatigueOf(session, entry)) : null
+  const live = entry.preFatigue === null ? targetsOf(entry) : null
   return {
     id: entry.id,
     sessionId: session.id,
@@ -120,11 +118,10 @@ const withEntry = (session: LocalSession, id: string, change: (e: LocalEntry) =>
 
 /** First set of an exercise: its pre-fatigue and the targets of every set are fixed now. */
 function freeze(session: LocalSession, entry: LocalEntry): LocalEntry {
-  const preFatigue = fatigueOf(session, entry)
-  const targets = targetsOf(entry, preFatigue)
+  const targets = targetsOf(entry)
   return {
     ...entry,
-    preFatigue,
+    preFatigue: fatigueOf(session, entry),
     sets: entry.sets.map((s, i) => ({ ...s, targetWeight: targets?.[i]?.weight ?? null, targetReps: targets?.[i]?.reps ?? null })),
   }
 }

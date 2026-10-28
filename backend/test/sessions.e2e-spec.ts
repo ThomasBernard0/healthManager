@@ -69,7 +69,7 @@ describe('Sessions (e2e)', () => {
     expect(dips).toMatchObject({ id: DIPS_ENTRY, history: [], knownWeights: [], step: 2.5, supersetGroup: null });
     expect(dips.exercise).toMatchObject({ name: 'Dips', equipment: 'bodyweight', primaryMuscles: ['chest'] });
     expect(dips.sets).toHaveLength(3);
-    expect(bench).toMatchObject({ id: BENCH_ENTRY, repMin: 8, repMax: 12, step: 5, easy: false, completed: false });
+    expect(bench).toMatchObject({ id: BENCH_ENTRY, repMin: 7, repMax: 10, step: 5, easy: false, completed: false });
     expect(bench.history).toEqual(DIPS_THEN_BENCH.bench.history);
     expect(bench.knownWeights).toEqual(DIPS_THEN_BENCH.bench.known);
     expect(bench.sets[0]).toEqual({

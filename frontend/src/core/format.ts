@@ -4,6 +4,7 @@ import { fr } from '../i18n/fr'
 /** All numbers: fr-FR grouping ("1 460"), rounded only here, in the UI. */
 const integer = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 })
 const decimal = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 })
+const oneDecimal = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 // Intl uses U+202F (narrow no-break space) between thousands, which Space Grotesk renders
 // with no width: use a regular no-break space, as in the design ("1 460").
@@ -12,6 +13,9 @@ const groupSpace = (s: string) => s.replace(/ /g, ' ')
 export const formatInt = (n: number): string => groupSpace(integer.format(Math.round(n) || 0))
 
 export const formatDecimal = (n: number): string => groupSpace(decimal.format(n))
+
+/** Exactly one decimal: "48,6", "1,0". */
+export const formatOneDecimal = (n: number): string => groupSpace(oneDecimal.format(n))
 
 export const formatGrams = (n: number): string => `${formatInt(n)} ${fr.common.grams}`
 
