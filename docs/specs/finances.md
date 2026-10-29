@@ -38,7 +38,7 @@ FinanceLine { id, kind: "income" | "expense",
 - Category colours are new theme tokens taken from the mockups:
   - Logement: blue `#82AAD6`;
   - Abonnements: purple `#B79CDB`;
-  - Épargne: the accent;
+  - Épargne: gold `#D9B44A` (dark) / `#9A7414` (light) — **its own colour, never the accent**: the accent (green) is reserved for the Reste ring and the action buttons, so the legend never shows two different meanings in the same green;
   - Autre: muted `#9AA59F`;
   - plus the light-theme equivalents.
 
@@ -118,6 +118,7 @@ Validation:
 Anything else → 400.
 
 ## 6. Acceptance checks
+- Épargne is gold everywhere (stacked bar, section square, desktop legend, form pill); the Reste ring and the Reste legend row are the only green finance elements.
 
 - With the mockup lines: Entrées 2 850 €, Dépenses 1 387,40 €, Reste 1 462,60 €; the ring is about 51 % full.
 - No "Autre" section while no line has that category; adding one makes it appear (mobile, desktop card and desktop legend).

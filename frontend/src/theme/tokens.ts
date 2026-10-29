@@ -35,9 +35,10 @@ const light = {
   onCamera: '#FFFFFF',
   /** Behind text laid over a photo (muscle pills on an exercise image). */
   overlay: 'rgba(255, 255, 255, 0.85)',
-  /** Finances categories (Épargne uses the accent). */
+  /** Finances categories (never the accent: green means only the Reste). */
   financeHousing: '#3D6E9E',
   financeSubscriptions: '#7E5BA6',
+  financeSavings: '#9A7414',
   financeOther: '#7C867F',
 }
 
@@ -74,6 +75,7 @@ const dark: typeof light = {
   overlay: 'rgba(15, 20, 17, 0.75)',
   financeHousing: '#82AAD6',
   financeSubscriptions: '#B79CDB',
+  financeSavings: '#D9B44A',
   financeOther: '#9AA59F',
 }
 
