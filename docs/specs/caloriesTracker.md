@@ -25,8 +25,9 @@ Meal { id, name, mode: "ingredients" | "manual",
        isFavorite, timesEaten, lastEatenAt, archived }
 
 // LogEntry — what I ate
-LogEntry { id, date /* YYYY-MM-DD */, time /* HH:mm */, kind: "meal" | "quick",
-           refId?, label, quantity /* portions */, snapshot: Nutrients /* frozen at log time */, createdAt }
+LogEntry { id, date /* YYYY-MM-DD */, time /* HH:mm */, kind: "meal" | "quick" | "food",
+           refId? /* mealId for meal, foodId for food */, label, quantity /* portions; 1 for a food logged in grams */,
+           grams? /* food logged in grams: the grams eaten (then snapshot = those grams) */, snapshot: Nutrients /* frozen at log time */, createdAt }
 
 // Goal — versioned by day
 Goal { id, validFrom /* the day it was changed */, dailyKcal,
@@ -62,6 +63,13 @@ Top bar: just the module title "Alimentation" (later it becomes the switch betwe
 ### 2 · Ajout rapide
 
 Bottom sheet (dialog on desktop). A search bar over **one single list, "Mes repas"**: every saved meal lives there whatever it is (shaker, fajitas, a fruit, a full dinner); no categories or tabs. Search is accent- and case-insensitive and matches anywhere in the name ("fajit" finds "Fajitas poulet"); no result → "Créer « … »" opens Nouveau repas with that name. Sort: favourites (star) first, then most eaten, then most recent. One button above the list, **Saisie rapide** (a one-time meal, never saved; see 3b); **Nouveau repas** (a meal saved to Mes repas; barcode scanning lives inside it) is a small link next to "Gérer" in the Mes repas header, since it is used less once Mes repas is set up. Each row shows kcal, P/L/G and last eaten, with "+" that logs it once, immediately (no portion stepper).
+
+**Foods in the list** (mockups `mobile-2-ajouter-un-repas`, `bureau-ajouter-un-repas`): an ingredient can be logged directly, without creating a meal for it ("Banane" = 1 banana).
+- **Search** ("Chercher un repas ou un aliment") matches meals **and** every food (with or without a portion); a food row carries a small "Aliment" tag.
+- **Default list** (no search): meals as today, plus the foods already **logged on their own at least once**, sorted together with the meals (favourites, then most eaten, then most recent). A food never logged on its own (oil, flour, scanned items used only in recipes) stays out of the list until searched.
+- A food row: name + "Aliment" tag; subtitle "1 portion · 105 kcal · P 1 · L 0 · G 27 · hier" (food with a portion) or "100 g · …" (food without one).
+- **"+"** logs 1 portion immediately (or 100 g for a food without a portion). **Tapping the row** opens the quantity sheet (3c, En portions | En grammes; grams only without a portion) with an "Ajouter" button.
+- The day entry is labelled with the food name and the quantity: "Banane", "Banane × 2", "Riz · 150 g".
 
 ### 3 · Nouveau repas
 
@@ -128,6 +136,10 @@ Space Grotesk for numbers and headings, IBM Plex Sans for text. White cards, 16�
 - A meal logged Sunday 23:30 counts in that week; Monday 00:10 counts in the next one.
 - Week total equals the sum of its seven days.
 - No English text visible anywhere in the UI.
+- Search "ban" in Ajouter un repas → "Banane" with the "Aliment" tag; "+" logs "Banane" 1 portion (105 kcal); afterwards Banane appears in the default list without searching.
+- Tapping Banane → quantity sheet; 2 portions → day entry "Banane × 2", 210 kcal; 150 g of Riz (no portion) → "Riz · 150 g".
+- A food only ever used inside meals never appears in the default list.
+- Desktop Nouveau repas with 15 ingredients: the dialog fits the window, the ingredient list scrolls, and the bottom buttons stay visible and work.
 - Week with Wed +180 and Sat +290 over their day targets but the week under its target: no orange anywhere on Semaine (mobile, desktop) nor on the Jour desktop mini chart; the ring shows kcal left.
 - Same week with the total over the weekly target: the ring and the desktop week row show "dépassé de N" in orange; the day bars stay neutral.
 - Average tiles read "value / goal" (kcal, Protéines, Lipides, Glucides).

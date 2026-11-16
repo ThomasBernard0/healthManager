@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import type { DaySummaryDto, LogEntryDto, WeekSummaryDto } from '../../../api/generated/model'
-import { formatInt, formatMacros, formatQuantity } from '../../../core/format'
+import { formatInt, formatEntryAmount, formatMacros } from '../../../core/format'
 import { Dots, Pencil, Plus } from '../../../core/ui/icons'
 import { MacroBar } from '../../../core/ui/MacroBar'
 import { Ring } from '../../../core/ui/Ring'
@@ -85,7 +85,7 @@ export function DayDesktop({ data, week, onOpenEntry, onAdd }: DayDesktopProps) 
             <span className={styles.time}>{entry.time}</span>
             <button type="button" className={styles.name} onClick={() => onOpenEntry(entry)}>
               {entry.label}
-              {entry.quantity !== 1 && <span className={styles.quantity}> {formatQuantity(entry.quantity)}</span>}
+              {formatEntryAmount(entry) && <span className={styles.quantity}> {formatEntryAmount(entry)}</span>}
             </button>
             <span className={styles.macro}>
               {fr.macros.p} {formatInt(entry.total.protein)}

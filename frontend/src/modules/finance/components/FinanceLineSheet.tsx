@@ -179,14 +179,16 @@ function LineForm({ line, onDone }: { line?: FinanceLineDto; onDone: () => void 
         </div>
       )}
 
-      <button className={`${form.primary} ${styles.save}`} type="submit" disabled={!valid || state === 'busy'}>
-        {fr.common.save}
-      </button>
-      {line && (
-        <button type="button" className={form.danger} disabled={state === 'busy'} onClick={() => void remove(line)}>
-          {fr.finance.delete}
+      <div className={form.actions}>
+        <button className={`${form.primary} ${styles.save}`} type="submit" disabled={!valid || state === 'busy'}>
+          {fr.common.save}
         </button>
-      )}
+        {line && (
+          <button type="button" className={form.danger} disabled={state === 'busy'} onClick={() => void remove(line)}>
+            {fr.finance.delete}
+          </button>
+        )}
+      </div>
     </form>
   )
 }

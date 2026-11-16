@@ -23,6 +23,7 @@ enum MealMode {
 enum LogKind {
   meal
   quick
+  food
 }
 
 enum Equipment {
@@ -141,6 +142,7 @@ model Food {
   portionGrams Decimal? @db.Decimal(7, 1)
   updatedAt  DateTime   @updatedAt
   mealItems  MealItem[]
+  logEntries LogEntry[]
 
   @@index([searchName])
 }
@@ -191,8 +193,12 @@ model LogEntry {
   kind      LogKind
   mealId    String?
   meal      Meal?    @relation(fields: [mealId], references: [id], onDelete: SetNull)
+  foodId    String?
+  food      Food?    @relation(fields: [foodId], references: [id], onDelete: SetNull)
   label     String
   quantity  Decimal  @db.Decimal(5, 2)
+  /// Food logged in grams: the grams eaten (quantity is then 1).
+  grams     Decimal? @db.Decimal(7, 1)
   kcal      Int
   protein   Decimal  @db.Decimal(7, 1)
   carbs     Decimal  @db.Decimal(7, 1)
@@ -201,6 +207,7 @@ model LogEntry {
 
   @@index([date])
   @@index([mealId])
+  @@index([foodId])
 }
 
 /// Daily goal, versioned by day: applies from validFrom until the next version.

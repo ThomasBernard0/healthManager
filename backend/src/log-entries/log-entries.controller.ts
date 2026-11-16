@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -16,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateQuickEntryDto } from './dto/create-quick-entry.dto.js';
 import { LogEntryDto } from './dto/log-entry.dto.js';
+import { LogFoodDto } from './dto/log-food.dto.js';
 import { LogMealDto } from './dto/log-meal.dto.js';
 import { RestoreLogEntryDto } from './dto/restore-log-entry.dto.js';
 import { LogEntriesService } from './log-entries.service.js';
@@ -31,6 +33,15 @@ export class LogEntriesController {
   @ApiNotFoundResponse()
   logMeal(@Body() dto: LogMealDto): Promise<LogEntryDto> {
     return this.entries.logMeal(dto);
+  }
+
+  /** Logs a food on its own (Ajout rapide): portions (food with a portion) or grams, nutrients frozen. */
+  @Post('food')
+  @ApiCreatedResponse({ type: LogEntryDto })
+  @ApiBadRequestResponse({ description: 'Not exactly one of portions / grams, or portions for a food without one' })
+  @ApiNotFoundResponse()
+  logFood(@Body() dto: LogFoodDto): Promise<LogEntryDto> {
+    return this.entries.logFood(dto);
   }
 
   @Post('quick')

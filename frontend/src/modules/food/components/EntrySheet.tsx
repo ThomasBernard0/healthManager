@@ -40,8 +40,10 @@ export function EntrySheet({ entry, onClose, onChanged }: EntrySheetProps) {
             time: entry.time,
             kind: entry.kind,
             mealId: entry.mealId,
+            foodId: entry.foodId,
             label: entry.label,
             quantity: entry.quantity,
+            grams: entry.grams,
             snapshot: entry.snapshot,
           }).then(onChanged)
         },

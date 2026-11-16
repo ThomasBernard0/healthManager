@@ -2,7 +2,7 @@ import { addDays, isIsoDate, parisToday, weekStart } from '@healthmanager/shared
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { summaryDay, summaryWeek } from '../../../api/generated/endpoints/summary/summary'
 import type { DaySummaryDto, LogEntryDto } from '../../../api/generated/model'
-import { formatDayTitle, formatInt, formatLongDate, formatMacros, formatQuantity } from '../../../core/format'
+import { formatDayTitle, formatInt, formatLongDate, formatEntryAmount, formatMacros } from '../../../core/format'
 import { ChevronLeft, ChevronRight, Pencil, Plus } from '../../../core/ui/icons'
 import { MacroBar } from '../../../core/ui/MacroBar'
 import { ModuleSwitcher } from '../../../core/ui/ModuleSwitcher'
@@ -275,8 +275,8 @@ function MealsCard({ entries, eatenKcal, onOpen }: MealsCardProps) {
                 <span className={styles.entryMain}>
                   <span className={styles.entryName}>
                     {entry.label}
-                    {entry.quantity !== 1 && (
-                      <span className={styles.quantity}> {formatQuantity(entry.quantity)}</span>
+                    {formatEntryAmount(entry) && (
+                      <span className={styles.quantity}> {formatEntryAmount(entry)}</span>
                     )}
                   </span>
                   <span className={styles.entryMacros}>{formatMacros(entry.total)}</span>

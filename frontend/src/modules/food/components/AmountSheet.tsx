@@ -27,6 +27,8 @@ interface AmountSheetProps {
   onConfirm: (amount: Amount) => void
   /** Shown when editing an ingredient already in the meal. */
   onRemove?: () => void
+  /** The confirm button (default "Valider"). */
+  confirmLabel?: string
 }
 
 type Unit = 'portions' | 'grams'
@@ -37,7 +39,7 @@ const UNITS = [
 ] as const
 
 /** How much of an ingredient: grams, or a count of portions when the food has one. */
-export function AmountSheet({ food, initial, onClose, onConfirm, onRemove }: AmountSheetProps) {
+export function AmountSheet({ food, initial, onClose, onConfirm, onRemove, confirmLabel = fr.food.validate }: AmountSheetProps) {
   const { portionGrams } = food
   const startInPortions = portionGrams !== null && (!initial || initial.portions !== null)
   const [unit, setUnit] = useState<Unit>(startInPortions ? 'portions' : 'grams')
@@ -102,7 +104,7 @@ export function AmountSheet({ food, initial, onClose, onConfirm, onRemove }: Amo
         </div>
 
         <button className={form.primary} type="submit" disabled={!valid}>
-          {fr.food.validate}
+          {confirmLabel}
         </button>
         {onRemove && (
           <button type="button" className={form.danger} onClick={onRemove}>

@@ -1,10 +1,11 @@
-import { normalizeNutrients, roundMacro, searchKey, searchTerms } from '@healthmanager/shared';
+import { fromUtcDate, normalizeNutrients, roundMacro, searchKey, searchTerms } from '@healthmanager/shared';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { num, toNutrients } from '../common/decimal.js';
 import type { Food } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
+import { EatenFoodDto } from './dto/eaten-food.dto.js';
 import { FoodDto } from './dto/food.dto.js';
 import type { FoodInUseDto } from './dto/food-in-use.dto.js';
 import { UpdateFoodDto } from './dto/update-food.dto.js';
@@ -76,6 +77,24 @@ export class FoodsService {
       take: CANDIDATES,
     });
     return rankFoods(candidates, query).slice(0, FOOD_SEARCH_LIMIT).map(toFoodDto);
+  }
+
+  /** The foods logged on their own at least once, with how often and when (Ajout rapide). */
+  async listEaten(): Promise<EatenFoodDto[]> {
+    const rows = await this.prisma.logEntry.groupBy({
+      by: ['foodId'],
+      where: { kind: 'food', foodId: { not: null } },
+      _count: { _all: true },
+      _max: { date: true },
+    });
+    const foods = await this.prisma.food.findMany({ where: { id: { in: rows.map((r) => r.foodId as string) } } });
+    const byId = new Map(foods.map((f) => [f.id, f]));
+    return rows.flatMap((r) => {
+      const food = r.foodId ? byId.get(r.foodId) : undefined;
+      if (!food) return [];
+      const lastEatenOn = r._max.date ? fromUtcDate(r._max.date) : null;
+      return [{ food: toFoodDto(food), timesEaten: r._count._all, lastEatenOn }];
+    });
   }
 
   /** Every food, by name (Mes repas → Ingrédients). */

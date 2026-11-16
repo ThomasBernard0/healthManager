@@ -13,6 +13,7 @@ import {
 import { parseBarcodeParam } from '../common/validators.js';
 import { BarcodeLookupDto } from './dto/barcode-lookup.dto.js';
 import { CreateFoodDto } from './dto/create-food.dto.js';
+import { EatenFoodDto } from './dto/eaten-food.dto.js';
 import { FoodDto } from './dto/food.dto.js';
 import { FoodInUseDto } from './dto/food-in-use.dto.js';
 import { UpdateFoodDto } from './dto/update-food.dto.js';
@@ -28,6 +29,13 @@ export class FoodsController {
   @ApiOkResponse({ type: [FoodDto] })
   search(@Query('q') q?: string): Promise<FoodDto[]> {
     return this.foods.search(q ?? '');
+  }
+
+  /** Foods logged on their own at least once (Ajout rapide; the client sorts them with Mes repas). */
+  @Get('eaten')
+  @ApiOkResponse({ type: [EatenFoodDto] })
+  listEaten(): Promise<EatenFoodDto[]> {
+    return this.foods.listEaten();
   }
 
   /** Every food, by name (Mes repas → Ingrédients). */

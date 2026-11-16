@@ -20,6 +20,8 @@
   max-width: var(--size-mobile);
   max-height: 94dvh;
   margin: 0 auto;
+  /* May shrink below its content (keyboard open, short window): it scrolls instead of being clipped. */
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--color-ground);
@@ -31,21 +33,19 @@
   min-height: 0;
 }
 
+/*
+ * Desktop: a dialog capped to the window that scrolls inside (a long Nouveau repas stays savable);
+ * the page's buttons (form.actions) stick to its bottom edge.
+ */
 @media (min-width: 1024px) {
   .root {
     justify-content: flex-start;
-    overflow-y: auto;
     padding: var(--space-64) var(--space-16);
-  }
-
-  .scrim {
-    position: fixed;
   }
 
   .panel {
     max-width: var(--size-dialog);
-    max-height: none;
-    overflow: hidden;
+    max-height: calc(100dvh - 2 * var(--space-64));
     border-radius: var(--radius-panel);
     box-shadow: var(--shadow-dialog);
   }

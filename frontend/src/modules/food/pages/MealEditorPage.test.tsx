@@ -8,6 +8,7 @@ import {
 } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsCreate, mealsGet, mealsRemove } from '../../../api/generated/endpoints/meals/meals'
 import type { FoodDto, MealDto } from '../../../api/generated/model'
+import { ModalFrame } from '../../../core/ui/ModalFrame'
 import MealEditorPage from './MealEditorPage'
 
 vi.mock('../../../api/generated/endpoints/foods/foods', () => ({
@@ -313,6 +314,66 @@ describe('MealEditorPage (Nouveau repas)', () => {
       renderEditor()
       expect(screen.getByRole('button', { name: '+ Ingrédient' })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Scanner' })).toBeNull()
+    } finally {
+      window.matchMedia = original
+    }
+  })
+  it('desktop dialog with 15 ingredients: the buttons stay in a footer stuck to the dialog’s bottom edge', async () => {
+    const original = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('min-width'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia
+    const items = Array.from({ length: 15 }, (_, i) => ({
+      id: `i${i}`,
+      food: food(`f${i}`, `Aliment ${i + 1}`, 100, 1, 1, 1),
+      grams: 100,
+      portions: null,
+      nutrients: { kcal: 100, protein: 1, carbs: 1, fat: 1 },
+    }))
+    vi.mocked(mealsGet).mockResolvedValue({
+      id: 'm1',
+      name: 'Grand bol',
+      mode: 'ingredients',
+      isFavorite: false,
+      totals: { kcal: 1500, protein: 15, carbs: 15, fat: 15 },
+      totalsSource: 'ingredients',
+      timesEaten: 0,
+      lastEatenOn: null,
+      items,
+      manualTotals: null,
+      override: null,
+    } as MealDto)
+    try {
+      render(
+        <MemoryRouter initialEntries={['/repas/m1']}>
+          <Routes>
+            <Route
+              path="/repas/:id"
+              element={
+                <ModalFrame label="Modifier le repas">
+                  <MealEditorPage />
+                </ModalFrame>
+              }
+            />
+          </Routes>
+        </MemoryRouter>,
+      )
+      const dialog = await screen.findByRole('dialog', { name: 'Modifier le repas' })
+      await within(dialog).findByText('Aliment 15')
+      expect(within(dialog).getAllByRole('button', { name: /^Modifier Aliment/ })).toHaveLength(15)
+      const save = within(dialog).getByRole('button', { name: 'Enregistrer' })
+      // jsdom has no layout: check the structure the CSS relies on. The panel scrolls (capped to the window),
+      // the buttons sit in the sticky footer, last in the page, after every ingredient.
+      const footer = save.parentElement as HTMLElement
+      expect(footer.className).toMatch(/actions/)
+      expect(footer).toContainElement(within(dialog).getByRole('button', { name: 'Supprimer' }))
+      expect(footer.parentElement?.lastElementChild).toBe(footer)
+      const last = within(dialog).getByText('Aliment 15')
+      expect(last.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(save).toBeEnabled()
     } finally {
       window.matchMedia = original
     }

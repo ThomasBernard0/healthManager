@@ -7,6 +7,7 @@
 import type {
   BarcodeLookupDto,
   CreateFoodDto,
+  EatenFoodDto,
   FoodDto,
   FoodsSearchParams,
   UpdateFoodDto
@@ -34,6 +35,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
       {url: `/api/foods`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createFoodDto
+    },
+      options);
+    }
+  export const foodsListEaten = (
+    
+ options?: SecondParameter<typeof apiClient<EatenFoodDto[]>>,) => {
+      return apiClient<EatenFoodDto[]>(
+      {url: `/api/foods/eaten`, method: 'GET'
     },
       options);
     }
@@ -82,6 +91,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
     }
   export type FoodsSearchResult = NonNullable<Awaited<ReturnType<typeof foodsSearch>>>
 export type FoodsCreateResult = NonNullable<Awaited<ReturnType<typeof foodsCreate>>>
+export type FoodsListEatenResult = NonNullable<Awaited<ReturnType<typeof foodsListEaten>>>
 export type FoodsListAllResult = NonNullable<Awaited<ReturnType<typeof foodsListAll>>>
 export type FoodsLookupBarcodeResult = NonNullable<Awaited<ReturnType<typeof foodsLookupBarcode>>>
 export type FoodsGetResult = NonNullable<Awaited<ReturnType<typeof foodsGet>>>

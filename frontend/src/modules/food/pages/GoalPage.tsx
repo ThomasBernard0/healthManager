@@ -156,9 +156,11 @@ function GoalForm({ goal, onSaved }: { goal: GoalDto | null; onSaved: () => void
         </div>
       )}
 
-      <button className={form.primary} type="submit" disabled={!valid || state === 'saving'}>
-        {fr.common.save}
-      </button>
+      <div className={form.actions}>
+        <button className={form.primary} type="submit" disabled={!valid || state === 'saving'}>
+          {fr.common.save}
+        </button>
+      </div>
     </form>
   )
 }
