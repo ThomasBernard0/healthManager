@@ -72,6 +72,7 @@ Muscle = "chest" | "back" | "shoulders_front" | "shoulders_side" | "shoulders_re
 - Harmonization doesn't change Up, Down or retry: after a harmonization, Up still moves every set to `stepUp(common weight)` × `repMin`; Down to `stepDown(common weight)` × `repMin`; retry gives every set the common weight with the common sets' last targets.
 - **Drop sets / different weights per set** (no lone off-weight set, see step 1): each set keeps its own weight. All sets move together by one step (`stepUp`/`stepDown` applied to each), so the shape is kept (60/57,5/55 → 62,5/60/57,5). The app reproduces what was done; it never proposes drop sets on its own.
 - The number of sets is fixed by the exercise (Modifier l'exercice); the exercise screen has no "+ Série". If the set count changes, added sets copy the last set's target and removed sets are dropped from the next targets.
+- **Targets in decreasing order**: when every set has the same target weight (always true outside drop sets, and after a harmonization), the target reps are sorted **highest first** — the first sets are the fresh ones, the last ones the hardest. Done 7·8·10·10 → +1 → 8·9·10·10 → shown and stored as **10·10·9·8**. Same total, same judgement; only the order changes. Drop sets (different weights) keep each set's own reps in place.
 - Changing the rep range: thresholds and targets use the new range from the next session on; weights are kept. Every target is clamped to the current `[repMin, repMax]` (a retried target of 11 on a range now 7–10 becomes 10). Reps done above the new max simply make the total reach the Up threshold, so the first session after narrowing a range usually steps up — no weight needs to be changed by hand.
 - Exercises skipped in a session don't change their next target.
 - An exercise **stopped early** (not every set done) doesn't move it either: next time its targets are retried (never up, never down), and it never counts as one of the two sessions in a row for a drop.
@@ -225,6 +226,7 @@ Two exercises of the same workout done alternately, set by set (A1, B1, A2, B2�
 12. Rep ranges 7–10 / 9–12, Up at N × max − 2, pre-fatigue only against Down, no superset rule, tonnage (see the README of this handoff).
 
 ## 7. Acceptance checks
+- Same weight, done 7·8·10·10 (4 × 7–10, total 35: progress) → targets **10·10·9·8**; done 9·10·10·10 (39 ≥ 38) → Up × 7·7·7·7.
 
 - Tonnage: barbell 60 × 10·10·10·8 → 2 280 kg; dumbbells 14 × 10·10·9·9 → 2 × 14 × 38 = 1 064 kg; tractions (bodyweight, assisted or not) → not counted, no box on their page.
 - Accueil total = Σ of every non-bodyweight exercise's tonnage; "cette semaine" counts only sessions since Monday 00:00 (Europe/Paris).

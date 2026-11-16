@@ -294,6 +294,37 @@ describe('judge and nextTargets (double progression, 4 × 7–10)', () => {
     expect(reps(next(log(50, [10, 10, 7]), { setCount: 3, repMin: 9, repMax: 12 }))).toEqual([11, 11, 9]);
   });
 
+  describe('targets in decreasing order (one weight for every set)', () => {
+    it('done 7·8·10·10 (total 35: progress) → 10·10·9·8', () => {
+      const t = next(log(50, [7, 8, 10, 10]));
+      expect(weights(t)).toEqual([50, 50, 50, 50]);
+      expect(reps(t)).toEqual([10, 10, 9, 8]);
+    });
+
+    it('a retried target 8·9·9·10 → 10·9·9·8', () => {
+      const t = next(log(50, [6, 6, 6, 6], false, { targets: [8, 9, 9, 10] }));
+      expect(weights(t)).toEqual([50, 50, 50, 50]);
+      expect(reps(t)).toEqual([10, 9, 9, 8]);
+    });
+
+    it('consolidate after a harmonization: sorted', () => {
+      const t = next(log([60, 60, 50, 60], [7, 9, 10, 8]));
+      expect(weights(t)).toEqual([60, 60, 60, 60]);
+      expect(reps(t)).toEqual([9, 8, 7, 7]);
+    });
+
+    it('Up / Down: unchanged, every set at repMin', () => {
+      expect(reps(next(log(50, [9, 10, 10, 10])))).toEqual([7, 7, 7, 7]);
+      expect(reps(next(log(50, [6, 7, 6, 6]), { previous: log(50, [6, 6, 6, 6]) }))).toEqual([7, 7, 7, 7]);
+    });
+
+    it('drop sets: each set keeps its own reps in place', () => {
+      const t = next(log([60, 57.5, 55], [7, 8, 9]), { setCount: 3 });
+      expect(weights(t)).toEqual([60, 57.5, 55]);
+      expect(reps(t)).toEqual([8, 9, 10]);
+    });
+  });
+
   it('drop set 60×10 · 57,5×10 · 55×10 (3 × 7–10, total 30 ≥ 28) → 62,5 · 60 · 57,5, targets × 7', () => {
     const t = next(log([60, 57.5, 55], [10, 10, 10]), { setCount: 3 });
     expect(weights(t)).toEqual([62.5, 60, 57.5]);
@@ -434,10 +465,10 @@ describe('harmonize a lone off-weight set (step 1, 4 × 7–10)', () => {
     expect(reps(t)).toEqual([9, 8, 8, 8]);
   });
 
-  it('the lone set first or in the middle keeps its place', () => {
+  it('the lone set first or in the middle: consolidated, then sorted highest first', () => {
     const t = next(log([60, 62.5, 60, 60], [8, 7, 9, 9]));
     expect(weights(t)).toEqual([60, 60, 60, 60]);
-    expect(reps(t)).toEqual([8, 8, 9, 9]);
+    expect(reps(t)).toEqual([9, 9, 8, 8]);
   });
 
   it('drop sets 60 / 57,5 / 55 or 60 · 60 · 50 · 50 → not harmonized, the shape is kept', () => {
