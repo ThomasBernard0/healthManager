@@ -26,7 +26,7 @@ No login: each device asks for the key once (or opens `/?key=…`) and keeps it 
 ## Folder structure
 
 ```
-shared/                  @healthmanager/shared — pure TS, no deps (nutrients, per-portion ⇄ per-100 g, calendar/weeks, goals,
+shared/                  @healthmanager/shared — pure TS, no deps (nutrients, per-portion ⇄ per-100 g, calendar/weeks, goals, Mes repas order (compareQuickAdd),
                          musculation: rotation, progression rules, stepUp/stepDown, pre-fatigue, set format,
                          supersets: interleaveSets, blocks; assistance: negative weights, ASSIST_STEP, chartBarValue;
                          tonnage: setTonnage (× 2 dumbbells, bodyweight 0), tonnageDisplay;

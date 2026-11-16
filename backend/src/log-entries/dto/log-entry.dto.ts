@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { NutrientsDto } from '../../common/nutrients.dto.js';
 
-export const LOG_KINDS = ['meal', 'quick'] as const;
+export const LOG_KINDS = ['meal', 'quick', 'food'] as const;
 export type LogKindValue = (typeof LOG_KINDS)[number];
 
 export class LogEntryDto {
@@ -20,11 +20,17 @@ export class LogEntryDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, description: 'Saved meal it was logged from' })
   mealId: string | null;
 
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, description: 'Food it was logged from (kind food)' })
+  foodId: string | null;
+
   @ApiProperty({ example: 'Bowl poulet riz' })
   label: string;
 
-  @ApiProperty({ example: 1, description: 'Portions' })
+  @ApiProperty({ example: 1, description: 'Portions (1 for a food logged in grams)' })
   quantity: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 150, description: 'Food logged in grams: the grams eaten' })
+  grams: number | null;
 
   @ApiProperty({ type: NutrientsDto, description: 'Per portion, frozen at log time' })
   snapshot: NutrientsDto;

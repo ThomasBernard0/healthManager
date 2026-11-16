@@ -12,4 +12,5 @@ export type LogKind = typeof LogKind[keyof typeof LogKind];
 export const LogKind = {
   meal: 'meal',
   quick: 'quick',
+  food: 'food',
 } as const;

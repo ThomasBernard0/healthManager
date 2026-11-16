@@ -420,19 +420,21 @@ function MealEditor({ meal }: { meal: MealDto | null }) {
         </div>
       )}
 
-      <button
-        className={form.primary}
-        type="button"
-        disabled={!valid || state === 'saving'}
-        onClick={() => void submit()}
-      >
-        {submitLabel}
-      </button>
-      {meal && (
-        <button type="button" className={form.danger} disabled={state === 'saving'} onClick={() => setConfirmDelete(true)}>
-          {fr.meal.delete}
+      <div className={form.actions}>
+        <button
+          className={form.primary}
+          type="button"
+          disabled={!valid || state === 'saving'}
+          onClick={() => void submit()}
+        >
+          {submitLabel}
         </button>
-      )}
+        {meal && (
+          <button type="button" className={form.danger} disabled={state === 'saving'} onClick={() => setConfirmDelete(true)}>
+            {fr.meal.delete}
+          </button>
+        )}
+      </div>
 
       {meal && confirmDelete && (
         <ConfirmSheet

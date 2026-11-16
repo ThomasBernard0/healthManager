@@ -13,15 +13,23 @@ export interface RestoreLogEntryDto {
   kind: LogKind;
   /** @nullable */
   mealId?: string | null;
+  /** @nullable */
+  foodId?: string | null;
   /**
    * @minLength 1
    * @maxLength 120
    */
   label: string;
   /**
-   * @minimum 0.25
-   * @maximum 20
+   * @minimum 0.01
+   * @maximum 999.99
    */
   quantity: number;
+  /**
+   * @minimum 0.1
+   * @maximum 5000
+   * @nullable
+   */
+  grams?: number | null;
   snapshot: NutrientsDto;
 }

@@ -7,6 +7,7 @@
 import type {
   CreateQuickEntryDto,
   LogEntryDto,
+  LogFoodDto,
   LogMealDto,
   RestoreLogEntryDto
 } from '../../model';
@@ -24,6 +25,16 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
       {url: `/api/log-entries/meal`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: logMealDto
+    },
+      options);
+    }
+  export const logEntriesLogFood = (
+    logFoodDto: LogFoodDto,
+ options?: SecondParameter<typeof apiClient<LogEntryDto>>,) => {
+      return apiClient<LogEntryDto>(
+      {url: `/api/log-entries/food`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: logFoodDto
     },
       options);
     }
@@ -56,6 +67,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
       options);
     }
   export type LogEntriesLogMealResult = NonNullable<Awaited<ReturnType<typeof logEntriesLogMeal>>>
+export type LogEntriesLogFoodResult = NonNullable<Awaited<ReturnType<typeof logEntriesLogFood>>>
 export type LogEntriesCreateQuickResult = NonNullable<Awaited<ReturnType<typeof logEntriesCreateQuick>>>
 export type LogEntriesRestoreResult = NonNullable<Awaited<ReturnType<typeof logEntriesRestore>>>
 export type LogEntriesRemoveResult = NonNullable<Awaited<ReturnType<typeof logEntriesRemove>>>

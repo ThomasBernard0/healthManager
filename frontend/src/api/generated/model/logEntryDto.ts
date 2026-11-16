@@ -17,9 +17,19 @@ export interface LogEntryDto {
    * @nullable
    */
   mealId: string | null;
+  /**
+   * Food it was logged from (kind food)
+   * @nullable
+   */
+  foodId: string | null;
   label: string;
-  /** Portions */
+  /** Portions (1 for a food logged in grams) */
   quantity: number;
+  /**
+   * Food logged in grams: the grams eaten
+   * @nullable
+   */
+  grams: number | null;
   /** Per portion, frozen at log time */
   snapshot: NutrientsDto;
   /** snapshot × quantity */

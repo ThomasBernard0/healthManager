@@ -123,6 +123,43 @@
         ]
       }
     },
+    "/api/log-entries/food": {
+      "post": {
+        "operationId": "LogEntries_logFood",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogFoodDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not exactly one of portions / grams, or portions for a food without one"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "log-entries"
+        ]
+      }
+    },
     "/api/log-entries/quick": {
       "post": {
         "operationId": "LogEntries_createQuick",
@@ -472,6 +509,30 @@
           },
           "409": {
             "description": "A food already has this barcode"
+          }
+        },
+        "tags": [
+          "foods"
+        ]
+      }
+    },
+    "/api/foods/eaten": {
+      "get": {
+        "operationId": "Foods_listEaten",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EatenFoodDto"
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1847,7 +1908,8 @@
         "type": "string",
         "enum": [
           "meal",
-          "quick"
+          "quick",
+          "food"
         ]
       },
       "NutrientsDto": {
@@ -1913,6 +1975,12 @@
             "nullable": true,
             "description": "Saved meal it was logged from"
           },
+          "foodId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Food it was logged from (kind food)"
+          },
           "label": {
             "type": "string",
             "example": "Bowl poulet riz"
@@ -1920,7 +1988,13 @@
           "quantity": {
             "type": "number",
             "example": 1,
-            "description": "Portions"
+            "description": "Portions (1 for a food logged in grams)"
+          },
+          "grams": {
+            "type": "number",
+            "nullable": true,
+            "example": 150,
+            "description": "Food logged in grams: the grams eaten"
           },
           "snapshot": {
             "description": "Per portion, frozen at log time",
@@ -1945,10 +2019,47 @@
           "time",
           "kind",
           "mealId",
+          "foodId",
           "label",
           "quantity",
+          "grams",
           "snapshot",
           "total"
+        ]
+      },
+      "LogFoodDto": {
+        "type": "object",
+        "properties": {
+          "foodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-10-04"
+          },
+          "time": {
+            "type": "string",
+            "example": "12:45"
+          },
+          "portions": {
+            "type": "number",
+            "example": 2,
+            "minimum": 0.01,
+            "maximum": 999.99,
+            "description": "Portions of the food"
+          },
+          "grams": {
+            "type": "number",
+            "example": 150,
+            "minimum": 0.1,
+            "maximum": 5000
+          }
+        },
+        "required": [
+          "foodId",
+          "date",
+          "time"
         ]
       },
       "CreateQuickEntryDto": {
@@ -2026,6 +2137,11 @@
             "format": "uuid",
             "nullable": true
           },
+          "foodId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "label": {
             "type": "string",
             "example": "Bowl poulet riz",
@@ -2035,8 +2151,14 @@
           "quantity": {
             "type": "number",
             "example": 1,
-            "minimum": 0.25,
-            "maximum": 20
+            "minimum": 0.01,
+            "maximum": 999.99
+          },
+          "grams": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0.1,
+            "maximum": 5000
           },
           "snapshot": {
             "$ref": "#/components/schemas/NutrientsDto"
@@ -2382,6 +2504,29 @@
         },
         "required": [
           "isFavorite"
+        ]
+      },
+      "EatenFoodDto": {
+        "type": "object",
+        "properties": {
+          "food": {
+            "$ref": "#/components/schemas/FoodDto"
+          },
+          "timesEaten": {
+            "type": "number",
+            "example": 4,
+            "description": "Times logged on its own"
+          },
+          "lastEatenOn": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-10-04"
+          }
+        },
+        "required": [
+          "food",
+          "timesEaten",
+          "lastEatenOn"
         ]
       },
       "BarcodeLookupDto": {

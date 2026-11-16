@@ -1,4 +1,5 @@
 import {
+  compareQuickAdd,
   fromUtcDate,
   ingredientNutrients,
   matchesSearch,
@@ -25,16 +26,6 @@ interface MealStats {
 
 const WITH_ITEMS = { items: { include: { food: true }, orderBy: { position: 'asc' } } } as const;
 const NO_STATS: MealStats = { timesEaten: 0, lastEatenOn: null };
-
-/** Mes repas order: favourites first, then most eaten, then most recently eaten, then by name. */
-export function compareMeals(a: MealSummaryDto, b: MealSummaryDto): number {
-  return (
-    Number(b.isFavorite) - Number(a.isFavorite) ||
-    b.timesEaten - a.timesEaten ||
-    (b.lastEatenOn ?? '').localeCompare(a.lastEatenOn ?? '') ||
-    a.name.localeCompare(b.name, 'fr')
-  );
-}
 
 const manualTotalsOf = (m: Meal) =>
   optionalNutrients(m.manualKcal, m.manualProtein, m.manualCarbs, m.manualFat);
@@ -99,7 +90,7 @@ export class MealsService {
     const meals = await this.prisma.meal.findMany({ include: WITH_ITEMS });
     const matching = meals.filter((m) => matchesSearch(m.searchName, query));
     const stats = await this.stats(matching.map((m) => m.id));
-    return matching.map((m) => toSummary(m, stats.get(m.id) ?? NO_STATS)).sort(compareMeals);
+    return matching.map((m) => toSummary(m, stats.get(m.id) ?? NO_STATS)).sort(compareQuickAdd);
   }
 
   async get(id: string): Promise<MealDto> {

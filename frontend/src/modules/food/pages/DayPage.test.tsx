@@ -2,20 +2,24 @@ import { parisToday } from '@healthmanager/shared'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { foodsListEaten, foodsSearch } from '../../../api/generated/endpoints/foods/foods'
 import {
   logEntriesCreateQuick,
+  logEntriesLogFood,
   logEntriesLogMeal,
 } from '../../../api/generated/endpoints/log-entries/log-entries'
 import { mealsList } from '../../../api/generated/endpoints/meals/meals'
 import { summaryDay } from '../../../api/generated/endpoints/summary/summary'
-import type { DaySummaryDto, LogEntryDto, MealSummaryDto } from '../../../api/generated/model'
+import type { DaySummaryDto, FoodDto, LogEntryDto, MealSummaryDto } from '../../../api/generated/model'
 import { ToastProvider } from '../../../core/ui/Toast'
 import DayPage from './DayPage'
 
 vi.mock('../../../api/generated/endpoints/summary/summary', () => ({ summaryDay: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/meals/meals', () => ({ mealsList: vi.fn() }))
+vi.mock('../../../api/generated/endpoints/foods/foods', () => ({ foodsListEaten: vi.fn(), foodsSearch: vi.fn() }))
 vi.mock('../../../api/generated/endpoints/log-entries/log-entries', () => ({
   logEntriesCreateQuick: vi.fn(),
+  logEntriesLogFood: vi.fn(),
   logEntriesLogMeal: vi.fn(),
   logEntriesRemove: vi.fn(),
   logEntriesRestore: vi.fn(),
@@ -30,8 +34,10 @@ const entry = (id: string, time: string, label: string, kcal: number): LogEntryD
   time,
   kind: 'quick',
   mealId: null,
+  foodId: null,
   label,
   quantity: 1,
+  grams: null,
   snapshot: n(kcal, 10, 20, 5),
   total: n(kcal, 10, 20, 5),
 })
@@ -67,7 +73,11 @@ function renderDay(path = `/jour/${DATE}`) {
 }
 
 describe('DayPage', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(foodsListEaten).mockResolvedValue([])
+    vi.mocked(foodsSearch).mockResolvedValue([])
+  })
 
   it('shows kcal left, eaten, the daily goal, the week and the meals ordered by time', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())
@@ -171,7 +181,7 @@ describe('DayPage', () => {
     expect(text(dialog)).toContain('Mes repas · 2')
     expect(text(dialog)).toContain('250 kcal · P 30 · L 5 · G 22 · hier')
 
-    const search = within(dialog).getByLabelText('Chercher dans mes repas')
+    const search = within(dialog).getByLabelText('Chercher dans mes repas et mes aliments')
     await user.type(search, 'FAJIT')
     expect(within(dialog).getByText('Fajitas poulet')).toBeInTheDocument()
     expect(within(dialog).queryByText('Shaker protéiné')).toBeNull()
@@ -182,7 +192,8 @@ describe('DayPage', () => {
 
     await user.clear(search)
     await user.type(search, 'Gaspacho')
-    expect(within(dialog).getByRole('button', { name: 'Créer « Gaspacho »' })).toBeInTheDocument()
+    // Once the food search found nothing either.
+    expect(await within(dialog).findByRole('button', { name: 'Créer « Gaspacho »' })).toBeInTheDocument()
   })
 
   it('logs a saved meal once with +: no portion stepper', async () => {
@@ -196,6 +207,89 @@ describe('DayPage', () => {
     expect(within(dialog).queryByRole('button', { name: /^Fajitas poulet/ })).toBeNull()
     expect(within(dialog).queryByRole('button', { name: 'Augmenter la quantité' })).toBeNull()
     expect(within(dialog).getByRole('button', { name: 'Ajouter Fajitas poulet' })).toBeInTheDocument()
+  })
+
+  const BANANE: FoodDto = {
+    id: 'f1',
+    name: 'Banane',
+    brand: null,
+    per100g: n(88, 1.1, 22.8, 0.3),
+    portionGrams: 120,
+  }
+  const RIZ: FoodDto = { id: 'f2', name: 'Riz', brand: null, per100g: n(130, 2.7, 28, 0.3), portionGrams: null }
+  const foodEntry = (id: string, label: string, quantity: number, grams: number | null): LogEntryDto => ({
+    ...entry(id, '10:00', label, 106),
+    kind: 'food',
+    foodId: 'f1',
+    quantity,
+    grams,
+  })
+
+  it('finds every food in the search, with the Aliment tag; + logs 1 portion', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(mealsList).mockResolvedValue([meal('m1', 'Shaker protéiné')])
+    vi.mocked(foodsSearch).mockResolvedValue([BANANE])
+    vi.mocked(logEntriesLogFood).mockResolvedValue(foodEntry('x', 'Banane', 1, null))
+    const user = userEvent.setup()
+    renderDay()
+
+    await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ajouter un repas' })
+    expect(within(dialog).getByPlaceholderText('Chercher un repas ou un aliment')).toBeInTheDocument()
+    await user.type(within(dialog).getByLabelText('Chercher dans mes repas et mes aliments'), 'ban')
+    await within(dialog).findByText('Aliment')
+    expect(foodsSearch).toHaveBeenLastCalledWith({ q: 'ban' })
+    expect(text(dialog)).toContain('BananeAliment1 portion · 106 kcal · P 1 · L 0 · G 27')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Ajouter 1 portion de Banane' }))
+    expect(logEntriesLogFood).toHaveBeenCalledWith(expect.objectContaining({ foodId: 'f1', date: DATE, portions: 1 }))
+    expect(await screen.findByText('Banane ajouté', {}, { timeout: 3000 })).toBeInTheDocument()
+  })
+
+  it('lists the foods already logged alone with the meals, by use; tap → quantity → 2 portions', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(summary())
+    vi.mocked(mealsList).mockResolvedValue([meal('m1', 'Shaker protéiné', { isFavorite: true, timesEaten: 1 }), meal('m2', 'Fajitas poulet', { timesEaten: 1 })])
+    vi.mocked(foodsListEaten).mockResolvedValue([
+      { food: BANANE, timesEaten: 5, lastEatenOn: '2026-10-03' },
+      { food: RIZ, timesEaten: 2, lastEatenOn: '2026-10-01' },
+    ])
+    vi.mocked(logEntriesLogFood).mockResolvedValue(foodEntry('x', 'Banane', 2, null))
+    const user = userEvent.setup()
+    renderDay()
+
+    await user.click(await screen.findByRole('button', { name: 'Ajouter' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ajouter un repas' })
+    await within(dialog).findByText('Banane')
+    expect(text(dialog)).toContain('Mes repas · 4')
+    const names = within(dialog).getAllByRole('button', { name: /^Ajouter (?!un)/ }).map((b) => b.getAttribute('aria-label'))
+    expect(names).toEqual([
+      'Ajouter Shaker protéiné',
+      'Ajouter 1 portion de Banane',
+      'Ajouter 100 g de Riz',
+      'Ajouter Fajitas poulet',
+    ])
+    expect(text(dialog)).toContain('100 g · 130 kcal · P 3 · L 0 · G 28')
+
+    await user.click(within(dialog).getByRole('button', { name: /^BananeAliment/ }))
+    const amount = await screen.findByRole('dialog', { name: 'Banane' })
+    const input = within(amount).getByLabelText('Quantité de Banane')
+    await user.clear(input)
+    await user.type(input, '2')
+    await user.click(within(amount).getByRole('button', { name: 'Ajouter' }))
+    expect(logEntriesLogFood).toHaveBeenCalledWith(expect.objectContaining({ foodId: 'f1', date: DATE, portions: 2 }))
+    expect(vi.mocked(logEntriesLogFood).mock.calls[0][0]).not.toHaveProperty('grams')
+  })
+
+  it('labels food entries with their amount: "Banane", "Banane ×2", "Riz · 150 g"', async () => {
+    vi.mocked(summaryDay).mockResolvedValue(
+      summary({
+        entries: [foodEntry('a', 'Banane', 1, null), foodEntry('b', 'Banane', 2, null), foodEntry('c', 'Riz', 1, 150)],
+      }),
+    )
+    renderDay()
+    await screen.findByRole('heading', { name: 'Repas du jour' })
+    const rows = screen.getAllByRole('button', { name: /^10:00/ }).map((b) => text(b))
+    expect(rows.map((r) => r.replace(/^10:00/, '').replace(/P \d.*$/, ''))).toEqual(['Banane', 'Banane ×2', 'Riz · 150 g'])
   })
   it('shows a logged meal’s totals and Supprimer only: no time, no edit (the time is in Repas du jour)', async () => {
     vi.mocked(summaryDay).mockResolvedValue(summary())

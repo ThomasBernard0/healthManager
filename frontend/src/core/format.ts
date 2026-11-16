@@ -22,6 +22,12 @@ export const formatGrams = (n: number): string => `${formatInt(n)} ${fr.common.g
 /** "×1,5" */
 export const formatQuantity = (n: number): string => `×${formatDecimal(n)}`
 
+/** After a day entry's name: "×2" (portions), "· 150 g" (a food logged in grams), nothing for 1 portion. */
+export function formatEntryAmount(entry: { quantity: number; grams: number | null }): string | null {
+  if (entry.grams !== null) return `· ${formatDecimal(entry.grams)} ${fr.common.grams}`
+  return entry.quantity === 1 ? null : formatQuantity(entry.quantity)
+}
+
 /** "P 28 · L 14 · G 45": carbs always last. */
 export function formatMacros(n: { protein: number; carbs: number; fat: number }): string {
   return [
