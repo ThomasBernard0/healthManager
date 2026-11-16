@@ -201,8 +201,8 @@ export interface NextTargetsInput {
  * Targets of each set, from the last time the exercise was done. Each set keeps its own weight and all
  * move together (drop sets keep their shape), except a lone off-weight set: it is put back to the common
  * weight with the lowest target of the others, and the rest is consolidated (same reps, no +1) instead of
- * progressing. Every target is clamped to [repMin, repMax] (the range may have changed since); today's
- * pre-fatigue doesn't matter. null: first time, the user types everything.
+ * progressing. Every target is clamped to [repMin, repMax] (the range may have changed since); with one weight
+ * for every set, the reps are sorted highest first. Today's pre-fatigue doesn't matter. null: first time, the user types everything.
  */
 export function nextTargets(input: NextTargetsInput): Target[] | null {
   const { last, previous, setCount, repMin, repMax, known, step } = input;
@@ -232,7 +232,9 @@ export function nextTargets(input: NextTargetsInput): Target[] | null {
   }
 
   // The exercise's set count changed: added sets copy the last set's target, removed ones are dropped.
-  return Array.from({ length: setCount }, (_, i) => targets[Math.min(i, targets.length - 1)]);
+  const sized = Array.from({ length: setCount }, (_, i) => targets[Math.min(i, targets.length - 1)]);
+  // One weight for every set: the reps highest first (drop sets keep each set's reps in place).
+  return sized.every((t) => t.weight === sized[0].weight) ? sized.toSorted((a, b) => b.reps - a.reps) : sized;
 }
 
 /** nextTargets from the history of an exercise: its last finished sessions, most recent first (two are enough). */

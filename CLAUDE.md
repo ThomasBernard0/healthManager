@@ -217,6 +217,7 @@ Frontend (`frontend/.env`, see `frontend/.env.example`; read at **build** time):
 ## Rules
 
 - **Never commit to `main` directly.** Always a `feat/…`, `fix/…`, `chore/…` branch + PR (`main` is protected).
+- Claude Code merges its own PRs (squash) once CI passes, without waiting for a review, and checks the deploy.
 - **Conventional Commits** for commit messages and PR titles (`feat: …`, `fix: …`, `chore: …`, `docs: …`, `refactor: …`, `test: …`, `ci: …`).
 - **Never edit `design/`** — handoff bundles are read-only.
 - **Never edit the generated client** (`frontend/src/api/generated/`) or `frontend/openapi.json` by hand — change the backend, then `npm run api:sync`.
